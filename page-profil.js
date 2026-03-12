@@ -248,15 +248,24 @@ window.simpanDataUsaha = async function() {
 
   try {
     const session = await getSession();
-    const { error } = await sb.from('profiles').update({
+    const uid = session.user.id;
+    
+    // Gunakan upsert alih-alih update untuk menjamin baris profil tercipta
+    // jika trigger on_auth_user_created sebelumnya gagal berjalan
+    const { data, error } = await sb.from('profiles').upsert({
+      id: uid,
       nama_usaha: namaUsaha,
       jenis_usaha: jenisUsaha,
       telepon,
       alamat,
       updated_at: new Date().toISOString()
-    }).eq('id', session.user.id);
+    }, { onConflict: 'id' }).select();
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+      console.warn('Upsert Usaha gagal me-return data. RLS Blocked? UID:', uid);
+      throw new Error("Gagal menyimpan profil: Akses Ditolak oleh RLS.");
+    }
 
     // Update sidebar
     const uEl = document.getElementById('sidebarUsaha');
@@ -288,13 +297,21 @@ window.simpanDataPemilik = async function() {
 
   try {
     const session = await getSession();
-    const { error } = await sb.from('profiles').update({
+    const uid = session.user.id;
+
+    // Gunakan upsert untuk menjamin insert if not exists
+    const { data, error } = await sb.from('profiles').upsert({
+      id: uid,
       nama_pemilik: namaPemilik,
-      deskripsi: bio,  // pakai kolom 'deskripsi' di DB
+      deskripsi: bio,
       updated_at: new Date().toISOString()
-    }).eq('id', session.user.id);
+    }, { onConflict: 'id' }).select();
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+      console.warn('Upsert Pemilik gagal me-return data. UID:', uid);
+      throw new Error("Gagal menyimpan pemilik: Akses Ditolak oleh RLS.");
+    }
 
     // Update sidebar nama & avatar inisial
     const nEl = document.getElementById('sidebarNama');
