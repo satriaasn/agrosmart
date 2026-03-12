@@ -24,7 +24,7 @@ async function renderDashboard() {
   <div class="page-header">
     <div>
       <div class="page-title">Dashboard</div>
-      <div class="page-subtitle">Selamat datang, ${state.profile?.nama_pemilik || state.session?.user?.email?.split('@')[0] || 'Pengguna'}! Berikut ringkasan perkebunan hari ini — ${new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}.</div>
+      <div class="page-subtitle">Selamat datang, ${window.state?.profile?.nama_pemilik || window.state?.session?.user?.email?.split('@')[0] || 'Pengguna'}! Berikut ringkasan perkebunan hari ini — ${new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}.</div>
     </div>
     <div class="page-actions">
       <button class="btn btn-secondary" onclick="showToast('success','Laporan diperbarui','Data telah disinkronisasi.')">

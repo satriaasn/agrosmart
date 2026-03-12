@@ -284,6 +284,8 @@ async function initUserProfile() {
     window._currentUserId = session.user.id;
 
     const profile = await loadProfile(session.user.id);
+    window.state = { session, profile }; // Store globally for other modules
+
     const nama    = profile?.nama_pemilik || session.user.user_metadata?.full_name || session.user.email;
     const usaha   = profile?.nama_usaha   || 'AgroSmart';
     const initials = nama.split(' ').map(function(n){ return n[0]; }).slice(0, 2).join('').toUpperCase();
