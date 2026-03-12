@@ -78,84 +78,166 @@ async function openPanenModal(id) {
     SB.lahan.fetch(),
     SB.karyawan.fetch()
   ]);
-  const arrPanen = listPanen || [];
-  const arrTanaman = listTanaman || [];
-  const arrLahan = listLahan || [];
+  const arrPanen    = listPanen    || [];
+  const arrTanaman  = listTanaman  || [];
+  const arrLahan    = listLahan    || [];
   const arrKaryawan = listKaryawan || [];
+
+  // Simpan data tanaman semua ke window agar bisa diakses cascade handler
+  window._allTanaman = arrTanaman;
 
   let p = null;
   if (id) p = arrPanen.find(x => String(x.id) === String(id));
 
-  openModal(p ? 'Edit Catatan Panen' : 'Tambah Catatan Panen', `
+  // Tentukan lahan yang dipilih (untuk edit: lahan dari data, untuk add: lahan pertama)
+  const selectedLahan = p?.lahan || (arrLahan[0]?.nama || '');
+
+  // Fungsi build options tanaman difilter berdasarkan lahan
+  const getTanamanOptions = (lahanNama, selectedTanaman) => {
+    const filtered = (window._allTanaman || []).filter(t => t.lahan === lahanNama);
+    if (filtered.length === 0) {
+      return `<option value="">— Belum ada tanaman di lahan ini —</option>`;
+    }
+    return filtered.map(t =>
+      `<option value="${t.nama}" ${selectedTanaman === t.nama ? 'selected' : ''}>${t.nama}${t.kategori ? ' ('+t.kategori+')' : ''}</option>`
+    ).join('');
+  };
+
+  openModal(p ? 'Edit Catatan Panen' : 'Catat Hasil Panen', `
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Tanaman</label>
-        <select class="form-control" id="f-pTan">
-          ${arrTanaman.map(t=>`<option ${p?.tanaman===t.nama?'selected':''}>${t.nama}</option>`).join('')}
+      <div class="form-group">
+        <label class="form-label">Blok Lahan *</label>
+        <select class="form-control" id="f-pLahan" onchange="cascadeTanamanByLahan(this.value)">
+          ${arrLahan.map(l => `<option value="${l.nama}" ${selectedLahan === l.nama ? 'selected' : ''}>${l.nama}</option>`).join('')}
         </select>
       </div>
-      <div class="form-group"><label class="form-label">Blok Lahan</label>
-        <select class="form-control" id="f-pLahan">
-          ${arrLahan.map(l=>`<option ${p?.lahan===l.nama?'selected':''}>${l.nama}</option>`).join('')}
+      <div class="form-group">
+        <label class="form-label">Tanaman *
+          <span id="tanamanHint" style="font-weight:400;font-size:11px;color:var(--accent-primary);margin-left:6px">▸ sesuai lahan terpilih</span>
+        </label>
+        <select class="form-control" id="f-pTan">
+          ${getTanamanOptions(selectedLahan, p?.tanaman)}
         </select>
       </div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Tanggal Panen</label><input class="form-control" type="date" id="f-pTgl" value="${p?.tanggal||new Date().toISOString().slice(0,10)}"></div>
-      <div class="form-group"><label class="form-label">Jumlah (kg)</label><input class="form-control" type="number" id="f-pJml" value="${p?.jumlah||''}"></div>
+      <div class="form-group"><label class="form-label">Tanggal Panen</label><input class="form-control" type="date" id="f-pTgl" value="${p?.tanggal || new Date().toISOString().slice(0,10)}"></div>
+      <div class="form-group">
+        <label class="form-label">Satuan</label>
+        <select class="form-control" id="f-pSatuan">
+          ${['kg','ton','kwintal','ikat','buah'].map(s => `<option ${(p?.satuan||'kg')===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Jumlah *</label><input class="form-control" type="number" id="f-pJml" value="${p?.jumlah||''}" placeholder="0" min="0"></div>
+      <div class="form-group"><label class="form-label">Harga / Satuan (Rp) *</label><input class="form-control" type="number" id="f-pHarga" value="${p?.harga||''}" placeholder="0" min="0"></div>
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Kualitas</label>
         <select class="form-control" id="f-pKual">
-          <option ${p?.kualitas==='A'?'selected':''}>A</option>
-          <option ${p?.kualitas==='B'?'selected':''}>B</option>
-          <option ${p?.kualitas==='C'?'selected':''}>C</option>
+          ${['Super','A','B','C'].map(k => `<option ${(p?.kualitas||'A')===k?'selected':''}>${k}</option>`).join('')}
         </select>
       </div>
-      <div class="form-group"><label class="form-label">Harga/kg (Rp)</label><input class="form-control" type="number" id="f-pHarga" value="${p?.harga||''}"></div>
+      <div class="form-group"><label class="form-label">Penanggung Jawab</label>
+        <select class="form-control" id="f-pKary">
+          <option value="">— Pilih karyawan —</option>
+          ${arrKaryawan.map(k => `<option ${p?.karyawan===k.nama?'selected':''}>${k.nama}</option>`).join('')}
+        </select>
+      </div>
     </div>
-    <div class="form-group"><label class="form-label">Penanggung Jawab</label>
-      <select class="form-control" id="f-pKary">
-        ${arrKaryawan.map(k=>`<option ${p?.karyawan===k.nama?'selected':''}>${k.nama}</option>`).join('')}
-      </select>
+    <div id="previewTotal" style="margin-top:4px;padding:10px 14px;background:var(--accent-bg);border-radius:8px;font-size:13px;color:var(--accent-primary);display:none">
+      💰 Estimasi Total: <strong id="previewTotalVal">Rp 0</strong>
     </div>
+    <style>
+      #f-pJml, #f-pHarga { transition: border-color 0.2s; }
+    </style>
+    <script>
+      (function(){
+        function updatePreview() {
+          const j = parseFloat(document.getElementById('f-pJml')?.value || 0);
+          const h = parseFloat(document.getElementById('f-pHarga')?.value || 0);
+          const box = document.getElementById('previewTotal');
+          const val = document.getElementById('previewTotalVal');
+          if (j > 0 && h > 0) {
+            box.style.display = 'block';
+            val.textContent = 'Rp ' + (j * h).toLocaleString('id-ID');
+          } else {
+            box.style.display = 'none';
+          }
+        }
+        document.getElementById('f-pJml')?.addEventListener('input', updatePreview);
+        document.getElementById('f-pHarga')?.addEventListener('input', updatePreview);
+      })();
+    </script>
   `, async () => {
     const jumlah = +document.getElementById('f-pJml').value;
     const harga  = +document.getElementById('f-pHarga').value;
-    if (!jumlah || !harga) { showToast('danger','Gagal','Jumlah dan harga wajib diisi.'); return; }
-    
-    const data = { 
-      tanaman: document.getElementById('f-pTan').value, 
-      lahan: document.getElementById('f-pLahan').value, 
-      tanggal: document.getElementById('f-pTgl').value, 
-      jumlah, 
-      satuan:'kg', 
-      kualitas: document.getElementById('f-pKual').value, 
+    const tanaman = document.getElementById('f-pTan').value;
+    const lahan   = document.getElementById('f-pLahan').value;
+
+    if (!lahan)   { showToast('error','Gagal','Pilih blok lahan terlebih dahulu.'); return false; }
+    if (!tanaman) { showToast('error','Gagal','Pilih tanaman terlebih dahulu.'); return false; }
+    if (!jumlah || jumlah <= 0) { showToast('error','Gagal','Jumlah harus lebih dari 0.'); return false; }
+    if (!harga  || harga  <= 0) { showToast('error','Gagal','Harga harus lebih dari 0.'); return false; }
+
+    const data = {
+      tanaman,
+      lahan,
+      tanggal:  document.getElementById('f-pTgl').value,
+      jumlah,
+      satuan:   document.getElementById('f-pSatuan').value || 'kg',
+      kualitas: document.getElementById('f-pKual').value,
       harga,
-      // total adalah GENERATED ALWAYS AS (jumlah * harga), tidak perlu dikirim
-      karyawan: document.getElementById('f-pKary').value 
+      // total = GENERATED ALWAYS AS (jumlah * harga), tidak perlu dikirim
+      karyawan: document.getElementById('f-pKary').value || null
     };
 
     if (window.APP_ROLE === 'operator' && window.APP_OWNER_ID) {
       data.owner_id = window.APP_OWNER_ID;
     }
 
-    if (p) { 
-        await SB.panen.update(p.id, data); 
-        showToast('success','Berhasil','Catatan panen diperbarui.'); 
-    } else { 
-        await SB.panen.insert(data); 
-        showToast('success','Berhasil','Catatan panen ditambahkan.'); 
+    if (p) {
+      await SB.panen.update(p.id, data);
+      showToast('success', 'Diperbarui', 'Catatan panen berhasil diperbarui.');
+    } else {
+      await SB.panen.insert(data);
+      showToast('success', 'Tersimpan', 'Catatan panen berhasil ditambahkan.');
     }
     navigate('panen');
   });
 }
-function editPanen(id) { openPanenModal(id); }
-async function deletePanen(id) { 
-  if(!confirm('Yakin hapus data panen ini?')) return;
-  await SB.panen.remove(id); 
-  showToast('success','Dihapus','Catatan panen dihapus.'); 
-  navigate('panen'); 
+
+// ── Cascade: Filter Tanaman berdasarkan Lahan yang dipilih ────────────────────
+window.cascadeTanamanByLahan = function(lahanNama) {
+  const select = document.getElementById('f-pTan');
+  if (!select) return;
+
+  const filtered = (window._allTanaman || []).filter(t => t.lahan === lahanNama);
+
+  if (filtered.length === 0) {
+    select.innerHTML = `<option value="">— Belum ada tanaman di lahan ini —</option>`;
+    select.style.borderColor = 'rgba(239,68,68,0.5)';
+    const hint = document.getElementById('tanamanHint');
+    if (hint) hint.textContent = '⚠ tidak ada data tanaman';
+  } else {
+    select.innerHTML = filtered
+      .map(t => `<option value="${t.nama}">${t.nama}${t.kategori ? ' ('+t.kategori+')' : ''}</option>`)
+      .join('');
+    select.style.borderColor = '';
+    const hint = document.getElementById('tanamanHint');
+    if (hint) hint.textContent = `▸ ${filtered.length} tanaman di lahan ini`;
+  }
+};
+
+function editPanen(id)  { openPanenModal(id); }
+async function deletePanen(id) {
+  if (!confirm('Yakin hapus catatan panen ini?')) return;
+  await SB.panen.remove(id);
+  showToast('success', 'Dihapus', 'Catatan panen dihapus.');
+  navigate('panen');
 }
+
 
 /* ---- LAPORAN ---- */
 async function renderLaporan() {
