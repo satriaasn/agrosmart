@@ -26,6 +26,7 @@ CREATE TABLE public.profiles (
   role            TEXT NOT NULL DEFAULT 'owner' CHECK (role IN ('superadmin','owner','operator')),
   nama_usaha      TEXT,
   nama_pemilik    TEXT,
+  jenis_usaha     TEXT,
   alamat          TEXT,
   telepon         TEXT,
   logo_url        TEXT,
