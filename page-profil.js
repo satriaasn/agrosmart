@@ -84,22 +84,22 @@ async function renderProfil() {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <div class="form-group" style="grid-column:1/-1">
           <label class="form-label">Nama Usaha *</label>
-          <input type="text" id="pf_namaUsaha" class="form-input" value="${namaUsaha}" placeholder="Contoh: Kebun Makmur Sejahtera">
+          <input type="text" id="pf_namaUsaha" class="form-control" value="${namaUsaha}" placeholder="Contoh: Kebun Makmur Sejahtera">
         </div>
         <div class="form-group">
           <label class="form-label">Jenis Usaha</label>
-          <select id="pf_jenisUsaha" class="form-input">
+          <select id="pf_jenisUsaha" class="form-control">
             <option value="">— Pilih —</option>
             ${['Sawah','Kebun','Ladang','Greenhouse','Campuran','Lainnya'].map(j=>`<option value="${j}"${jenis===j?' selected':''}>${j}</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
           <label class="form-label">Telepon Usaha</label>
-          <input type="tel" id="pf_telepon" class="form-input" value="${telepon}" placeholder="08xxxxxxxxxx">
+          <input type="tel" id="pf_telepon" class="form-control" value="${telepon}" placeholder="08xxxxxxxxxx">
         </div>
         <div class="form-group" style="grid-column:1/-1">
           <label class="form-label">Alamat Usaha</label>
-          <textarea id="pf_alamat" class="form-input" rows="2" placeholder="Jl. Kebun No.1, Desa...">${alamat}</textarea>
+          <textarea id="pf_alamat" class="form-control" rows="2" placeholder="Jl. Kebun No.1, Desa...">${alamat}</textarea>
         </div>
       </div>
       <div style="display:flex;justify-content:flex-end;margin-top:4px">
@@ -119,11 +119,11 @@ async function renderProfil() {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <div class="form-group" style="grid-column:1/-1">
           <label class="form-label">Nama Lengkap *</label>
-          <input type="text" id="pf_namaPemilik" class="form-input" value="${nama}" placeholder="Nama lengkap Anda">
+          <input type="text" id="pf_namaPemilik" class="form-control" value="${nama}" placeholder="Nama lengkap Anda">
         </div>
         <div class="form-group" style="grid-column:1/-1">
           <label class="form-label">Bio / Deskripsi Singkat</label>
-          <textarea id="pf_bio" class="form-input" rows="2" placeholder="Cerita singkat tentang usaha Anda...">${bio}</textarea>
+          <textarea id="pf_bio" class="form-control" rows="2" placeholder="Cerita singkat tentang usaha Anda...">${bio}</textarea>
         </div>
       </div>
       <div style="display:flex;justify-content:flex-end;margin-top:4px">
@@ -145,14 +145,14 @@ async function renderProfil() {
         <div class="form-group">
           <label class="form-label">Password Baru</label>
           <div style="position:relative">
-            <input type="password" id="pf_passNew" class="form-input" placeholder="Password baru (min. 6 karakter)" style="padding-right:44px">
+            <input type="password" id="pf_passNew" class="form-control" placeholder="Password baru (min. 6 karakter)" style="padding-right:44px">
             <button onclick="togglePass('pf_passNew',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted)">👁</button>
           </div>
         </div>
         <div class="form-group">
           <label class="form-label">Konfirmasi Password Baru</label>
           <div style="position:relative">
-            <input type="password" id="pf_passConfirm" class="form-input" placeholder="Ulangi password baru" style="padding-right:44px">
+            <input type="password" id="pf_passConfirm" class="form-control" placeholder="Ulangi password baru" style="padding-right:44px">
             <button onclick="togglePass('pf_passConfirm',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted)">👁</button>
           </div>
         </div>
@@ -366,7 +366,7 @@ window.konfirmasiHapusAkun = function() {
       <p style="margin:0;color:#f87171;font-weight:600">Tindakan ini TIDAK dapat dibatalkan!</p>
       <div class="form-group" style="margin-top:16px">
         <label class="form-label">Ketik <strong>HAPUS AKUN</strong> untuk konfirmasi:</label>
-        <input type="text" id="confirmDeleteText" class="form-input" placeholder="HAPUS AKUN">
+        <input type="text" id="confirmDeleteText" class="form-control" placeholder="HAPUS AKUN">
       </div>
     </div>`,
     async () => {

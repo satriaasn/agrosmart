@@ -133,9 +133,9 @@ function initSidebar() {
 function initTheme() {
   const btn = document.getElementById('themeToggle');
   btn?.addEventListener('click', () => {
-    document.body.classList.toggle('light-mode');
-    const isLight = document.body.classList.contains('light-mode');
-    btn.title = isLight ? 'Mode gelap' : 'Mode terang';
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    btn.title = isDark ? 'Mode terang' : 'Mode gelap';
   });
 }
 
