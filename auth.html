@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgroSmart — Masuk / Daftar</title>
+  <meta name="description" content="Masuk atau daftar ke platform manajemen perkebunan AgroSmart." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:       #10b981;
+      --primary-dark:  #059669;
+      --primary-light: #34d399;
+      --primary-glow:  rgba(16,185,129,0.18);
+      --amber:         #f59e0b;
+      --amber-glow:    rgba(245,158,11,0.15);
+      --bg:            #0a1612;
+      --bg-card:       #112018;
+      --bg-input:      #0e1c14;
+      --border:        rgba(16,185,129,0.18);
+      --border-input:  rgba(16,185,129,0.25);
+      --text-primary:  #e8f5ee;
+      --text-secondary:#8fb99a;
+      --text-muted:    #5a7a64;
+      --red:           #ef4444;
+      --shadow:        0 24px 64px rgba(0,0,0,0.5);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 30%, rgba(16,185,129,0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 80% 70%, rgba(245,158,11,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Floating particles */
+    .particles { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+    .particle {
+      position: absolute;
+      width: 3px; height: 3px;
+      border-radius: 50%;
+      background: var(--primary);
+      opacity: 0;
+      animation: float-up 8s infinite;
+    }
+    .particle:nth-child(1)  { left:15%; animation-delay:0s;   animation-duration:7s; }
+    .particle:nth-child(2)  { left:35%; animation-delay:1.5s; animation-duration:9s; }
+    .particle:nth-child(3)  { left:55%; animation-delay:3s;   animation-duration:6s; }
+    .particle:nth-child(4)  { left:75%; animation-delay:4.5s; animation-duration:8s; }
+    .particle:nth-child(5)  { left:90%; animation-delay:2s;   animation-duration:10s; }
+    @keyframes float-up {
+      0%   { bottom: -10px; opacity: 0; transform: translateX(0); }
+      20%  { opacity: 0.6; }
+      80%  { opacity: 0.3; }
+      100% { bottom: 110%; opacity: 0; transform: translateX(20px); }
+    }
+
+    /* Card */
+    .auth-card {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 460px;
+      margin: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: var(--shadow);
+      animation: card-in 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes card-in {
+      from { opacity: 0; transform: translateY(30px) scale(0.96); }
+      to   { opacity: 1; transform: translateY(0)    scale(1); }
+    }
+
+    /* Logo */
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+      justify-content: center;
+    }
+    .logo-icon {
+      width: 48px; height: 48px;
+      background: var(--primary-glow);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+    }
+    .logo-name  { font-family: 'Outfit', sans-serif; font-size: 24px; font-weight: 800; color: var(--text-primary); }
+    .logo-tag   { font-size: 11px; color: var(--text-muted); letter-spacing: 0.5px; }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: var(--bg-input);
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 28px;
+      gap: 4px;
+    }
+    .tab {
+      flex: 1;
+      padding: 10px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 9px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.25s;
+      user-select: none;
+      border: none;
+      background: transparent;
+    }
+    .tab.active {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(16,185,129,0.35);
+    }
+
+    /* Form panels */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* Google button */
+    .btn-google {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 13px;
+      background: transparent;
+      border: 1.5px solid var(--border-input);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .btn-google:hover {
+      background: var(--primary-glow);
+      border-color: var(--primary);
+    }
+    .google-icon { width: 20px; height: 20px; flex-shrink: 0; }
+
+    /* Divider */
+    .divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 22px 0;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1;
+      height: 1px; background: var(--border);
+    }
+    .divider span { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+
+    /* Form fields */
+    .form-group { margin-bottom: 16px; }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 7px;
+      letter-spacing: 0.3px;
+    }
+    .form-input {
+      width: 100%;
+      padding: 12px 15px;
+      background: var(--bg-input);
+      border: 1.5px solid var(--border-input);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-input::placeholder { color: var(--text-muted); }
+    .form-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+
+    /* Submit button */
+    .btn-primary {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      letter-spacing: 0.3px;
+      box-shadow: 0 4px 20px rgba(16,185,129,0.3);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(16,185,129,0.4); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* Forgot password link */
+    .link-forgot {
+      display: block;
+      text-align: right;
+      font-size: 12px;
+      color: var(--primary-light);
+      text-decoration: none;
+      margin-top: -8px;
+      margin-bottom: 16px;
+      cursor: pointer;
+    }
+    .link-forgot:hover { text-decoration: underline; }
+
+    /* Error / Success message */
+    .alert-box {
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+      animation: slide-in 0.3s ease;
+      line-height: 1.6;
+    }
+    @keyframes slide-in { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:none; } }
+    .alert-error   { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+    .alert-success { background: var(--primary-glow);   border: 1px solid rgba(16,185,129,0.3); color: var(--primary-light); }
+    .alert-warning { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); color: #fcd34d; }
+
+    /* Setup guide box */
+    .setup-guide {
+      background: rgba(16,185,129,0.07);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 16px;
+      display: none;
+      animation: slide-in 0.3s ease;
+    }
+    .setup-guide-title {
+      font-size: 12px; font-weight: 700; color: var(--primary-light);
+      margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+    }
+    .setup-steps { list-style: none; counter-reset: step; }
+    .setup-steps li {
+      counter-increment: step;
+      font-size: 11.5px; color: var(--text-secondary);
+      margin-bottom: 8px; display: flex; gap: 8px; align-items: flex-start;
+    }
+    .setup-steps li::before {
+      content: counter(step);
+      background: var(--primary);
+      color: #fff;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      font-size: 10px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .setup-steps a { color: var(--primary-light); text-decoration: none; }
+    .setup-steps a:hover { text-decoration: underline; }
+    .setup-steps code {
+      background: rgba(255,255,255,0.08);
+      padding: 1px 5px; border-radius: 4px;
+      font-size: 11px; font-family: monospace;
+    }
+
+    /* Terms text */
+    .terms {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 18px;
+      line-height: 1.6;
+    }
+    .terms a { color: var(--primary-light); text-decoration: none; }
+
+    /* Spinner */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <!-- Floating particles decoration -->
+  <div class="particles">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+  </div>
+
+  <div class="auth-card">
+
+    <!-- Logo -->
+    <div class="logo">
+      <div class="logo-icon">🌿</div>
+      <div>
+        <div class="logo-name">AgroSmart</div>
+        <div class="logo-tag">PLATFORM PERKEBUNAN CERDAS</div>
+      </div>
+    </div>
+
+    <!-- Alert box -->
+    <div class="alert-box" id="alertBox"></div>
+
+    <!-- Google Provider Setup Guide (shown on error) -->
+    <div class="setup-guide" id="setupGuide">
+      <div class="setup-guide-title">⚙️ Google Sign-In belum diaktifkan di Supabase</div>
+      <ol class="setup-steps">
+        <li>Buka <a href="https://supabase.com/dashboard" target="_blank">supabase.com/dashboard</a> → pilih project Anda</li>
+        <li>Klik <strong>Authentication</strong> → <strong>Providers</strong> → cari <strong>Google</strong></li>
+        <li>Aktifkan toggle Google, lalu isi <strong>Client ID</strong> &amp; <strong>Client Secret</strong> dari <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a></li>
+        <li>Di Google Cloud Console: APIs → Credentials → OAuth 2.0 → tambah <code>https://[project].supabase.co/auth/v1/callback</code> sebagai Authorized redirect URI</li>
+        <li>Klik <strong>Save</strong> di Supabase, lalu coba lagi ✅</li>
+      </ol>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(16,185,129,0.2);font-size:11px;color:var(--text-muted)">💡 Atau gunakan login Email/Password di bawah — tidak memerlukan setup tambahan.</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" id="tabMasuk"  onclick="switchTab('masuk')">Masuk</button>
+      <button class="tab"        id="tabDaftar" onclick="switchTab('daftar')">Daftar Gratis</button>
+    </div>
+
+    <!-- ══ PANEL MASUK ══ -->
+    <div class="panel active" id="panelMasuk">
+      <!-- Google OAuth -->
+      <button class="btn-google" onclick="loginGoogle()">
+        <svg class="google-icon" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Masuk dengan Google
+      </button>
+
+      <div class="divider"><span>atau masuk dengan email</span></div>
+
+      <div class="form-group">
+        <label class="form-label">Alamat Email</label>
+        <input class="form-input" type="email" id="loginEmail" placeholder="nama@email.com" autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" />
+      </div>
+      <a class="link-forgot" onclick="showForgotPassword()">Lupa password?</a>
+      <button class="btn-primary" id="btnMasuk" onclick="loginEmail()">Masuk</button>
+    </div>
+
+    <!-- ══ PANEL DAFTAR ══ -->
+    <div class="panel" id="panelDaftar">
+      <button class="btn-google" onclick="loginGoogle()">
+        <svg class="google-icon" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Daftar dengan Google
+      </button>
+
+      <div class="divider"><span>atau daftar dengan email</span></div>
+
+      <div class="form-group">
+        <label class="form-label">Nama Lengkap</label>
+        <input class="form-input" type="text" id="regNama" placeholder="Nama Anda" autocomplete="name" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Alamat Email</label>
+        <input class="form-input" type="email" id="regEmail" placeholder="nama@email.com" autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="regPassword" placeholder="Min. 8 karakter" autocomplete="new-password" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Konfirmasi Password</label>
+        <input class="form-input" type="password" id="regConfirm" placeholder="Ulangi password" autocomplete="new-password" />
+      </div>
+      <button class="btn-primary" id="btnDaftar" onclick="registerEmail()">Buat Akun Gratis</button>
+
+      <p class="terms">
+        Dengan mendaftar, Anda menyetujui<br>
+        <a href="#">Syarat &amp; Ketentuan</a> dan <a href="#">Kebijakan Privasi</a> AgroSmart.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script>
+    // ── Tab switching ──────────────────────────────────────────────────────────
+    function switchTab(tab) {
+      document.getElementById('tabMasuk').classList.toggle('active', tab === 'masuk');
+      document.getElementById('tabDaftar').classList.toggle('active', tab === 'daftar');
+      document.getElementById('panelMasuk').classList.toggle('active', tab === 'masuk');
+      document.getElementById('panelDaftar').classList.toggle('active', tab === 'daftar');
+      hideAlert();
+    }
+
+    // ── Alert helpers ──────────────────────────────────────────────────────────
+    function showAlert(msg, type = 'error') {
+      const el = document.getElementById('alertBox');
+      el.textContent = msg;
+      el.className = `alert-box alert-${type}`;
+      el.style.display = 'block';
+    }
+    function hideAlert() {
+      document.getElementById('alertBox').style.display = 'none';
+    }
+    function setLoading(btnId, loading) {
+      const btn = document.getElementById(btnId);
+      btn.disabled = loading;
+      btn.innerHTML = loading ? '<span class="spinner"></span> Memproses...' : btn.dataset.text;
+    }
+
+    // ── Google OAuth ───────────────────────────────────────────────────────────
+    async function loginGoogle() {
+      hideAlert();
+      document.getElementById('setupGuide').style.display = 'none';
+
+      const { error } = await sb.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin + '/index.html' }
+      });
+
+      if (error) {
+        // Deteksi error: Google provider belum diaktifkan di Supabase
+        const isProviderDisabled =
+          error.message?.toLowerCase().includes('provider') ||
+          error.message?.toLowerCase().includes('not enabled') ||
+          error.message?.toLowerCase().includes('validation_failed') ||
+          error.status === 400;
+
+        if (isProviderDisabled) {
+          // Tampilkan panduan setup, sembunyikan alert biasa
+          document.getElementById('setupGuide').style.display = 'block';
+          document.getElementById('setupGuide').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+          showAlert('Gagal masuk dengan Google: ' + error.message);
+        }
+      }
+    }
+
+    // ── Email Login ────────────────────────────────────────────────────────────
+    async function loginEmail() {
+      hideAlert();
+      const email    = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      if (!email || !password) { showAlert('Email dan password wajib diisi.'); return; }
+
+      setLoading('btnMasuk', true);
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      setLoading('btnMasuk', false);
+
+      if (error) { showAlert('Login gagal: ' + error.message); return; }
+      await redirectAfterAuth(data.user);
+    }
+
+    // ── Email Register ─────────────────────────────────────────────────────────
+    async function registerEmail() {
+      hideAlert();
+      const nama     = document.getElementById('regNama').value.trim();
+      const email    = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const confirm  = document.getElementById('regConfirm').value;
+
+      if (!nama || !email || !password) { showAlert('Semua field wajib diisi.'); return; }
+      if (password.length < 8) { showAlert('Password minimal 8 karakter.'); return; }
+      if (password !== confirm) { showAlert('Konfirmasi password tidak cocok.'); return; }
+
+      setLoading('btnDaftar', true);
+      const { data, error } = await sb.auth.signUp({
+        email, password,
+        options: { data: { full_name: nama } }
+      });
+      setLoading('btnDaftar', false);
+
+      if (error) { showAlert('Pendaftaran gagal: ' + error.message); return; }
+      if (data.user && !data.session) {
+        // Email confirmation required
+        showAlert('✅ Link konfirmasi dikirim ke email Anda. Silakan cek inbox!', 'success');
+        return;
+      }
+      await redirectAfterAuth(data.user);
+    }
+
+    // ── Forgot password ────────────────────────────────────────────────────────
+    async function showForgotPassword() {
+      const email = document.getElementById('loginEmail').value.trim();
+      if (!email) { showAlert('Masukkan email Anda terlebih dahulu di field email.'); return; }
+      const { error } = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/auth.html'
+      });
+      if (error) showAlert('Gagal kirim reset: ' + error.message);
+      else showAlert('✅ Link reset password dikirim ke ' + email, 'success');
+    }
+
+    // ── Post-auth routing ──────────────────────────────────────────────────────
+    async function redirectAfterAuth(user) {
+      if (!user) return;
+      const done = await isOnboardingDone(user.id);
+      window.location.href = done ? 'index.html' : 'profile-setup.html';
+    }
+
+    // ── Cek jika sudah login (dan simpan original data text) ──────────────────
+    async function init() {
+      document.getElementById('btnMasuk').dataset.text  = 'Masuk';
+      document.getElementById('btnDaftar').dataset.text = 'Buat Akun Gratis';
+
+      // OAuth callback handling
+      const session = await getSession();
+      if (session) {
+        await redirectAfterAuth(session.user);
+      }
+    }
+
+    init();
+
+    // Enter key support
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        if (document.getElementById('panelMasuk').classList.contains('active')) loginEmail();
+        else registerEmail();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgroSmart — Admin Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #10b981; --primary-dark: #059669; --primary-light: #34d399;
+      --amber: #f59e0b; --red: #ef4444; --blue: #3b82f6;
+      --bg: #0a1612; --bg-card: #112018; --bg-input: #0e1c14;
+      --border: rgba(16,185,129,0.18); --border-strong: rgba(16,185,129,0.3);
+      --text-primary: #e8f5ee; --text-secondary: #8fb99a; --text-muted: #5a7a64;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text-primary); min-height:100vh; }
+
+    /* ── Topbar ── */
+    .topbar {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 32px; height:60px;
+      background:var(--bg-card); border-bottom:1px solid var(--border);
+      position:sticky; top:0; z-index:100;
+    }
+    .topbar-brand { display:flex; align-items:center; gap:10px; font-family:'Outfit',sans-serif; font-size:18px; font-weight:800; color:var(--text-primary); }
+    .topbar-brand .icon { width:36px; height:36px; background:rgba(16,185,129,0.15); border:1px solid var(--border); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; }
+    .badge-sa { background:linear-gradient(135deg,#f59e0b,#d97706); color:#fff; font-size:10px; font-weight:700; padding:3px 8px; border-radius:99px; letter-spacing:0.5px; }
+    .topbar-right { display:flex; align-items:center; gap:16px; }
+    .topbar-user { font-size:13px; color:var(--text-secondary); }
+    .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; border:none; transition:all 0.2s; }
+    .btn-primary { background:linear-gradient(135deg,var(--primary),var(--primary-dark)); color:#fff; box-shadow:0 4px 14px rgba(16,185,129,0.3); }
+    .btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(16,185,129,0.4); }
+    .btn-danger { background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; }
+    .btn-danger:hover { background:rgba(239,68,68,0.25); }
+    .btn-secondary { background:var(--bg-input); border:1px solid var(--border); color:var(--text-secondary); }
+    .btn-secondary:hover { border-color:var(--primary); color:var(--primary-light); }
+    .btn-success { background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:var(--primary-light); }
+    .btn-sm { padding:5px 10px; font-size:11px; border-radius:7px; }
+
+    /* ── Layout ── */
+    .container { max-width:1400px; margin:0 auto; padding:32px; }
+    .page-title { font-family:'Outfit',sans-serif; font-size:28px; font-weight:800; margin-bottom:4px; }
+    .page-sub { color:var(--text-muted); font-size:13px; margin-bottom:28px; }
+
+    /* ── Stats Row ── */
+    .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:32px; }
+    .stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:20px; }
+    .stat-label { font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:0.5px; margin-bottom:8px; text-transform:uppercase; }
+    .stat-val { font-size:28px; font-weight:800; color:var(--text-primary); }
+    .stat-sub { font-size:11px; color:var(--text-muted); margin-top:4px; }
+
+    /* ── Search/Filter bar ── */
+    .toolbar { display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+    .search-input {
+      flex:1; min-width:200px; padding:10px 14px; border-radius:10px;
+      background:var(--bg-input); border:1.5px solid var(--border); color:var(--text-primary);
+      font-size:13px; font-family:inherit; outline:none;
+    }
+    .search-input:focus { border-color:var(--primary); }
+    .filter-select {
+      padding:10px 14px; border-radius:10px; background:var(--bg-input);
+      border:1.5px solid var(--border); color:var(--text-secondary);
+      font-size:13px; font-family:inherit; outline:none; cursor:pointer;
+    }
+
+    /* ── Table ── */
+    .table-wrap { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+    table { width:100%; border-collapse:collapse; }
+    thead th { padding:12px 16px; font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:0.5px; text-transform:uppercase; border-bottom:1px solid var(--border); text-align:left; white-space:nowrap; }
+    tbody td { padding:14px 16px; font-size:13px; border-bottom:1px solid rgba(16,185,129,0.06); vertical-align:middle; }
+    tbody tr:last-child td { border-bottom:none; }
+    tbody tr:hover td { background:rgba(16,185,129,0.03); }
+    .td-email { color:var(--text-secondary); font-size:12px; }
+    .td-date { color:var(--text-muted); font-size:11px; white-space:nowrap; }
+    .badge { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:700; }
+    .badge-green { background:rgba(16,185,129,0.15); color:var(--primary-light); border:1px solid rgba(16,185,129,0.25); }
+    .badge-amber { background:rgba(245,158,11,0.15); color:#fbbf24; border:1px solid rgba(245,158,11,0.25); }
+    .badge-red   { background:rgba(239,68,68,0.15);  color:#fca5a5;  border:1px solid rgba(239,68,68,0.25); }
+    .badge-blue  { background:rgba(59,130,246,0.15); color:#93c5fd;  border:1px solid rgba(59,130,246,0.25); }
+    .badge-dot { width:6px; height:6px; border-radius:50%; background:currentColor; display:inline-block; }
+    .actions-cell { display:flex; gap:6px; flex-wrap:wrap; }
+
+    /* ── Empty state ── */
+    .empty { text-align:center; padding:48px; color:var(--text-muted); font-size:14px; }
+
+    /* ── Section header ── */
+    .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+    .section-title { font-size:16px; font-weight:700; color:var(--text-primary); }
+
+    /* ── Modal ── */
+    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:999; padding:20px; }
+    .modal-box { background:var(--bg-card); border:1px solid var(--border); border-radius:20px; padding:32px; width:100%; max-width:480px; box-shadow:var(--shadow); animation:modal-in 0.25s ease; }
+    @keyframes modal-in { from { opacity:0; transform:translateY(20px) scale(0.96); } }
+    .modal-title { font-size:18px; font-weight:700; margin-bottom:20px; }
+    .form-group { margin-bottom:14px; }
+    .form-label { display:block; font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:6px; letter-spacing:0.3px; text-transform:uppercase; }
+    .form-control { width:100%; padding:10px 13px; background:var(--bg-input); border:1.5px solid var(--border-strong); border-radius:10px; color:var(--text-primary); font-size:13px; font-family:inherit; outline:none; }
+    .form-control:focus { border-color:var(--primary); }
+    .modal-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+
+    /* ── Toast ── */
+    .toast-area { position:fixed; bottom:24px; right:24px; display:flex; flex-direction:column; gap:8px; z-index:9999; }
+    .toast { padding:12px 18px; border-radius:12px; font-size:13px; font-weight:600; animation:toast-in 0.3s ease; min-width:200px; }
+    .toast-success { background:#064e3b; border:1px solid var(--primary); color:var(--primary-light); }
+    .toast-error   { background:#450a0a; border:1px solid var(--red); color:#fca5a5; }
+    @keyframes toast-in { from { opacity:0; transform:translateX(20px); } }
+
+    /* ── Spinner ── */
+    .spinner { width:18px; height:18px; border:2.5px solid rgba(255,255,255,0.2); border-top-color:#fff; border-radius:50%; animation:spin 0.7s linear infinite; display:inline-block; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ── Tabs ── */
+    .admin-tabs { display:flex; gap:4px; background:var(--bg-input); border-radius:12px; padding:4px; margin-bottom:24px; width:fit-content; }
+    .admin-tab { padding:8px 18px; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; color:var(--text-muted); border:none; background:transparent; font-family:inherit; transition:all 0.2s; }
+    .admin-tab.active { background:var(--primary); color:#fff; box-shadow:0 4px 14px rgba(16,185,129,0.35); }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="icon">🌿</div>
+      AgroSmart
+      <span class="badge-sa">SUPERADMIN</span>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-user" id="saEmail">—</span>
+      <button class="btn btn-secondary btn-sm" onclick="window.location.href='index.html'">← App</button>
+      <button class="btn btn-danger btn-sm" onclick="signOut()">Keluar</button>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="container">
+    <div class="page-title">Admin Panel</div>
+    <div class="page-sub" id="saDate">Platform AgroSmart — Kontrol Penuh</div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card">
+        <div class="stat-label">Total Akun</div>
+        <div class="stat-val" id="stTotal">—</div>
+        <div class="stat-sub">bisnis terdaftar</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Aktif</div>
+        <div class="stat-val" id="stAktif" style="color:var(--primary-light)">—</div>
+        <div class="stat-sub">akun aktif</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Suspended</div>
+        <div class="stat-val" id="stSuspend" style="color:#fca5a5">—</div>
+        <div class="stat-sub">dinonaktifkan</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Bulan Ini</div>
+        <div class="stat-val" id="stBulan" style="color:#fbbf24">—</div>
+        <div class="stat-sub">registrasi baru</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="switchTab('users')">👤 Semua Akun</button>
+      <button class="admin-tab" onclick="switchTab('add')">➕ Tambah User</button>
+    </div>
+
+    <!-- Tab: All Users -->
+    <div id="tabUsers">
+      <div class="section-header">
+        <div class="section-title">Daftar Akun Bisnis</div>
+      </div>
+      <div class="toolbar">
+        <input class="search-input" id="searchInput" placeholder="🔍 Cari nama usaha, email..." oninput="filterTable()">
+        <select class="filter-select" id="filterRole" onchange="filterTable()">
+          <option value="">Semua Role</option>
+          <option value="superadmin">Superadmin</option>
+          <option value="owner">Owner</option>
+          <option value="operator">Operator</option>
+        </select>
+        <select class="filter-select" id="filterStatus" onchange="filterTable()">
+          <option value="">Semua Status</option>
+          <option value="active">Aktif</option>
+          <option value="suspended">Suspended</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="loadAllUsers()">↻ Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nama Usaha / Pemilik</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Tanggal Daftar</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="usersTable">
+            <tr><td colspan="6" class="empty">Memuat data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab: Add User -->
+    <div id="tabAdd" style="display:none">
+      <div class="section-title" style="margin-bottom:20px">Tambah User Manual</div>
+      <div style="max-width:480px; background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:28px;">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-control" id="addEmail" type="email" placeholder="user@email.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password Sementara</label>
+          <input class="form-control" id="addPassword" type="text" placeholder="Min 8 karakter">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <select class="form-control" id="addRole">
+            <option value="owner">Owner (Bisnis)</option>
+            <option value="operator">Operator</option>
+            <option value="superadmin">Superadmin</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nama Lengkap (opsional)</label>
+          <input class="form-control" id="addNama" placeholder="Nama pemilik">
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px" onclick="addUserManual()" id="btnAddUser">
+          ➕ Buat Akun
+        </button>
+        <div id="addResult" style="margin-top:12px;font-size:12px;color:var(--text-muted)"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Area -->
+  <div class="toast-area" id="toastArea"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script>
+    let allUsers = [];
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    async function init() {
+      const session = await getSession();
+      if (!session) { window.location.href = 'auth.html'; return; }
+
+      const role = await getMyRole(session.user.id);
+      if (role !== 'superadmin') {
+        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-size:14px;color:#fca5a5">⛔ Akses ditolak. Hanya Superadmin yang dapat mengakses halaman ini.</div>';
+        return;
+      }
+
+      document.getElementById('saEmail').textContent = session.user.email;
+      document.getElementById('saDate').textContent =
+        'Platform AgroSmart — ' + new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+      await loadAllUsers();
+    }
+
+    // ── Load all users ─────────────────────────────────────────────────────────
+    async function loadAllUsers() {
+      const tbody = document.getElementById('usersTable');
+      tbody.innerHTML = '<tr><td colspan="6" class="empty"><span class="spinner"></span> Memuat...</td></tr>';
+
+      // Fetch profiles + join user email via auth.users view
+      const { data, error } = await sb
+        .from('profiles')
+        .select('id, role, nama_usaha, nama_pemilik, is_suspended, onboarding_done, created_at')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty" style="color:#fca5a5">Gagal memuat: ${error.message}</td></tr>`;
+        return;
+      }
+
+      // Also fetch auth users to get emails (needs service role in production, fallback to profile data)
+      const { data: authUsers } = await sb.auth.admin?.listUsers().catch(() => ({ data: null })) ?? { data: null };
+      const emailMap = {};
+      authUsers?.users?.forEach(u => { emailMap[u.id] = u.email; });
+
+      allUsers = data.map(p => ({ ...p, email: emailMap[p.id] || '—' }));
+      updateStats(allUsers);
+      renderTable(allUsers);
+    }
+
+    function updateStats(users) {
+      const now = new Date();
+      const thisMonth = users.filter(u => new Date(u.created_at).getMonth() === now.getMonth() && new Date(u.created_at).getFullYear() === now.getFullYear());
+      document.getElementById('stTotal').textContent   = users.length;
+      document.getElementById('stAktif').textContent   = users.filter(u => !u.is_suspended).length;
+      document.getElementById('stSuspend').textContent = users.filter(u => u.is_suspended).length;
+      document.getElementById('stBulan').textContent   = thisMonth.length;
+    }
+
+    function filterTable() {
+      const q      = document.getElementById('searchInput').value.toLowerCase();
+      const role   = document.getElementById('filterRole').value;
+      const status = document.getElementById('filterStatus').value;
+      const filtered = allUsers.filter(u => {
+        const matchQ = !q || (u.nama_usaha||'').toLowerCase().includes(q) || (u.nama_pemilik||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q);
+        const matchRole   = !role   || u.role === role;
+        const matchStatus = !status || (status==='suspended' ? u.is_suspended : !u.is_suspended);
+        return matchQ && matchRole && matchStatus;
+      });
+      renderTable(filtered);
+    }
+
+    function renderTable(users) {
+      const tbody = document.getElementById('usersTable');
+      if (!users.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Tidak ada data.</td></tr>'; return; }
+      tbody.innerHTML = users.map(u => {
+        const roleB = u.role === 'superadmin' ? 'badge-blue' : u.role === 'owner' ? 'badge-green' : 'badge-amber';
+        const statusB = u.is_suspended ? 'badge-red' : 'badge-green';
+        const statusLabel = u.is_suspended ? 'Suspended' : 'Aktif';
+        const onboard = u.onboarding_done ? '' : '<span class="badge badge-amber" style="font-size:9px;margin-left:4px">Setup</span>';
+        return `<tr>
+          <td>
+            <div style="font-weight:600">${u.nama_usaha || '—'} ${onboard}</div>
+            <div style="font-size:11px;color:var(--text-muted)">${u.nama_pemilik || '—'}</div>
+          </td>
+          <td class="td-email">${u.email}</td>
+          <td><span class="badge ${roleB}">${u.role}</span></td>
+          <td><span class="badge ${statusB}"><span class="badge-dot"></span>${statusLabel}</span></td>
+          <td class="td-date">${new Date(u.created_at).toLocaleDateString('id-ID')}</td>
+          <td>
+            <div class="actions-cell">
+              ${u.is_suspended
+                ? `<button class="btn btn-success btn-sm" onclick="toggleSuspend('${u.id}',false)">✅ Aktifkan</button>`
+                : `<button class="btn btn-danger btn-sm" onclick="toggleSuspend('${u.id}',true)">🚫 Suspend</button>`}
+              <select class="filter-select" style="font-size:11px;padding:4px 8px;height:28px" onchange="changeRole('${u.id}',this.value)">
+                <option value="">Ubah Role</option>
+                <option value="owner">→ Owner</option>
+                <option value="operator">→ Operator</option>
+                <option value="superadmin">→ Superadmin</option>
+              </select>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ── Actions ───────────────────────────────────────────────────────────────
+    async function toggleSuspend(id, suspend) {
+      const fn = suspend ? SB.admin.suspendUser : SB.admin.activateUser;
+      const { error } = await fn(id);
+      if (error) { showToast('error', 'Gagal: ' + error.message); return; }
+      showToast('success', suspend ? 'Akun di-suspend.' : 'Akun diaktifkan kembali.');
+      await loadAllUsers();
+    }
+
+    async function changeRole(id, role) {
+      if (!role) return;
+      if (!confirm(`Yakin ubah role user menjadi "${role}"?`)) return;
+      const { error } = await SB.admin.setRole(id, role);
+      if (error) { showToast('error', 'Gagal: ' + error.message); return; }
+      showToast('success', `Role diperbarui menjadi ${role}.`);
+      await loadAllUsers();
+    }
+
+    async function addUserManual() {
+      const email    = document.getElementById('addEmail').value.trim();
+      const password = document.getElementById('addPassword').value;
+      const role     = document.getElementById('addRole').value;
+      const nama     = document.getElementById('addNama').value.trim();
+      const btn      = document.getElementById('btnAddUser');
+      const result   = document.getElementById('addResult');
+
+      if (!email || !password) { result.textContent = '⚠️ Email dan password wajib diisi.'; return; }
+      if (password.length < 8) { result.textContent = '⚠️ Password minimal 8 karakter.'; return; }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Membuat akun...';
+      result.textContent = '';
+
+      // Create user via Supabase Admin API (requires service role key)
+      // Catatan: sb.auth.admin hanya tersedia dengan service_role key
+      // Alternatif: gunakan signUp biasa lalu update role via SQL
+      const { data, error } = await sb.auth.admin?.createUser({
+        email, password,
+        user_metadata: { full_name: nama, role },
+        email_confirm: true,
+      }) ?? { data: null, error: { message: 'Admin API tidak tersedia. Gunakan Supabase Dashboard → Authentication → Users → Add User.' } };
+
+      btn.disabled = false;
+      btn.innerHTML = '➕ Buat Akun';
+
+      if (error) {
+        result.style.color = '#fca5a5';
+        result.textContent = '❌ ' + error.message;
+      } else {
+        // Update role in profiles
+        if (role !== 'owner') {
+          await SB.admin.setRole(data.user.id, role);
+        }
+        result.style.color = 'var(--primary-light)';
+        result.textContent = '✅ Akun berhasil dibuat untuk ' + email;
+        document.getElementById('addEmail').value = '';
+        document.getElementById('addPassword').value = '';
+        document.getElementById('addNama').value = '';
+        await loadAllUsers();
+      }
+    }
+
+    // ── Tabs ──────────────────────────────────────────────────────────────────
+    function switchTab(tab) {
+      document.getElementById('tabUsers').style.display = tab === 'users' ? '' : 'none';
+      document.getElementById('tabAdd').style.display   = tab === 'add'   ? '' : 'none';
+      document.querySelectorAll('.admin-tab').forEach((t,i) => {
+        t.classList.toggle('active', (i === 0 && tab === 'users') || (i === 1 && tab === 'add'));
+      });
+    }
+
+    // ── Toast ─────────────────────────────────────────────────────────────────
+    function showToast(type, msg) {
+      const el = document.createElement('div');
+      el.className = `toast toast-${type}`;
+      el.textContent = (type === 'success' ? '✅ ' : '❌ ') + msg;
+      document.getElementById('toastArea').appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+
+    init();
+  </script>
+</body>
+</html>

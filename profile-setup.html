@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgroSmart — Setup Profil Usaha</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #10b981; --primary-dark: #059669; --primary-light: #34d399;
+      --primary-glow: rgba(16,185,129,0.18); --amber: #f59e0b;
+      --bg: #0a1612; --bg-card: #112018; --bg-input: #0e1c14;
+      --border: rgba(16,185,129,0.18); --border-input: rgba(16,185,129,0.25);
+      --text-primary: #e8f5ee; --text-secondary: #8fb99a; --text-muted: #5a7a64;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 32px 16px;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 20% 30%, rgba(16,185,129,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .card {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 600px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+      animation: in 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes in { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:none; } }
+
+    /* Progress steps */
+    .steps { display: flex; align-items: center; gap: 0; margin-bottom: 36px; }
+    .step { display: flex; align-items: center; gap: 8px; flex: 1; }
+    .step-dot {
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+      background: var(--bg-input); border: 2px solid var(--border-input); color: var(--text-muted);
+      transition: all 0.3s;
+    }
+    .step-dot.done  { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .step-dot.active{ background: var(--primary-glow); border-color: var(--primary); color: var(--primary-light); }
+    .step-label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+    .step-label.active { color: var(--primary-light); }
+    .step-line { flex: 1; height: 1px; background: var(--border); margin: 0 8px; }
+
+    /* Header */
+    .header { margin-bottom: 28px; }
+    .header-emoji { font-size: 40px; margin-bottom: 12px; }
+    h1 { font-family: 'Outfit', sans-serif; font-size: 26px; font-weight: 800; color: var(--text-primary); margin-bottom: 6px; }
+    .subtitle { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+    /* Form */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 7px; letter-spacing: 0.3px; }
+    .form-input {
+      width: 100%; padding: 12px 15px;
+      background: var(--bg-input); border: 1.5px solid var(--border-input);
+      border-radius: 10px; color: var(--text-primary); font-size: 14px; font-family: inherit;
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-input::placeholder { color: var(--text-muted); }
+    .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+    .form-input.optional { border-style: dashed; }
+    .badge-optional {
+      font-size: 9px; font-weight: 700; padding: 1px 6px; background: rgba(245,158,11,0.1);
+      color: var(--amber); border-radius: 4px; letter-spacing: 0.3px; margin-left: 6px; vertical-align: middle;
+    }
+
+    /* Logo upload */
+    .upload-area {
+      border: 2px dashed var(--border-input); border-radius: 12px; padding: 24px;
+      text-align: center; cursor: pointer; transition: all 0.2s;
+      background: var(--bg-input);
+    }
+    .upload-area:hover { border-color: var(--primary); background: var(--primary-glow); }
+    .upload-area input { display: none; }
+    .upload-icon { font-size: 32px; margin-bottom: 8px; }
+    .upload-text { font-size: 13px; color: var(--text-secondary); }
+    .upload-sub  { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+    .upload-preview { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; margin: 0 auto 8px; display: none; }
+
+    /* Jenis usaha chips */
+    .jenis-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 4px; }
+    .jenis-chip {
+      padding: 10px 8px; border-radius: 10px; border: 1.5px solid var(--border-input);
+      background: var(--bg-input); color: var(--text-secondary);
+      font-size: 12px; font-weight: 600; text-align: center; cursor: pointer;
+      transition: all 0.2s; user-select: none;
+    }
+    .jenis-chip.selected {
+      background: var(--primary-glow); border-color: var(--primary); color: var(--primary-light);
+    }
+    .jenis-chip .j-icon { font-size: 18px; display: block; margin-bottom: 4px; }
+
+    /* Buttons */
+    .btn-primary {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border: none; border-radius: 12px; color: #fff; font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s; font-family: inherit;
+      box-shadow: 0 4px 20px rgba(16,185,129,0.3); margin-top: 8px;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(16,185,129,0.4); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .skip-link { display: block; text-align: center; margin-top: 14px; font-size: 12px; color: var(--text-muted); cursor: pointer; }
+    .skip-link:hover { color: var(--text-secondary); }
+    .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .alert-box { padding: 12px 14px; border-radius: 10px; font-size: 13px; margin-bottom: 16px; display: none; }
+    .alert-error { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+  </style>
+</head>
+<body>
+  <div class="card">
+
+    <!-- Progress indicator -->
+    <div class="steps">
+      <div class="step">
+        <div class="step-dot done">✓</div>
+        <div class="step-label">Akun Dibuat</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step">
+        <div class="step-dot active">2</div>
+        <div class="step-label active">Profil Usaha</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step">
+        <div class="step-dot">3</div>
+        <div class="step-label">Dashboard</div>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+      <div class="header-emoji">🌿</div>
+      <h1>Ceritakan tentang usaha Anda</h1>
+      <p class="subtitle">Informasi ini membantu kami mempersonalisasi pengalaman AgroSmart untuk perkebunan Anda.</p>
+    </div>
+
+    <div id="alertBox" class="alert-box"></div>
+
+    <!-- Jenis Usaha chips -->
+    <div class="form-group">
+      <label class="form-label">Jenis Usaha <span class="badge-optional">PILIH</span></label>
+      <div class="jenis-grid" id="jenisGrid">
+        <div class="jenis-chip selected" data-val="Perkebunan Sawit"><span class="j-icon">🌴</span>Sawit</div>
+        <div class="jenis-chip" data-val="Karet"><span class="j-icon">🌲</span>Karet</div>
+        <div class="jenis-chip" data-val="Kakao/Kopi"><span class="j-icon">☕</span>Kakao/Kopi</div>
+        <div class="jenis-chip" data-val="Pertanian Pangan"><span class="j-icon">🌾</span>Pangan</div>
+        <div class="jenis-chip" data-val="Hortikultura"><span class="j-icon">🥦</span>Hortikultura</div>
+        <div class="jenis-chip" data-val="Campuran"><span class="j-icon">🌿</span>Campuran</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Nama Usaha / Kebun</label>
+        <input class="form-input" id="fNamaUsaha" placeholder="cth. Kebun Subur Makmur" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nama Pemilik / PIC</label>
+        <input class="form-input" id="fNamaPemilik" placeholder="Nama lengkap Anda" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Alamat Usaha</label>
+      <input class="form-input" id="fAlamat" placeholder="cth. Desa Subur, Kab. Kotawaringin, Kalimantan Tengah" />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Nomor Telepon / WA <span class="badge-optional">OPSIONAL</span></label>
+        <input class="form-input optional" id="fTelepon" placeholder="+62 8xx xxxx xxxx" type="tel" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Total Luas Lahan (ha) <span class="badge-optional">OPSIONAL</span></label>
+        <input class="form-input optional" id="fLuas" placeholder="cth. 150" type="number" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Logo Usaha <span class="badge-optional">OPSIONAL</span></label>
+      <div class="upload-area" onclick="document.getElementById('logoInput').click()">
+        <img id="logoPreview" class="upload-preview" alt="Logo" />
+        <div id="uploadPlaceholder">
+          <div class="upload-icon">🖼️</div>
+          <div class="upload-text">Klik untuk upload logo</div>
+          <div class="upload-sub">PNG, JPG max. 2MB</div>
+        </div>
+        <input type="file" id="logoInput" accept="image/*" onchange="previewLogo(this)" />
+      </div>
+    </div>
+
+    <button class="btn-primary" id="btnSimpan" onclick="saveProfile()">
+      🚀 Mulai Kelola Perkebunan
+    </button>
+    <a class="skip-link" onclick="skipSetup()">Lewati untuk sekarang →</a>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script>
+    let selectedJenis = 'Perkebunan Sawit';
+    let logoFile = null;
+
+    // ── Auth guard ─────────────────────────────────────────────────────────────
+    async function init() {
+      const session = await getSession();
+      if (!session) { window.location.href = 'auth.html'; return; }
+
+      // Pre-fill nama from OAuth metadata
+      const meta = session.user.user_metadata;
+      if (meta?.full_name || meta?.name) {
+        document.getElementById('fNamaPemilik').value = meta.full_name || meta.name;
+      }
+    }
+    init();
+
+    // ── Jenis chip selection ───────────────────────────────────────────────────
+    document.querySelectorAll('.jenis-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.jenis-chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+        selectedJenis = chip.dataset.val;
+      });
+    });
+
+    // ── Logo preview ───────────────────────────────────────────────────────────
+    function previewLogo(input) {
+      if (!input.files[0]) return;
+      if (input.files[0].size > 2 * 1024 * 1024) { alert('File terlalu besar (maks 2MB)'); return; }
+      logoFile = input.files[0];
+      const reader = new FileReader();
+      reader.onload = e => {
+        const preview = document.getElementById('logoPreview');
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        document.getElementById('uploadPlaceholder').style.display = 'none';
+      };
+      reader.readAsDataURL(logoFile);
+    }
+
+    // ── Save profile ───────────────────────────────────────────────────────────
+    async function saveProfile() {
+      const namaUsaha   = document.getElementById('fNamaUsaha').value.trim();
+      const namaPemilik = document.getElementById('fNamaPemilik').value.trim();
+      const alamat      = document.getElementById('fAlamat').value.trim();
+      const telepon     = document.getElementById('fTelepon').value.trim();
+
+      if (!namaUsaha || !namaPemilik || !alamat) {
+        showAlert('Nama usaha, nama pemilik, dan alamat wajib diisi.');
+        return;
+      }
+
+      const btn = document.getElementById('btnSimpan');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Menyimpan...';
+
+      const session = await getSession();
+      const uid = session.user.id;
+
+      let logoUrl = null;
+      if (logoFile) {
+        const { data, error } = await sb.storage
+          .from('logos')
+          .upload(`${uid}/logo`, logoFile, { upsert: true });
+        if (!error) {
+          const { data: pub } = sb.storage.from('logos').getPublicUrl(`${uid}/logo`);
+          logoUrl = pub.publicUrl;
+        }
+      }
+
+      const { error } = await sb.from('profiles').update({
+        nama_usaha: namaUsaha,
+        nama_pemilik: namaPemilik,
+        alamat,
+        telepon,
+        deskripsi: selectedJenis,
+        logo_url: logoUrl,
+        onboarding_done: true,
+      }).eq('id', uid);
+
+      if (error) {
+        btn.disabled = false;
+        btn.innerHTML = '🚀 Mulai Kelola Perkebunan';
+        showAlert('Gagal menyimpan: ' + error.message);
+        return;
+      }
+
+      window.location.href = 'index.html';
+    }
+
+    async function skipSetup() {
+      const session = await getSession();
+      if (!session) return;
+      await sb.from('profiles').update({ onboarding_done: true }).eq('id', session.user.id);
+      window.location.href = 'index.html';
+    }
+
+    function showAlert(msg) {
+      const el = document.getElementById('alertBox');
+      el.textContent = msg;
+      el.className = 'alert-box alert-error';
+      el.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
