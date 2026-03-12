@@ -14,10 +14,15 @@ let currentModalSave = null;
 async function navigate(page) {
   currentPage = page;
 
-  // Update nav active state
+  // Update nav active state (Sidebar)
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
   const navEl = document.getElementById('nav-' + page);
   if (navEl) navEl.classList.add('active');
+
+  // Update nav active state (Bottom Nav)
+  document.querySelectorAll('.bnav-item').forEach(el => el.classList.remove('active'));
+  const bnavEl = document.querySelector(`.bnav-item[data-page="${page}"]`);
+  if (bnavEl) bnavEl.classList.add('active');
 
   // Update breadcrumb
   const labels = { dashboard:'Dashboard', tanaman:'Tanaman', lahan:'Lahan', karyawan:'Karyawan', panen:'Panen', keuangan:'Keuangan', laporan:'Laporan', cuaca:'Cuaca', peta:'Peta Lahan', tim:'Manajemen Tim', profil:'Profil & Pengaturan' };

@@ -50,41 +50,88 @@ async function renderDashboard() {
   </div>
   ` : ''}
 
-  <!-- Stat Cards -->
-  <div class="stats-grid">
-    <div class="stat-card" style="--card-accent:#22c55e; --icon-bg:rgba(34,197,94,0.12)">
-      <div class="stat-header">
-        <span class="stat-label">Total Lahan</span>
-        <div class="stat-icon-wrapper">🗺️</div>
+  <!-- Stats Horizontal Scroll -->
+  <section style="margin-bottom:24px">
+    <div style="display:flex; overflow-x:auto; padding-bottom:16px; gap:16px; scroll-snap-type:x mandatory; margin:0 -16px; padding:0 16px; -ms-overflow-style:none; scrollbar-width:none;" class="no-scrollbar">
+      
+      <!-- Card 1 -->
+      <div style="flex-shrink:0; width:280px; scroll-snap-align:center; background:var(--bg-card); padding:20px; border-radius:var(--border-radius); border:1px solid var(--border-card); box-shadow:var(--shadow-card);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+          <span style="padding:8px; background:var(--primary-glow); border-radius:10px; color:var(--primary);">
+            <div class="stat-icon-wrapper" style="width:auto;height:auto;background:none;color:inherit;box-shadow:none;font-size:24px">🗺️</div>
+          </span>
+          <span style="color:var(--green-500); font-size:12px; font-weight:700; display:flex; align-items:center; gap:4px;">
+            ↑ 2 blok baru
+          </span>
+        </div>
+        <p style="color:var(--text-muted); font-size:12px; font-weight:600; margin:0;">Total Lahan</p>
+        <h3 style="font-size:24px; font-weight:700; margin:4px 0 0 0; color:var(--text-primary);">${totalLahanHa} <span style="font-size:16px;color:var(--text-secondary)">ha</span></h3>
       </div>
-      <div class="stat-value">${totalLahanHa}<span class="stat-unit">ha</span></div>
-      <span class="stat-change up">↑ 2 blok baru</span>
-    </div>
-    <div class="stat-card" style="--card-accent:#10b981; --icon-bg:rgba(16,185,129,0.12)">
-      <div class="stat-header">
-        <span class="stat-label">Produksi Bulan Ini</span>
-        <div class="stat-icon-wrapper">📦</div>
+
+      <!-- Card 2 -->
+      <div style="flex-shrink:0; width:280px; scroll-snap-align:center; background:var(--bg-card); padding:20px; border-radius:var(--border-radius); border:1px solid var(--border-card); box-shadow:var(--shadow-card);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+          <span style="padding:8px; background:var(--primary-glow); border-radius:10px; color:var(--primary);">
+            <div class="stat-icon-wrapper" style="width:auto;height:auto;background:none;color:inherit;box-shadow:none;font-size:24px">📦</div>
+          </span>
+          <span style="color:var(--text-muted); font-size:12px; font-weight:600; font-style:italic;">
+            Aktif
+          </span>
+        </div>
+        <p style="color:var(--text-muted); font-size:12px; font-weight:600; margin:0;">Produksi Total</p>
+        <h3 style="font-size:24px; font-weight:700; margin:4px 0 0 0; color:var(--text-primary);">${(totalPanen/1000).toFixed(1)} <span style="font-size:16px;color:var(--text-secondary)">ton</span></h3>
       </div>
-      <div class="stat-value">${(totalPanen/1000).toFixed(1)}<span class="stat-unit">ton</span></div>
-      <span class="stat-change up">↑ 8.3% vs bulan lalu</span>
-    </div>
-    <div class="stat-card" style="--card-accent:#f59e0b; --icon-bg:rgba(245,158,11,0.12)">
-      <div class="stat-header">
-        <span class="stat-label">Karyawan Aktif</span>
-        <div class="stat-icon-wrapper">👷</div>
+
+      <!-- Card 3 -->
+      <div style="flex-shrink:0; width:280px; scroll-snap-align:center; background:var(--bg-card); padding:20px; border-radius:var(--border-radius); border:1px solid var(--border-card); box-shadow:var(--shadow-card);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+          <span style="padding:8px; background:var(--primary-glow); border-radius:10px; color:var(--primary);">
+            <div class="stat-icon-wrapper" style="width:auto;height:auto;background:none;color:inherit;box-shadow:none;font-size:24px">💰</div>
+          </span>
+          <span style="color:var(--green-500); font-size:12px; font-weight:700; display:flex; align-items:center; gap:4px;">
+            ↑ 12%
+          </span>
+        </div>
+        <p style="color:var(--text-muted); font-size:12px; font-weight:600; margin:0;">Pendapatan Bulanan</p>
+        <h3 style="font-size:24px; font-weight:700; margin:4px 0 0 0; color:var(--text-primary);">${(totalPendapatan/1000000).toFixed(1)} <span style="font-size:16px;color:var(--text-secondary)">jt</span></h3>
       </div>
-      <div class="stat-value">${totalKaryawan - 1}<span class="stat-unit">org</span></div>
-      <span class="stat-change neutral">1 sedang cuti</span>
+      
     </div>
-    <div class="stat-card" style="--card-accent:#3b82f6; --icon-bg:rgba(59,130,246,0.12)">
-      <div class="stat-header">
-        <span class="stat-label">Pendapatan Bulan Ini</span>
-        <div class="stat-icon-wrapper">💰</div>
+  </section>
+
+  <!-- Plot Status -->
+  <section style="margin-bottom:24px">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+      <h4 style="font-size:16px; font-weight:700; margin:0;">Status Lahan</h4>
+      <button onclick="navigate('peta')" style="color:var(--primary); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; background:none; border:none; cursor:pointer;">
+        Brosur Peta
+      </button>
+    </div>
+    
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      ${arrLahan.length > 0 ? arrLahan.slice(0, 3).map(l => `
+      <div style="background:var(--bg-card); border-radius:var(--border-radius); border:1px solid var(--border-card); overflow:hidden; box-shadow:var(--shadow-card); cursor:pointer; transition:transform 0.2s;" onclick="navigate('lahan')">
+        <div style="height:120px; background:var(--bg-input); position:relative;">
+          <div style="position:absolute; inset:0; background-image:url('${l.maps_url && l.maps_url.includes('http') ? l.maps_url : 'https://images.unsplash.com/photo-1592982537447-6f2c6a0c0e1e?auto=format&fit=crop&q=80&w=800'}'); background-size:cover; background-position:center; opacity:0.6;"></div>
+          <div style="position:absolute; top:12px; left:12px; padding:4px 8px; background:rgba(255,255,255,0.9); border-radius:4px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#0f172a;">
+            ${l.lokasi || 'Area Tertentu'}
+          </div>
+        </div>
+        <div style="padding:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <h5 style="font-size:16px; font-weight:700; margin:0 0 4px 0;">${l.nama}</h5>
+              <p style="font-size:12px; color:var(--text-muted); margin:0;">${l.jenis || 'Tanah'} • ${l.luas || 0} ha</p>
+            </div>
+            <span style="display:flex; align-items:center; gap:4px; color:${l.status === 'Aktif' ? 'var(--green-600)' : 'var(--amber-600)'}; background:${l.status === 'Aktif' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)'}; padding:4px 8px; border-radius:99px; font-size:10px; font-weight:700;">
+              ${l.status === 'Aktif' ? '🌱 Sehat' : '⚠️ Perlu Tindakan'}
+            </span>
+          </div>
+        </div>
       </div>
-      <div class="stat-value">${(totalPendapatan/1000000).toFixed(0)}<span class="stat-unit">jt</span></div>
-      <span class="stat-change up">↑ 12% vs target</span>
+      `).join('') : '<div style="color:var(--text-muted); font-size:13px; text-align:center; padding:20px;">Belum ada lahan ditambahkan.</div>'}
     </div>
-  </div>
+  </section>
 
   <!-- Main Charts Row -->
   <div class="grid-2" style="margin-bottom:22px">
@@ -128,22 +175,45 @@ async function renderDashboard() {
     <div id="dashboardMiniMap" style="height:300px;width:100%"></div>
   </div>
 
-  <!-- Lower Row -->
-  <div class="grid-2" style="margin-bottom:22px">
-    <!-- Alerts lokal -->
-    <div class="card">
-      <div class="section-title">Notifikasi & Peringatan</div>
-      ${[
-        { jenis:'warning', pesan:'Pantau kadar air tanah secara berkala untuk mencegah kekeringan.', waktu:'Otomatis' },
-        { jenis:'info',    pesan:'Sistem AgroSmart siap digunakan. Tambahkan data lahan dan tanaman Anda.', waktu:'Otomatis' },
-        { jenis:'success', pesan:'Selamat datang! Data Anda aman tersimpan di cloud Supabase.', waktu:'Sekarang' },
-      ].map(a => `
-        <div class="alert alert-${a.jenis === 'danger' ? 'danger' : a.jenis === 'warning' ? 'warning' : a.jenis === 'success' ? 'success' : 'info'}">
-          <span class="alert-icon">${a.jenis==='danger'?'🚨':a.jenis==='warning'?'⚠️':a.jenis==='success'?'✅':'ℹ️'}</span>
-          <div><div style="font-weight:600">${a.pesan}</div><div style="font-size:11px;color:var(--text-muted);margin-top:4px">${a.waktu}</div></div>
+  <!-- Recent Alerts -->
+  <section style="margin-bottom:24px">
+    <h4 style="font-size:16px; font-weight:700; margin:0 0 16px 0;">Peringatan Terbaru</h4>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      
+      <div style="display:flex; gap:16px; padding:16px; background:rgba(220,38,38,0.05); border-radius:var(--border-radius); border:1px solid rgba(220,38,38,0.15);">
+        <div style="font-size:24px;">⚠️</div>
+        <div style="flex:1;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <p style="font-size:14px; font-weight:700; color:var(--red-600); margin:0;">Level Air & Suhu Ekstrem</p>
+            <span style="font-size:10px; color:var(--red-500); font-weight:600; text-transform:uppercase;">Baru Saja</span>
+          </div>
+          <p style="font-size:12px; color:var(--text-muted); margin:4px 0 0 0;">Area Blok A-1 terdeteksi kering. Jadwalkan irigasi segera.</p>
         </div>
-      `).join('')}
+      </div>
+
+      <div style="display:flex; gap:16px; padding:16px; background:var(--primary-glow); border-radius:var(--border-radius); border:1px solid var(--border-card);">
+        <div style="font-size:24px;">ℹ️</div>
+        <div style="flex:1;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <p style="font-size:14px; font-weight:700; color:var(--text-primary); margin:0;">Pembaruan Cuaca</p>
+            <span style="font-size:10px; color:var(--text-muted); font-weight:600; text-transform:uppercase;">2j yang lalu</span>
+          </div>
+          <p style="font-size:12px; color:var(--text-muted); margin:4px 0 0 0;">Diperkirakan hujan lebat malam ini, waspada genangan.</p>
+        </div>
+      </div>
+
     </div>
+  </section>
+
+  <!-- Support CTA / Info Card -->
+  <div style="background:var(--primary); padding:24px; border-radius:var(--border-radius-lg); color:#fff; box-shadow:var(--shadow-card); position:relative; overflow:hidden; margin-bottom:24px;">
+    <div style="position:relative; z-index:10;">
+      <h4 style="font-size:18px; font-weight:700; margin:0 0 4px 0;">Manajemen Panen Terpadu</h4>
+      <p style="font-size:12px; color:rgba(255,255,255,0.8); margin:0 0 16px 0; max-width:200px;">Gunakan modul panen untuk pencatatan realtime hasil kebun Anda.</p>
+      <button onclick="navigate('panen')" style="padding:8px 24px; background:#fff; color:var(--primary); border-radius:8px; font-size:14px; font-weight:700; border:none; cursor:pointer;" class="btn-primary-hover">Akses Panen</button>
+    </div>
+    <div style="position:absolute; bottom:-10px; right:-10px; font-size:100px; opacity:0.1; line-height:1;">🚜</div>
+  </div>
 
     <!-- Aktivitas -->
     <div class="card">
@@ -165,9 +235,9 @@ async function renderDashboard() {
 
   <!-- Lahan Status -->
   <div class="card">
-    <div class="section-title">Status Lahan</div>
-    <div class="table-wrapper">
-      <table>
+    <div class="section-title">Status Lahan Detail</div>
+    <div class="table-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+      <table style="min-width: 600px;">
         <thead>
           <tr>
             <th>Blok</th><th>Tanaman</th><th>Luas (ha)</th>
@@ -177,7 +247,7 @@ async function renderDashboard() {
         <tbody>
           ${arrLahan.map(l => `
             <tr>
-              <td><strong>${l.nama}</strong> <span style="font-size:11px;color:var(--text-muted)">${(l.lokasi||'').split(',')[0]}</span></td>
+              <td><strong>${l.nama}</strong> <span style="font-size:11px;color:var(--text-muted)"><br>${(l.lokasi||'').split(',')[0]}</span></td>
               <td>${l.tanaman||'-'}</td>
               <td>${l.luas||0} ha</td>
               <td>

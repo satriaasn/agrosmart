@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<title>Plantation Mobile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#595927",
+                        "background-light": "#f7f7f6",
+                        "background-dark": "#1d1d15",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        .safe-top { padding-top: env(safe-area-inset-top); }
+        -webkit-tap-highlight-color: transparent;
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 overflow-x-hidden">
+<div class="flex flex-col min-h-screen pb-20">
+<!-- Top Header -->
+<header class="sticky top-0 z-30 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-primary/10 safe-top">
+<div class="flex items-center justify-between px-5 h-16">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-2xl">potted_plant</span>
+<h1 class="text-lg font-bold tracking-tight">Plantation</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="relative p-2 text-slate-500 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white dark:border-background-dark"></span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex-1 p-5 space-y-6">
+<!-- Stats Horizontal Scroll -->
+<section>
+<div class="flex overflow-x-auto pb-4 gap-4 snap-x no-scrollbar -mx-5 px-5">
+<!-- Card 1 -->
+<div class="flex-shrink-0 w-[280px] snap-center bg-white dark:bg-slate-800 p-5 rounded-xl border border-primary/10 shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<span class="p-2 bg-primary/10 rounded-lg text-primary">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</span>
+<span class="text-green-600 text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">trending_up</span> 5.2%
+                        </span>
+</div>
+<p class="text-slate-500 text-xs font-medium">Total Plantation Value</p>
+<h3 class="text-xl font-bold mt-1">$450,000.00</h3>
+</div>
+<!-- Card 2 -->
+<div class="flex-shrink-0 w-[280px] snap-center bg-white dark:bg-slate-800 p-5 rounded-xl border border-primary/10 shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<span class="p-2 bg-primary/10 rounded-lg text-primary">
+<span class="material-symbols-outlined">agriculture</span>
+</span>
+<span class="text-slate-400 text-xs font-medium italic">Active</span>
+</div>
+<p class="text-slate-500 text-xs font-medium">Active Cultivations</p>
+<h3 class="text-xl font-bold mt-1">12 Plots</h3>
+</div>
+<!-- Card 3 -->
+<div class="flex-shrink-0 w-[280px] snap-center bg-white dark:bg-slate-800 p-5 rounded-xl border border-primary/10 shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<span class="p-2 bg-primary/10 rounded-lg text-primary">
+<span class="material-symbols-outlined">show_chart</span>
+</span>
+<span class="text-red-500 text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">trending_up</span> 1.2%
+                        </span>
+</div>
+<p class="text-slate-500 text-xs font-medium">Monthly Costs</p>
+<h3 class="text-xl font-bold mt-1">$12,480.00</h3>
+</div>
+</div>
+</section>
+<!-- Plot Status -->
+<section class="space-y-4">
+<div class="flex items-center justify-between">
+<h4 class="text-base font-bold">Land Plot Status</h4>
+<button class="text-primary text-xs font-bold uppercase tracking-wider">Map Mode</button>
+</div>
+<div class="space-y-4">
+<!-- Plot Card 1 -->
+<div class="bg-white dark:bg-slate-800 rounded-xl border border-primary/10 overflow-hidden shadow-sm active:scale-[0.98] transition-transform">
+<div class="h-32 bg-slate-200 relative">
+<div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCxPp3ud9oxXSmpDUQ2gh7BUUS4KlKYEF27xN9tWyV0uxQq1VZGQSpm01CtbYXs7cwJxfO4-_VA7v8euwbPG7xvPKVSmFnaNHFWD3lMqjoAgssIxaKk7n6cups2uj4PGkYihRhePbZXohhadQ4LvUz0F1mvy6W_7I3bqGHv9a8wQ_i-VZPee7QCxEIY9j3XOqPR9l4IlSOQlzTg-PVD-m64BMNDHjzKSlDbJj9XQY1FyvhPlInV8AIaD76dj4hKdHXRPGxn6j3Ya1c')"></div>
+<div class="absolute top-3 left-3 px-2 py-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur rounded text-[10px] font-bold uppercase tracking-wider">North Sector</div>
+</div>
+<div class="p-4">
+<div class="flex justify-between items-start">
+<div>
+<h5 class="font-bold">Plot A-102</h5>
+<p class="text-xs text-slate-500">Organic Arabica Coffee</p>
+</div>
+<span class="flex items-center gap-1 text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-full text-[10px] font-bold">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Healthy
+                            </span>
+</div>
+</div>
+</div>
+<!-- Plot Card 2 -->
+<div class="bg-white dark:bg-slate-800 rounded-xl border border-primary/10 overflow-hidden shadow-sm active:scale-[0.98] transition-transform">
+<div class="h-32 bg-slate-200 relative">
+<div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAtZlgdYg2M6a79tOLVdxTe87Z5-ShNHZD6KwoUZN4SY2TftlgYPlgGqDfbuIHaBKNuIZhIUNy43f2UGx5Ou8G7MMaKM9UgdNXKyslc6kMIH2zRVgCyD70MDDduNBXfRjK8Geyt2VAVvxDt-RJwNdRjVXgiYqEIiTmT5vSSvf37G4HoH9m9IuvZWkKBe1zaTRHeCCit8vd2IY3A1zQAkEASq7DeFHkDxUBf5s6on3E56oyj8DLaPPB_QiZ8B6KzTtQ_fZN5kKSfdks')"></div>
+<div class="absolute top-3 left-3 px-2 py-1 bg-white/90 dark:bg-slate-900/90 backdrop-blur rounded text-[10px] font-bold uppercase tracking-wider">East Sector</div>
+</div>
+<div class="p-4">
+<div class="flex justify-between items-start">
+<div>
+<h5 class="font-bold">Plot B-204</h5>
+<p class="text-xs text-slate-500">Young Rubber Trees</p>
+</div>
+<span class="flex items-center gap-1 text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-full text-[10px] font-bold">
+<span class="material-symbols-outlined text-[14px]">water_drop</span> Needed
+                            </span>
+</div>
+</div>
+</div>
+</div>
+<button class="w-full py-3 border border-primary/20 text-primary text-sm font-bold rounded-xl hover:bg-primary/5">View All Plots</button>
+</section>
+<!-- Recent Alerts -->
+<section class="space-y-4">
+<h4 class="text-base font-bold">Recent Alerts</h4>
+<div class="space-y-3">
+<div class="flex gap-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-900/30">
+<span class="material-symbols-outlined text-red-600">warning</span>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<p class="text-sm font-bold text-red-900 dark:text-red-100">Low Water Level</p>
+<span class="text-[10px] text-red-600 font-medium uppercase">10m ago</span>
+</div>
+<p class="text-xs text-red-800/70 dark:text-red-200/70 mt-1">Main Tank B-1 is below 15%. Refill scheduled.</p>
+</div>
+</div>
+<div class="flex gap-4 p-4 bg-primary/5 rounded-xl border border-primary/10">
+<span class="material-symbols-outlined text-primary">info</span>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<p class="text-sm font-bold">Weather Update</p>
+<span class="text-[10px] text-slate-400 font-medium uppercase">2h ago</span>
+</div>
+<p class="text-xs text-slate-500 mt-1">Heavy rain expected in 24 hours. Pause irrigation.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Support CTA -->
+<div class="bg-primary p-6 rounded-2xl text-white shadow-lg relative overflow-hidden">
+<div class="relative z-10">
+<h4 class="text-lg font-bold">Premium Support</h4>
+<p class="text-xs text-white/80 mt-1 max-w-[200px]">Get expert advice for your crops from our agronomists.</p>
+<button class="mt-4 px-6 py-2 bg-white text-primary rounded-lg text-sm font-bold active:bg-slate-100 transition-colors">Chat Now</button>
+</div>
+<span class="material-symbols-outlined absolute -bottom-6 -right-6 text-white/10 text-8xl">psychology</span>
+</div>
+</main>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-background-dark/90 backdrop-blur-xl border-t border-primary/10 z-40 safe-bottom">
+<div class="flex items-center justify-around h-16">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined text-[24px]">grid_view</span>
+<span class="text-[10px] font-bold">Dashboard</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined text-[24px]">landscape</span>
+<span class="text-[10px] font-medium">Lands</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined text-[24px]">payments</span>
+<span class="text-[10px] font-medium">Expenses</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined text-[24px]">analytics</span>
+<span class="text-[10px] font-medium">Reports</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined text-[24px]">settings</span>
+<span class="text-[10px] font-medium">Settings</span>
+</a>
+</div>
+</nav>
+</div>
+<style>
+    /* Hide scrollbar but keep functionality */
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+</style>
+</body></html>

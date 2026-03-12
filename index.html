@@ -160,6 +160,37 @@
 
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Bottom Navigation (Mobile Only) -->
+  <nav class="bottom-nav" id="bottomNav">
+    <div class="bnav-inner">
+      <button class="bnav-item active" data-page="dashboard" onclick="navigate('dashboard')">
+        <span class="material-symbols-outlined">grid_view</span>
+        <span>Dashboard</span>
+      </button>
+      <button class="bnav-item" data-page="lahan" onclick="navigate('lahan')">
+        <span class="material-symbols-outlined">landscape</span>
+        <span>Lahan</span>
+      </button>
+      <button class="bnav-item" data-page="keuangan" onclick="navigate('keuangan')">
+        <span class="material-symbols-outlined">payments</span>
+        <span>Keuangan</span>
+      </button>
+      <button class="bnav-item" data-page="laporan" onclick="navigate('laporan')">
+        <span class="material-symbols-outlined">analytics</span>
+        <span>Laporan</span>
+      </button>
+      <button class="bnav-item" data-page="profil" onclick="navigate('profil')">
+        <span class="material-symbols-outlined">settings</span>
+        <span>Settings</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Load Material Symbols Outlined -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+  <!-- Scripts -->
   <!-- Supabase JS v2 + Config/Auth -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
