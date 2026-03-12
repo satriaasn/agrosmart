@@ -87,7 +87,8 @@ async function navigate(page) {
 
   // Close mobile sidebar on navigate
   if (window.innerWidth <= 768) {
-    document.getElementById('sidebar').classList.remove('mobile-open');
+    document.getElementById('sidebar')?.classList.remove('mobile-open');
+    document.getElementById('sidebarOverlay')?.classList.remove('mobile-open');
   }
 }
 
@@ -106,6 +107,12 @@ function initSidebar() {
 
   mobileBtn?.addEventListener('click', () => {
     sidebar.classList.toggle('mobile-open');
+    document.getElementById('sidebarOverlay')?.classList.toggle('mobile-open');
+  });
+
+  document.getElementById('sidebarOverlay')?.addEventListener('click', () => {
+    sidebar.classList.remove('mobile-open');
+    document.getElementById('sidebarOverlay')?.classList.remove('mobile-open');
   });
 
   // Nav item clicks
