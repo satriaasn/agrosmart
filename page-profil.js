@@ -35,7 +35,7 @@ async function renderProfil() {
   </div>
 </div>
 
-<div style="display:grid;grid-template-columns:1fr 2fr;gap:24px;align-items:start;max-width:960px">
+<div class="profile-layout">
 
   <!-- KIRI: Avatar & Identitas -->
   <div style="display:flex;flex-direction:column;gap:16px">
@@ -81,7 +81,7 @@ async function renderProfil() {
         <div style="font-size:15px;font-weight:700;color:var(--text-primary)">🏢 Data Usaha</div>
         <div style="font-size:12px;color:var(--text-muted)">Informasi bisnis perkebunan Anda</div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <div class="form-group" style="grid-column:1/-1">
           <label class="form-label">Nama Usaha *</label>
           <input type="text" id="pf_namaUsaha" class="form-control" value="${namaUsaha}" placeholder="Contoh: Kebun Makmur Sejahtera">
@@ -116,7 +116,7 @@ async function renderProfil() {
         <div style="font-size:15px;font-weight:700;color:var(--text-primary)">👤 Data Pemilik</div>
         <div style="font-size:12px;color:var(--text-muted)">Informasi pribadi pemilik akun</div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <div class="form-group" style="grid-column:1/-1">
           <label class="form-label">Nama Lengkap *</label>
           <input type="text" id="pf_namaPemilik" class="form-control" value="${nama}" placeholder="Nama lengkap Anda">

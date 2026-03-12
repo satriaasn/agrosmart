@@ -187,7 +187,7 @@ function lahanProfitCard(l, listLahan, listBiaya, listPanen) {
     </div>
 
     <!-- Stats row -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+    <div class="grid-2" style="gap:8px;margin-bottom:12px">
       <div style="background:var(--bg-secondary);border-radius:8px;padding:10px">
         <div style="font-size:10px;color:var(--text-muted);font-weight:600">TONASE PANEN</div>
         <div style="font-size:15px;font-weight:700;color:var(--text-primary);margin-top:2px">${(tonase/1000).toFixed(2)} ton</div>
@@ -277,7 +277,7 @@ async function showLahanDetail(lahanNama) {
   const lahanInfo  = (listLahan||[]).find(l => l.nama === lahanNama) || {};
 
   openModal(`📊 Rincian ${lahanNama} — ${lahanInfo.tanaman || ''}`, `
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px">
+    <div class="grid-3" style="gap:10px;margin-bottom:18px">
       <div style="background:rgba(239,68,68,0.08);border-radius:10px;padding:12px;text-align:center">
         <div style="font-size:10px;color:var(--text-muted);font-weight:600">TOTAL BIAYA</div>
         <div style="font-size:16px;font-weight:700;color:var(--red-400);margin-top:4px">Rp ${(totBiaya/1000000).toFixed(2)}jt</div>

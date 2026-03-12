@@ -140,7 +140,7 @@ function openInviteModal() {
     </div>
     <div style="border-top:1px solid var(--border);margin:16px 0;padding-top:16px">
       <div style="font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:0.5px;margin-bottom:12px">⚙️ HAK AKSES AWAL</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="grid-2" style="gap:10px">
         ${[
           { key:'dashboard', label:'Dashboard', defOn:true },
           { key:'lahan',     label:'Lahan',     defOn:true },
@@ -212,7 +212,7 @@ async function openPermissionModal(memberId) {
       <input class="form-control" id="ep-roleLabel" value="${m.role_label}">
     </div>
     <div style="font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:0.5px;margin-bottom:12px">⚙️ HAK AKSES</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div class="grid-2" style="gap:10px">
       ${pKeys.map(p => `
         <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:var(--bg-input);border:1px solid var(--border);cursor:pointer">
           <input type="checkbox" id="ep-${p.key}" ${perms[p.key]?'checked':''} style="accent-color:var(--accent-primary);width:14px;height:14px">

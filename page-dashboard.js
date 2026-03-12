@@ -52,7 +52,7 @@ async function renderDashboard() {
 
   <!-- Stats Grid Responsif -->
   <section style="margin-bottom:24px">
-    <div style="display:grid; gap:16px; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));">
+    <div class="grid-auto">
       
       <!-- Card 1 -->
       <div style="background:var(--bg-card); padding:20px; border-radius:var(--border-radius); border:1px solid var(--border-card); box-shadow:var(--shadow-card);">

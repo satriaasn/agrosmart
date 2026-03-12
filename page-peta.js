@@ -82,7 +82,7 @@ function buildPopup(l, listBiaya, listPanen) {
       </div>
       <span style="margin-left:auto;background:${statusColor}22;color:${statusColor};font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap">${l.status||'-'}</span>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+      <div class="grid-2" style="gap:6px;margin-bottom:10px">
       <div style="background:#f0fdf4;border-radius:8px;padding:8px">
         <div style="font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase">Kelembaban</div>
         <div style="font-size:14px;font-weight:700;color:#15803d">${l.kelembaban||0}%</div>
