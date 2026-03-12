@@ -50,12 +50,12 @@ async function renderDashboard() {
   </div>
   ` : ''}
 
-  <!-- Stats Horizontal Scroll -->
+  <!-- Stats Grid Responsif -->
   <section style="margin-bottom:24px">
-    <div style="display:flex; overflow-x:auto; padding-bottom:16px; gap:16px; scroll-snap-type:x mandatory; margin:0 -16px; padding:0 16px; -ms-overflow-style:none; scrollbar-width:none;" class="no-scrollbar">
+    <div style="display:grid; gap:16px; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));">
       
       <!-- Card 1 -->
-      <div style="flex-shrink:0; width:280px; scroll-snap-align:center; background:var(--bg-card); padding:20px; border-radius:var(--border-radius); border:1px solid var(--border-card); box-shadow:var(--shadow-card);">
+      <div style="background:var(--bg-card); padding:20px; border-radius:var(--border-radius); border:1px solid var(--border-card); box-shadow:var(--shadow-card);">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
           <span style="padding:8px; background:var(--primary-glow); border-radius:10px; color:var(--primary);">
             <div class="stat-icon-wrapper" style="width:auto;height:auto;background:none;color:inherit;box-shadow:none;font-size:24px">🗺️</div>
@@ -69,7 +69,7 @@ async function renderDashboard() {
       </div>
 
       <!-- Card 2 -->
-      <div style="flex-shrink:0; width:280px; scroll-snap-align:center; background:var(--bg-card); padding:20px; border-radius:var(--border-radius); border:1px solid var(--border-card); box-shadow:var(--shadow-card);">
+      <div style="background:var(--bg-card); padding:20px; border-radius:var(--border-radius); border:1px solid var(--border-card); box-shadow:var(--shadow-card);">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
           <span style="padding:8px; background:var(--primary-glow); border-radius:10px; color:var(--primary);">
             <div class="stat-icon-wrapper" style="width:auto;height:auto;background:none;color:inherit;box-shadow:none;font-size:24px">📦</div>
@@ -83,7 +83,7 @@ async function renderDashboard() {
       </div>
 
       <!-- Card 3 -->
-      <div style="flex-shrink:0; width:280px; scroll-snap-align:center; background:var(--bg-card); padding:20px; border-radius:var(--border-radius); border:1px solid var(--border-card); box-shadow:var(--shadow-card);">
+      <div style="background:var(--bg-card); padding:20px; border-radius:var(--border-radius); border:1px solid var(--border-card); box-shadow:var(--shadow-card);">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
           <span style="padding:8px; background:var(--primary-glow); border-radius:10px; color:var(--primary);">
             <div class="stat-icon-wrapper" style="width:auto;height:auto;background:none;color:inherit;box-shadow:none;font-size:24px">💰</div>

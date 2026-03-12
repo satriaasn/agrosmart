@@ -150,15 +150,15 @@ async function renderPeta() {
   </div>
 
   <!-- Main layout: map + sidebar -->
-  <div style="display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start">
+  <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start">
 
     <!-- Map Container -->
-    <div style="border-radius:var(--border-radius);overflow:hidden;border:1px solid var(--border-card);box-shadow:var(--shadow-card)">
+    <div style="flex:1 1 320px;min-width:0;border-radius:var(--border-radius);overflow:hidden;border:1px solid var(--border-card);box-shadow:var(--shadow-card)">
       <div id="leafletMap" style="height:560px;width:100%;background:#1a2520"></div>
     </div>
 
     <!-- Lahan List Panel -->
-    <div style="display:flex;flex-direction:column;gap:10px;max-height:576px;overflow-y:auto">
+    <div style="flex:1 1 300px;display:flex;flex-direction:column;gap:10px;max-height:576px;overflow-y:auto;min-width:0">
       <div style="font-size:12px;font-weight:600;color:var(--text-muted);padding:0 4px;letter-spacing:0.5px;text-transform:uppercase">Daftar Blok (${window._CACHE_LAHAN.length})</div>
       ${window._CACHE_LAHAN.map((l,i) => {
         const hasCoord = !!(l.lat && l.lng);
