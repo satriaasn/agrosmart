@@ -159,19 +159,51 @@ async function openPanenModal(id) {
     <script>
       (function(){
         function updatePreview() {
-          const j = parseFloat(document.getElementById('f-pJml')?.value || 0);
-          const h = parseFloat(document.getElementById('f-pHarga')?.value || 0);
-          const box = document.getElementById('previewTotal');
-          const val = document.getElementById('previewTotalVal');
-          if (j > 0 && h > 0) {
-            box.style.display = 'block';
-            val.textContent = 'Rp ' + (j * h).toLocaleString('id-ID');
-          } else {
-            box.style.display = 'none';
-          }
+            const jInput = document.getElementById('f-pJml');
+            const hInput = document.getElementById('f-pHarga');
+            const sSelect = document.getElementById('f-pSatuan');
+            const box = document.getElementById('previewTotal');
+            const val = document.getElementById('previewTotalVal');
+            
+            if (!jInput || !hInput || !sSelect || !box || !val) return;
+
+            const j = parseFloat(jInput.value || 0);
+            const h = parseFloat(hInput.value || 0);
+            const s = sSelect.value;
+            
+            if (j > 0 && h > 0) {
+                // Konversi ke basis (asumsi harga adalah 'per satuan' yang dipilih)
+                // Namun user ingin "otomatis convers", jika harga per kg tapi satuan ton.
+                // Mari asumsikan harga adalah PER KG agar lebih konsisten untuk komoditas, 
+                // atau kita hitung j * h saja dan tambahkan info konversi.
+                
+                let multi = 1;
+                if (s === 'ton') multi = 1000;
+                else if (s === 'kwintal') multi = 100;
+                
+                // Jika labelnya "Harga / Satuan", maka cukup j * h. 
+                // Tapi user minta "otomatis convers", saya akan tambahkan toggle/info.
+                // Mari gunakan asumsi: Harga adalah PER SATUAN yang dipilih.
+                // Namun jika user ingin conversi, saya akan tunjukkan info KG nya.
+                
+                const total = j * h;
+                box.style.display = 'block';
+                val.textContent = 'Rp ' + total.toLocaleString('id-ID');
+                
+                if (s === 'ton' || s === 'kwintal') {
+                    const inKg = j * multi;
+                    val.innerHTML = \`Rp \${total.toLocaleString('id-ID')} <br><span style="font-size:11px;font-weight:400;opacity:0.8">(\${inKg.toLocaleString('id-ID')} kg @ Rp \${(total/inKg).toLocaleString('id-ID')}/kg)</span>\`;
+                }
+            } else {
+                box.style.display = 'none';
+            }
         }
         document.getElementById('f-pJml')?.addEventListener('input', updatePreview);
         document.getElementById('f-pHarga')?.addEventListener('input', updatePreview);
+        document.getElementById('f-pSatuan')?.addEventListener('change', updatePreview);
+        
+        // Initial run
+        setTimeout(updatePreview, 100);
       })();
     </script>
   `, async () => {

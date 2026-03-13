@@ -49,6 +49,7 @@ CREATE TABLE public.team_members (
     "dashboard":true, "lahan":true, "tanaman":true, "karyawan":true, "panen":true,
     "keuangan":false, "laporan":true, "cuaca":true, "peta":true, "edit":true, "hapus":false
   }',
+  temp_password TEXT,
   status        TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','active','suspended')),
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(owner_id, invited_email)
@@ -230,35 +231,35 @@ CREATE POLICY "tm_owner_all" ON public.team_members FOR ALL USING (auth.uid() = 
 CREATE POLICY "tm_operator_read" ON public.team_members FOR SELECT USING (auth.uid() = user_id);
 
 -- RLS: Modul Operasional
--- LAHAN: owner atau operator aktif dari owner lahan tersebut
-CREATE POLICY "lahan_select" ON public.lahan FOR SELECT USING (auth.uid() = user_id OR public.is_my_operator(user_id));
-CREATE POLICY "lahan_insert" ON public.lahan FOR INSERT WITH CHECK (auth.uid() = user_id OR public.is_my_operator(user_id));
-CREATE POLICY "lahan_update" ON public.lahan FOR UPDATE USING (auth.uid() = user_id OR public.is_my_operator(user_id));
-CREATE POLICY "lahan_delete" ON public.lahan FOR DELETE USING (auth.uid() = user_id);
+-- LAHAN: owner, operator aktif, atau superadmin
+CREATE POLICY "lahan_select" ON public.lahan FOR SELECT USING (auth.uid() = user_id OR public.is_my_operator(user_id) OR public.is_superadmin());
+CREATE POLICY "lahan_insert" ON public.lahan FOR INSERT WITH CHECK (auth.uid() = user_id OR public.is_my_operator(user_id) OR public.is_superadmin());
+CREATE POLICY "lahan_update" ON public.lahan FOR UPDATE USING (auth.uid() = user_id OR public.is_my_operator(user_id) OR public.is_superadmin());
+CREATE POLICY "lahan_delete" ON public.lahan FOR DELETE USING (auth.uid() = user_id OR public.is_superadmin());
 
 -- TANAMAN
-CREATE POLICY "tanaman_select" ON public.tanaman FOR SELECT USING (auth.uid() = user_id OR public.is_my_operator(user_id));
-CREATE POLICY "tanaman_insert" ON public.tanaman FOR INSERT WITH CHECK (auth.uid() = user_id OR public.is_my_operator(user_id));
-CREATE POLICY "tanaman_update" ON public.tanaman FOR UPDATE USING (auth.uid() = user_id OR public.is_my_operator(user_id));
-CREATE POLICY "tanaman_delete" ON public.tanaman FOR DELETE USING (auth.uid() = user_id);
+CREATE POLICY "tanaman_select" ON public.tanaman FOR SELECT USING (auth.uid() = user_id OR public.is_my_operator(user_id) OR public.is_superadmin());
+CREATE POLICY "tanaman_insert" ON public.tanaman FOR INSERT WITH CHECK (auth.uid() = user_id OR public.is_my_operator(user_id) OR public.is_superadmin());
+CREATE POLICY "tanaman_update" ON public.tanaman FOR UPDATE USING (auth.uid() = user_id OR public.is_my_operator(user_id) OR public.is_superadmin());
+CREATE POLICY "tanaman_delete" ON public.tanaman FOR DELETE USING (auth.uid() = user_id OR public.is_superadmin());
 
 -- KARYAWAN
-CREATE POLICY "karyawan_select" ON public.karyawan FOR SELECT USING (auth.uid() = user_id OR public.is_my_operator(user_id));
-CREATE POLICY "karyawan_insert" ON public.karyawan FOR INSERT WITH CHECK (auth.uid() = user_id OR public.is_my_operator(user_id));
-CREATE POLICY "karyawan_update" ON public.karyawan FOR UPDATE USING (auth.uid() = user_id OR public.is_my_operator(user_id));
-CREATE POLICY "karyawan_delete" ON public.karyawan FOR DELETE USING (auth.uid() = user_id);
+CREATE POLICY "karyawan_select" ON public.karyawan FOR SELECT USING (auth.uid() = user_id OR public.is_my_operator(user_id) OR public.is_superadmin());
+CREATE POLICY "karyawan_insert" ON public.karyawan FOR INSERT WITH CHECK (auth.uid() = user_id OR public.is_my_operator(user_id) OR public.is_superadmin());
+CREATE POLICY "karyawan_update" ON public.karyawan FOR UPDATE USING (auth.uid() = user_id OR public.is_my_operator(user_id) OR public.is_superadmin());
+CREATE POLICY "karyawan_delete" ON public.karyawan FOR DELETE USING (auth.uid() = user_id OR public.is_superadmin());
 
 -- PANEN
-CREATE POLICY "panen_select" ON public.panen FOR SELECT USING (auth.uid() = user_id OR public.is_my_operator(user_id));
-CREATE POLICY "panen_insert" ON public.panen FOR INSERT WITH CHECK (auth.uid() = user_id OR public.is_my_operator(user_id));
-CREATE POLICY "panen_update" ON public.panen FOR UPDATE USING (auth.uid() = user_id OR public.is_my_operator(user_id));
-CREATE POLICY "panen_delete" ON public.panen FOR DELETE USING (auth.uid() = user_id);
+CREATE POLICY "panen_select" ON public.panen FOR SELECT USING (auth.uid() = user_id OR public.is_my_operator(user_id) OR public.is_superadmin());
+CREATE POLICY "panen_insert" ON public.panen FOR INSERT WITH CHECK (auth.uid() = user_id OR public.is_my_operator(user_id) OR public.is_superadmin());
+CREATE POLICY "panen_update" ON public.panen FOR UPDATE USING (auth.uid() = user_id OR public.is_my_operator(user_id) OR public.is_superadmin());
+CREATE POLICY "panen_delete" ON public.panen FOR DELETE USING (auth.uid() = user_id OR public.is_superadmin());
 
 -- BIAYA
-CREATE POLICY "biaya_select" ON public.biaya FOR SELECT USING (auth.uid() = user_id OR public.is_my_operator(user_id));
-CREATE POLICY "biaya_insert" ON public.biaya FOR INSERT WITH CHECK (auth.uid() = user_id OR public.is_my_operator(user_id));
-CREATE POLICY "biaya_update" ON public.biaya FOR UPDATE USING (auth.uid() = user_id OR public.is_my_operator(user_id));
-CREATE POLICY "biaya_delete" ON public.biaya FOR DELETE USING (auth.uid() = user_id);
+CREATE POLICY "biaya_select" ON public.biaya FOR SELECT USING (auth.uid() = user_id OR public.is_my_operator(user_id) OR public.is_superadmin());
+CREATE POLICY "biaya_insert" ON public.biaya FOR INSERT WITH CHECK (auth.uid() = user_id OR public.is_my_operator(user_id) OR public.is_superadmin());
+CREATE POLICY "biaya_update" ON public.biaya FOR UPDATE USING (auth.uid() = user_id OR public.is_my_operator(user_id) OR public.is_superadmin());
+CREATE POLICY "biaya_delete" ON public.biaya FOR DELETE USING (auth.uid() = user_id OR public.is_superadmin());
 
 -- AKTIVITAS
 CREATE POLICY "aktivitas_select" ON public.aktivitas FOR SELECT USING (auth.uid() = user_id OR public.is_my_operator(user_id));

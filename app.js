@@ -306,10 +306,10 @@ async function initUserProfile() {
 
     applyRoleUI(window.APP_ROLE, window.APP_PERMISSIONS);
 
-    // Superadmin langsung redirect ke admin panel
-    if (isSuperadmin()) {
-      window.location.href = 'admin.html';
-    }
+    // Superadmin punya link khusus di sidebar, tidak perlu redirect paksa
+    // if (isSuperadmin()) {
+    //   window.location.href = 'admin.html';
+    // }
 
   } catch (e) {
     console.info('AgroSmart running in demo mode (Supabase not configured).');

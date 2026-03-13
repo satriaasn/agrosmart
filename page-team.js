@@ -135,6 +135,11 @@ function openInviteModal() {
       <div style="font-size:11px;color:var(--text-muted);margin-top:5px">Minta mereka register dulu di halaman login dengan email ini.</div>
     </div>
     <div class="form-group">
+      <label class="form-label">Password Sementara</label>
+      <input class="form-control" id="f-iPassword" type="text" placeholder="Min. 8 karakter">
+      <div style="font-size:11px;color:var(--text-muted);margin-top:5px">Berikan password ini ke operator Anda agar mereka bisa langsung login.</div>
+    </div>
+    <div class="form-group">
       <label class="form-label">Label Peran / Jabatan</label>
       <input class="form-control" id="f-iRole" placeholder="cth. Manajer Kebun, Supervisor, Pencatat">
     </div>
@@ -161,8 +166,11 @@ function openInviteModal() {
     </div>
   `, async () => {
     const email = document.getElementById('f-iEmail').value.trim().toLowerCase();
+    const password = document.getElementById('f-iPassword').value.trim();
     const role  = document.getElementById('f-iRole').value.trim() || 'Operator';
+    
     if (!email) { showToast('danger','Gagal','Email tidak boleh kosong.'); return; }
+    if (!password || password.length < 8) { showToast('danger','Gagal','Password minimal 8 karakter.'); return; }
 
     const pKeys = ['dashboard','lahan','tanaman','karyawan','panen','keuangan','laporan','peta','edit','hapus'];
     const permissions = {};
@@ -171,6 +179,7 @@ function openInviteModal() {
     const { error } = await SB.team.invite({
       owner_id: window._currentUserId,
       invited_email: email,
+      temp_password: password,
       role_label: role,
       permissions,
       status: 'pending',

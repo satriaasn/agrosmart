@@ -180,6 +180,8 @@
     <!-- Tabs -->
     <div class="admin-tabs">
       <button class="admin-tab active" onclick="switchTab('users')">👤 Semua Akun</button>
+      <button class="admin-tab" onclick="switchTab('monitoring')">📊 Monitoring Global</button>
+      <button class="admin-tab" onclick="switchTab('activities')">📜 Aktivitas</button>
       <button class="admin-tab" onclick="switchTab('add')">➕ Tambah User</button>
     </div>
 
@@ -219,7 +221,60 @@
             <tr><td colspan="6" class="empty">Memuat data...</td></tr>
           </tbody>
         </table>
+    </div>
+
+    <!-- Tab: Monitoring (Global Overview) -->
+    <div id="tabMonitoring" style="display:none">
+      <div class="section-header">
+        <div class="section-title">Overview Data Seluruh Owner</div>
       </div>
+      <div class="stats-row" id="monitoringStats">
+        <div class="stat-card">
+          <div class="stat-label">Total Panen (Seluruh)</div>
+          <div class="stat-val" id="moTotalPanen">0</div>
+          <div class="stat-sub">akumulasi kg</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Luas Lahan</div>
+          <div class="stat-val" id="moTotalLahan">0</div>
+          <div class="stat-sub">hektar terdaftar</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Karyawan</div>
+          <div class="stat-val" id="moTotalKaryawan">0</div>
+          <div class="stat-sub">anggota tim</div>
+        </div>
+      </div>
+      
+      <!-- User Data Inspector -->
+      <div id="inspectorContainer" style="display:none; margin-top:24px; animation:slide-in 0.4s ease;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div class="section-title" id="inspectorTitle">Data: Nama Usaha</div>
+          <button class="btn btn-secondary btn-sm" onclick="closeInspector()">✕ Tutup</button>
+        </div>
+        <div class="stats-row">
+            <div class="stat-card"><div class="stat-label">Lahan</div><div class="stat-val" id="inLahan">-</div></div>
+            <div class="stat-card"><div class="stat-label">Tanaman</div><div class="stat-val" id="inTanaman">-</div></div>
+            <div class="stat-card"><div class="stat-label">Panen</div><div class="stat-val" id="inPanen">-</div></div>
+            <div class="stat-card"><div class="stat-label">Karyawan</div><div class="stat-val" id="inKaryawan">-</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Activities -->
+    <div id="tabActivities" style="display:none">
+        <div class="section-header">
+          <div class="section-title">Aktivitas Terbaru Seluruh Platform</div>
+          <button class="btn btn-secondary btn-sm" onclick="loadActivities()">↻ Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Waktu</th><th>Bisnis</th><th>Aksi</th><th>Deskripsi</th></tr></thead>
+            <tbody id="activitiesTable">
+              <tr><td colspan="4" class="empty">Memuat aktivitas...</td></tr>
+            </tbody>
+          </table>
+        </div>
     </div>
 
     <!-- Tab: Add User -->
@@ -347,6 +402,7 @@
           <td class="td-date">${new Date(u.created_at).toLocaleDateString('id-ID')}</td>
           <td>
             <div class="actions-cell">
+              <button class="btn btn-secondary btn-sm" onclick="inspectUser('${u.id}', '${u.nama_usaha || u.nama_pemilik}')">👁️ Lihat Data</button>
               ${u.is_suspended
                 ? `<button class="btn btn-success btn-sm" onclick="toggleSuspend('${u.id}',false)">✅ Aktifkan</button>`
                 : `<button class="btn btn-danger btn-sm" onclick="toggleSuspend('${u.id}',true)">🚫 Suspend</button>`}
@@ -427,10 +483,78 @@
     // ── Tabs ──────────────────────────────────────────────────────────────────
     function switchTab(tab) {
       document.getElementById('tabUsers').style.display = tab === 'users' ? '' : 'none';
+      document.getElementById('tabMonitoring').style.display = tab === 'monitoring' ? '' : 'none';
+      document.getElementById('tabActivities').style.display = tab === 'activities' ? '' : 'none';
       document.getElementById('tabAdd').style.display   = tab === 'add'   ? '' : 'none';
-      document.querySelectorAll('.admin-tab').forEach((t,i) => {
-        t.classList.toggle('active', (i === 0 && tab === 'users') || (i === 1 && tab === 'add'));
+      
+      document.querySelectorAll('.admin-tab').forEach((t) => {
+        t.classList.remove('active');
+        if (tab === 'users' && t.textContent.includes('Semua Akun')) t.classList.add('active');
+        if (tab === 'monitoring' && t.textContent.includes('Monitoring Global')) t.classList.add('active');
+        if (tab === 'activities' && t.textContent.includes('Aktivitas')) t.classList.add('active');
+        if (tab === 'add' && t.textContent.includes('Tambah User')) t.classList.add('active');
       });
+
+      if (tab === 'monitoring') loadMonitoring();
+      if (tab === 'activities') loadActivities();
+    }
+
+    async function loadMonitoring() {
+        const [{data: panen}, {data: lahan}, {data: karyawan}] = await Promise.all([
+            sb.from('panen').select('jumlah'),
+            sb.from('lahan').select('luas'),
+            sb.from('karyawan').select('id', { count: 'exact' })
+        ]);
+        
+        document.getElementById('moTotalPanen').textContent = (panen||[]).reduce((a,b)=>a+(+b.jumlah||0),0).toLocaleString();
+        document.getElementById('moTotalLahan').textContent = (lahan||[]).reduce((a,b)=>a+(+b.luas||0),0).toFixed(1);
+        document.getElementById('moTotalKaryawan').textContent = karyawan?.length || 0;
+    }
+
+    async function loadActivities() {
+        const tbody = document.getElementById('activitiesTable');
+        tbody.innerHTML = '<tr><td colspan="4" class="empty"><span class="spinner"></span> Memuat...</td></tr>';
+        
+        const { data, error } = await SB.admin.allActivities();
+        if (error) { tbody.innerHTML = `<tr><td colspan="4" class="empty">Error: ${error.message}</td></tr>`; return; }
+        
+        if (!data.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty">Belum ada aktivitas.</td></tr>'; return; }
+        
+        tbody.innerHTML = data.map(a => `
+            <tr>
+                <td class="td-date">${new Date(a.created_at).toLocaleString('id-ID')}</td>
+                <td><div style="font-weight:600">${a.profiles?.nama_usaha || '—'}</div></td>
+                <td><span class="badge badge-blue">${a.judul}</span></td>
+                <td style="font-size:12px;color:var(--text-secondary)">${a.deskripsi || '-'}</td>
+            </tr>
+        `).join('');
+    }
+
+    // ── Inspector ─────────────────────────────────────────────────────────────
+    async function inspectUser(id, name) {
+        switchTab('monitoring');
+        const container = document.getElementById('inspectorContainer');
+        const title = document.getElementById('inspectorTitle');
+        container.style.display = 'block';
+        title.textContent = `👁️ Data: ${name}`;
+        
+        // Clear old vals
+        document.querySelectorAll('#inspectorContainer .stat-val').forEach(el => el.textContent = '...');
+
+        const [{data: l}, {data: t}, {data: p}, {data: k}] = await Promise.all([
+            SB.lahan.fetch(id), SB.tanaman.fetch(id), SB.panen.fetch(id), SB.karyawan.fetch(id)
+        ]);
+
+        document.getElementById('inLahan').textContent = (l||[]).length;
+        document.getElementById('inTanaman').textContent = (t||[]).length;
+        document.getElementById('inPanen').textContent = (p||[]).length + ' rec';
+        document.getElementById('inKaryawan').textContent = (k||[]).length;
+        
+        container.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function closeInspector() {
+        document.getElementById('inspectorContainer').style.display = 'none';
     }
 
     // ── Toast ─────────────────────────────────────────────────────────────────

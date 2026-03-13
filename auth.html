@@ -488,15 +488,45 @@
     // ── Email Login ────────────────────────────────────────────────────────────
     async function loginEmail() {
       hideAlert();
-      const email    = document.getElementById('loginEmail').value.trim();
+      const email    = document.getElementById('loginEmail').value.trim().toLowerCase();
       const password = document.getElementById('loginPassword').value;
       if (!email || !password) { showAlert('Email dan password wajib diisi.'); return; }
-
+    
       setLoading('btnMasuk', true);
       const { data, error } = await sb.auth.signInWithPassword({ email, password });
-      setLoading('btnMasuk', false);
+      
+      if (error) {
+        // Jika login gagal, cek apakah ini operator yang diundang dengan temp password
+        const { data: invite } = await SB.auth.checkInvitation(email);
+        
+        if (invite && invite.temp_password === password) {
+          showAlert('Menyiapkan akun operator Anda...', 'success');
+          // Buat akun auth otomatis
+          const { data: reg, error: regErr } = await sb.auth.signUp({ 
+            email, password, 
+            options: { data: { role: 'operator' } } 
+          });
+          
+          if (regErr) {
+            setLoading('btnMasuk', false);
+            showAlert('Gagal registrasi operator: ' + regErr.message);
+            return;
+          }
+          
+          // Sukses reg, link-kan user_id ke team_members
+          await SB.auth.completeTeamMember(invite.id, reg.user.id);
+          
+          // Login ulang otomatis (session biasanya sudah ada setelah signup di Supabase)
+          await redirectAfterAuth(reg.user);
+          return;
+        }
 
-      if (error) { showAlert('Login gagal: ' + error.message); return; }
+        setLoading('btnMasuk', false);
+        showAlert('Login gagal: ' + error.message); 
+        return; 
+      }
+      
+      setLoading('btnMasuk', false);
       await redirectAfterAuth(data.user);
     }
 

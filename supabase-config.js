@@ -110,42 +110,66 @@ function _withUserId(data) {
 const SB = {
   /** LAHAN */
   lahan: {
-    fetch:  ()           => sb.from('lahan').select('*').order('created_at'),
+    fetch:  (uid)       => {
+      let q = sb.from('lahan').select('*').order('created_at');
+      if (uid) q = q.eq('user_id', uid);
+      return q;
+    },
     insert: (data)       => sb.from('lahan').insert(_withUserId(data)).select().single(),
     update: (id, data)   => sb.from('lahan').update(data).eq('id', id).select().single(),
     remove: (id)         => sb.from('lahan').delete().eq('id', id),
   },
   /** TANAMAN */
   tanaman: {
-    fetch:  ()           => sb.from('tanaman').select('*').order('created_at'),
+    fetch:  (uid)       => {
+      let q = sb.from('tanaman').select('*').order('created_at');
+      if (uid) q = q.eq('user_id', uid);
+      return q;
+    },
     insert: (data)       => sb.from('tanaman').insert(_withUserId(data)).select().single(),
     update: (id, data)   => sb.from('tanaman').update(data).eq('id', id).select().single(),
     remove: (id)         => sb.from('tanaman').delete().eq('id', id),
   },
   /** KARYAWAN */
   karyawan: {
-    fetch:  ()           => sb.from('karyawan').select('*').order('created_at'),
+    fetch:  (uid)       => {
+      let q = sb.from('karyawan').select('*').order('created_at');
+      if (uid) q = q.eq('user_id', uid);
+      return q;
+    },
     insert: (data)       => sb.from('karyawan').insert(_withUserId(data)).select().single(),
     update: (id, data)   => sb.from('karyawan').update(data).eq('id', id).select().single(),
     remove: (id)         => sb.from('karyawan').delete().eq('id', id),
   },
   /** PANEN */
   panen: {
-    fetch:  ()           => sb.from('panen').select('*').order('tanggal', { ascending: false }),
+    fetch:  (uid)       => {
+      let q = sb.from('panen').select('*').order('tanggal', { ascending: false });
+      if (uid) q = q.eq('user_id', uid);
+      return q;
+    },
     insert: (data)       => sb.from('panen').insert(_withUserId(data)).select().single(),
     update: (id, data)   => sb.from('panen').update(data).eq('id', id).select().single(),
     remove: (id)         => sb.from('panen').delete().eq('id', id),
   },
   /** BIAYA */
   biaya: {
-    fetch:  ()           => sb.from('biaya').select('*').order('tanggal', { ascending: false }),
+    fetch:  (uid)       => {
+      let q = sb.from('biaya').select('*').order('tanggal', { ascending: false });
+      if (uid) q = q.eq('user_id', uid);
+      return q;
+    },
     insert: (data)       => sb.from('biaya').insert(_withUserId(data)).select().single(),
     update: (id, data)   => sb.from('biaya').update(data).eq('id', id).select().single(),
     remove: (id)         => sb.from('biaya').delete().eq('id', id),
   },
   /** AKTIVITAS */
   aktivitas: {
-    fetch:  (limit = 10) => sb.from('aktivitas').select('*').order('created_at', { ascending: false }).limit(limit),
+    fetch:  (limit = 10, uid) => {
+      let q = sb.from('aktivitas').select('*').order('created_at', { ascending: false }).limit(limit);
+      if (uid) q = q.eq('user_id', uid);
+      return q;
+    },
     insert: (judul, desc)=> sb.from('aktivitas').insert(_withUserId({ judul, deskripsi: desc })),
   },
   /** TEAM MEMBERS (untuk owner kelola operator) */
@@ -164,7 +188,13 @@ const SB = {
     suspendUser: (id)   => sb.from('profiles').update({ is_suspended: true  }).eq('id', id),
     activateUser:(id)   => sb.from('profiles').update({ is_suspended: false }).eq('id', id),
     setRole:     (id, role) => sb.from('profiles').update({ role }).eq('id', id),
+    allActivities:() => sb.from('aktivitas').select('*, profiles(nama_usaha)').order('created_at', { ascending: false }).limit(50),
   },
+  /** AUTH FLOW FOR OPERATORS */
+  auth: {
+    checkInvitation: (email) => sb.from('team_members').select('*').eq('invited_email', email).eq('status', 'pending').single(),
+    completeTeamMember: (id, userId) => sb.from('team_members').update({ user_id: userId, status: 'active' }).eq('id', id),
+  }
 };
 
 async function logActivity(judul, deskripsi = '') {
