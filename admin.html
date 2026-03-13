@@ -351,12 +351,8 @@
         return;
       }
 
-      // Also fetch auth users to get emails (needs service role in production, fallback to profile data)
-      const { data: authUsers } = await sb.auth.admin?.listUsers().catch(() => ({ data: null })) ?? { data: null };
-      const emailMap = {};
-      authUsers?.users?.forEach(u => { emailMap[u.id] = u.email; });
-
-      allUsers = data.map(p => ({ ...p, email: emailMap[p.id] || '—' }));
+      // Use the email field from profile (populated via trigger/migration)
+      allUsers = data.map(p => ({ ...p, email: p.email || '—' }));
       updateStats(allUsers);
       renderTable(allUsers);
     }

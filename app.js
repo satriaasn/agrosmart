@@ -123,6 +123,12 @@ function initSidebar() {
   // Nav item clicks
   document.querySelectorAll('.nav-item').forEach(el => {
     el.addEventListener('click', e => {
+      // Allow direct links to real pages (like admin.html) to bypass navigate()
+      const href = el.getAttribute('href');
+      if (href && href !== '#' && !href.startsWith('javascript:')) {
+        return; 
+      }
+      
       e.preventDefault();
       navigate(el.dataset.page);
     });
