@@ -984,6 +984,13 @@ select.form-control { cursor: pointer; appearance: none; background-image: url("
 
 /* === Print === */
 @media print {
-  .sidebar, .top-header, .page-actions { display: none; }
+  .sidebar, .top-header, .page-actions { display: none !important; }
   .main-content { margin-left: 0; }
+}
+
+/* Safety fix for missing buttons */
+.page-actions {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
