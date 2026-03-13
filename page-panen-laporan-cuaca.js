@@ -94,7 +94,11 @@ async function openPanenModal(id) {
 
   // Fungsi build options tanaman difilter berdasarkan lahan
   const getTanamanOptions = (lahanNama, selectedTanaman) => {
-    const filtered = (window._allTanaman || []).filter(t => t.lahan === lahanNama);
+    const filtered = (window._allTanaman || []).filter(t => {
+      // Parse lahan string: "Blok A, Blok B" -> ["Blok A", "Blok B"]
+      const lands = t.lahan ? t.lahan.split(',').map(x => x.trim()) : [];
+      return lands.includes(lahanNama);
+    });
     if (filtered.length === 0) {
       return `<option value="">— Belum ada tanaman di lahan ini —</option>`;
     }
@@ -213,11 +217,14 @@ window.cascadeTanamanByLahan = function(lahanNama) {
   const select = document.getElementById('f-pTan');
   if (!select) return;
 
-  const filtered = (window._allTanaman || []).filter(t => t.lahan === lahanNama);
+  const filtered = (window._allTanaman || []).filter(t => {
+    const lands = t.lahan ? t.lahan.split(',').map(x => x.trim()) : [];
+    return lands.includes(lahanNama);
+  });
 
   if (filtered.length === 0) {
     select.innerHTML = `<option value="">— Belum ada tanaman di lahan ini —</option>`;
-    select.style.borderColor = 'rgba(239,68,68,0.5)';
+    select.style.borderColor = 'var(--red-500)';
     const hint = document.getElementById('tanamanHint');
     if (hint) hint.textContent = '⚠ tidak ada data tanaman';
   } else {
