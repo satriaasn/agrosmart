@@ -1,5 +1,5 @@
 -- ============================================================
--- AgroSmart — SQL PATCH: Admin & Harvest Improvements
+-- AgroSmart — SQL PATCH: Admin & Harvest Improvements (RE-RUN)
 -- ============================================================
 
 -- 1. Tambah kolom email ke PROFILES agar Admin Panel bisa menampilkan email user
@@ -33,11 +33,14 @@ SET email = u.email
 FROM auth.users u
 WHERE p.id = u.id AND p.email IS NULL;
 
--- 4. Tambah kolom multiplier ke PANEN (opsional, tapi membantu untuk track unit pengali)
+-- 4. Tambah kolom multiplier & harga_raw ke PANEN
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='panen' AND column_name='multiplier_label') THEN
-        ALTER TABLE public.panen ADD COLUMN multiplier_label TEXT DEFAULT 'Per Satuan';
+        ALTER TABLE public.panen ADD COLUMN multiplier_label TEXT DEFAULT 'per_kg';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='panen' AND column_name='harga_raw') THEN
+        ALTER TABLE public.panen ADD COLUMN harga_raw NUMERIC;
     END IF;
 END $$;
 

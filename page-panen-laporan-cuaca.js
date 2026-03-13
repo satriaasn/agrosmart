@@ -45,7 +45,7 @@ async function renderPanen() {
     <div class="section-title">Riwayat Panen</div>
     <div class="table-wrapper">
       <table>
-        <thead><tr><th>Tanaman</th><th>Blok</th><th>Tanggal</th><th>Jumlah</th><th>Kualitas</th><th>Harga/kg</th><th>Total</th><th>Karyawan</th><th>Aksi</th></tr></thead>
+        <thead><tr><th>Tanaman</th><th>Blok</th><th>Tanggal</th><th>Jumlah</th><th>Kualitas</th><th>Harga Satuan</th><th>Total</th><th>Karyawan</th><th>Aksi</th></tr></thead>
         <tbody>
           ${arrPanen.map(p => `
             <tr>
@@ -54,7 +54,10 @@ async function renderPanen() {
               <td>${new Date(p.tanggal).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</td>
               <td><span class="harvest-amount">${(p.jumlah||0).toLocaleString('id-ID')} ${p.satuan||'kg'}</span></td>
               <td><span class="badge ${p.kualitas==='A'?'badge-green':'badge-yellow'}">${p.kualitas||'-'}</span></td>
-              <td>Rp ${(p.harga||0).toLocaleString('id-ID')}</td>
+              <td>
+                <div style="font-size:13px;font-weight:600">Rp ${(p.harga_raw || p.harga || 0).toLocaleString('id-ID')}</div>
+                <div style="font-size:10px;color:var(--text-secondary)">/ ${p.multiplier_label === 'per_kg' ? 'kg' : (p.satuan || 'unit')}</div>
+              </td>
               <td style="font-weight:600;color:var(--green-400)">Rp ${(p.total||0).toLocaleString('id-ID')}</td>
               <td style="font-size:12px;color:var(--text-secondary)">${p.karyawan||'-'}</td>
               <td>
@@ -226,42 +229,67 @@ async function openPanenModal(id) {
       })();
     </script>
   `, async () => {
-    const multiplierLabel = document.getElementById('f-pHargaTipe').value || 'per_kg';
-    const rawHarga = +document.getElementById('f-pHarga').value;
-    const satuan = document.getElementById('f-pSatuan').value || 'kg';
-    
-    // Calculate effective price per selected unit
+    const jumlahInput = document.getElementById('f-pJml');
+    const hargaInput  = document.getElementById('f-pHarga');
+    const tanamanSelect = document.getElementById('f-pTan');
+    const lahanSelect   = document.getElementById('f-pLahan');
+    const tglInput      = document.getElementById('f-pTgl');
+    const satuanSelect  = document.getElementById('f-pSatuan');
+    const multiplierSelect = document.getElementById('f-pHargaTipe');
+    const kualSelect    = document.getElementById('f-pKual');
+    const karySelect    = document.getElementById('f-pKary');
+
+    const jumlah = +jumlahInput.value;
+    const rawHarga = +hargaInput.value;
+    const tanaman = tanamanSelect.value;
+    const lahan   = lahanSelect.value;
+    const tanggal = tglInput.value;
+    const satuan  = satuanSelect.value;
+    const multiplierLabel = multiplierSelect.value || 'per_kg';
+
+    if (!lahan)   { showToast('warning','Gagal','Pilih blok lahan terlebih dahulu.'); return false; }
+    if (!tanaman) { showToast('warning','Gagal','Pilih tanaman terlebih dahulu.'); return false; }
+    if (!jumlah || jumlah <= 0) { showToast('warning','Gagal','Jumlah harus lebih dari 0.'); return false; }
+    if (!rawHarga || rawHarga <= 0) { showToast('warning','Gagal','Harga harus lebih dari 0.'); return false; }
+
+    // Calculate effective price for database storage (which calculates total as jumlah * harga)
     let effectiveHarga = rawHarga;
     if (multiplierLabel === 'per_kg') {
-        if (satuan === 'ton') effectiveHarga = rawHarga * 1000;
-        else if (satuan === 'kwintal') effectiveHarga = rawHarga * 100;
+      if (satuan === 'ton') effectiveHarga = rawHarga * 1000;
+      else if (satuan === 'kwintal') effectiveHarga = rawHarga * 100;
     }
 
     const data = {
       tanaman,
       lahan,
-      tanggal:  document.getElementById('f-pTgl').value,
+      tanggal,
       jumlah,
-      satuan:   satuan,
-      kualitas: document.getElementById('f-pKual').value,
+      satuan,
+      kualitas: kualSelect.value,
       harga:    effectiveHarga,
-      multiplier_label: multiplierLabel, // Simpan untuk referensi saat edit
+      multiplier_label: multiplierLabel,
       harga_raw: rawHarga, 
-      karyawan: document.getElementById('f-pKary').value || null
+      karyawan: karySelect.value || null
     };
 
     if (window.APP_ROLE === 'operator' && window.APP_OWNER_ID) {
       data.owner_id = window.APP_OWNER_ID;
     }
 
-    if (p) {
-      await SB.panen.update(p.id, data);
-      showToast('success', 'Diperbarui', 'Catatan panen berhasil diperbarui.');
-    } else {
-      await SB.panen.insert(data);
-      showToast('success', 'Tersimpan', 'Catatan panen berhasil ditambahkan.');
+    try {
+      if (p?.id) {
+        await SB.panen.update(p.id, data);
+        showToast('success', 'Berhasil', 'Catatan panen diperbarui.');
+      } else {
+        await SB.panen.insert(data);
+        showToast('success', 'Berhasil', 'Catatan panen disimpan.');
+      }
+      closeModal();
+      navigate('panen');
+    } catch (err) {
+      console.error('Save error:', err);
+      showToast('danger', 'Error', 'Gagal menyimpan data: ' + err.message);
     }
-    navigate('panen');
   });
 }
 
