@@ -135,7 +135,16 @@ async function openPanenModal(id) {
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Jumlah *</label><input class="form-control" type="number" id="f-pJml" value="${p?.jumlah||''}" placeholder="0" min="0"></div>
-      <div class="form-group"><label class="form-label">Harga / Satuan (Rp) *</label><input class="form-control" type="number" id="f-pHarga" value="${p?.harga||''}" placeholder="0" min="0"></div>
+      <div class="form-group">
+        <label class="form-label">Harga (Rp) *</label>
+        <div style="display:flex;gap:4px">
+            <input class="form-control" type="number" id="f-pHarga" value="${p?.harga_raw||p?.harga||''}" placeholder="0" min="0" style="flex:1">
+            <select class="form-control" id="f-pHargaTipe" style="width:100px;font-size:11px">
+                <option value="per_kg" ${p?.multiplier_label==='per_kg'?'selected':''}>/ kg</option>
+                <option value="per_satuan" ${p?.multiplier_label==='per_satuan'?'selected':''}>/ unit</option>
+            </select>
+        </div>
+      </div>
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Kualitas</label>
@@ -150,8 +159,15 @@ async function openPanenModal(id) {
         </select>
       </div>
     </div>
-    <div id="previewTotal" style="margin-top:4px;padding:10px 14px;background:var(--accent-bg);border-radius:8px;font-size:13px;color:var(--accent-primary);display:none">
-      💰 Estimasi Total: <strong id="previewTotalVal">Rp 0</strong>
+    <div id="previewTotal" style="margin-top:12px;padding:16px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:14px;display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px">Estimasi Total Pendapatan</div>
+            <div id="previewTotalVal" style="font-size:24px;font-weight:800;color:var(--accent-primary);margin-top:2px">Rp 0</div>
+        </div>
+        <div id="previewBadge" class="badge badge-green" style="height:fit-content">Otomatis</div>
+      </div>
+      <div id="previewInfo" style="margin-top:8px;font-size:12px;color:var(--text-secondary);border-top:1px solid rgba(16,185,129,0.1);padding-top:8px"></div>
     </div>
     <style>
       #f-pJml, #f-pHarga { transition: border-color 0.2s; }
@@ -162,70 +178,75 @@ async function openPanenModal(id) {
             const jInput = document.getElementById('f-pJml');
             const hInput = document.getElementById('f-pHarga');
             const sSelect = document.getElementById('f-pSatuan');
+            const tSelect = document.getElementById('f-pHargaTipe');
             const box = document.getElementById('previewTotal');
             const val = document.getElementById('previewTotalVal');
+            const info = document.getElementById('previewInfo');
             
             if (!jInput || !hInput || !sSelect || !box || !val) return;
 
             const j = parseFloat(jInput.value || 0);
             const h = parseFloat(hInput.value || 0);
             const s = sSelect.value;
+            const t = tSelect.value;
             
             if (j > 0 && h > 0) {
-                // Konversi ke basis (asumsi harga adalah 'per satuan' yang dipilih)
-                // Namun user ingin "otomatis convers", jika harga per kg tapi satuan ton.
-                // Mari asumsikan harga adalah PER KG agar lebih konsisten untuk komoditas, 
-                // atau kita hitung j * h saja dan tambahkan info konversi.
+                let multiplier = 1;
+                if (t === 'per_kg') {
+                    if (s === 'ton') multiplier = 1000;
+                    else if (s === 'kwintal') multiplier = 100;
+                }
                 
-                let multi = 1;
-                if (s === 'ton') multi = 1000;
-                else if (s === 'kwintal') multi = 100;
-                
-                // Jika labelnya "Harga / Satuan", maka cukup j * h. 
-                // Tapi user minta "otomatis convers", saya akan tambahkan toggle/info.
-                // Mari gunakan asumsi: Harga adalah PER SATUAN yang dipilih.
-                // Namun jika user ingin conversi, saya akan tunjukkan info KG nya.
-                
-                const total = j * h;
+                const total = j * h * multiplier;
                 box.style.display = 'block';
                 val.textContent = 'Rp ' + total.toLocaleString('id-ID');
                 
-                if (s === 'ton' || s === 'kwintal') {
-                    const inKg = j * multi;
-                    val.innerHTML = \`Rp \${total.toLocaleString('id-ID')} <br><span style="font-size:11px;font-weight:400;opacity:0.8">(\${inKg.toLocaleString('id-ID')} kg @ Rp \${(total/inKg).toLocaleString('id-ID')}/kg)</span>\`;
+                let detail = j.toLocaleString('id-ID') + ' ' + s + ' × Rp ' + h.toLocaleString('id-ID');
+                if (t === 'per_kg' && multiplier > 1) {
+                    detail = j.toLocaleString('id-ID') + ' ' + s + ' (' + (j*multiplier).toLocaleString('id-ID') + ' kg) × Rp ' + h.toLocaleString('id-ID') + '/kg';
+                } else if (t === 'per_kg') {
+                    detail = j.toLocaleString('id-ID') + ' ' + s + ' × Rp ' + h.toLocaleString('id-ID') + '/kg';
+                } else {
+                    detail = j.toLocaleString('id-ID') + ' ' + s + ' × Rp ' + h.toLocaleString('id-ID') + '/' + s;
                 }
+                info.textContent = detail;
             } else {
                 box.style.display = 'none';
             }
         }
-        document.getElementById('f-pJml')?.addEventListener('input', updatePreview);
-        document.getElementById('f-pHarga')?.addEventListener('input', updatePreview);
-        document.getElementById('f-pSatuan')?.addEventListener('change', updatePreview);
+        ['input','change'].forEach(ev => {
+            document.getElementById('f-pJml')?.addEventListener(ev, updatePreview);
+            document.getElementById('f-pHarga')?.addEventListener(ev, updatePreview);
+            document.getElementById('f-pSatuan')?.addEventListener(ev, updatePreview);
+            document.getElementById('f-pHargaTipe')?.addEventListener(ev, updatePreview);
+        });
         
         // Initial run
         setTimeout(updatePreview, 100);
       })();
     </script>
   `, async () => {
-    const jumlah = +document.getElementById('f-pJml').value;
-    const harga  = +document.getElementById('f-pHarga').value;
-    const tanaman = document.getElementById('f-pTan').value;
-    const lahan   = document.getElementById('f-pLahan').value;
-
-    if (!lahan)   { showToast('error','Gagal','Pilih blok lahan terlebih dahulu.'); return false; }
-    if (!tanaman) { showToast('error','Gagal','Pilih tanaman terlebih dahulu.'); return false; }
-    if (!jumlah || jumlah <= 0) { showToast('error','Gagal','Jumlah harus lebih dari 0.'); return false; }
-    if (!harga  || harga  <= 0) { showToast('error','Gagal','Harga harus lebih dari 0.'); return false; }
+    const multiplierLabel = document.getElementById('f-pHargaTipe').value || 'per_kg';
+    const rawHarga = +document.getElementById('f-pHarga').value;
+    const satuan = document.getElementById('f-pSatuan').value || 'kg';
+    
+    // Calculate effective price per selected unit
+    let effectiveHarga = rawHarga;
+    if (multiplierLabel === 'per_kg') {
+        if (satuan === 'ton') effectiveHarga = rawHarga * 1000;
+        else if (satuan === 'kwintal') effectiveHarga = rawHarga * 100;
+    }
 
     const data = {
       tanaman,
       lahan,
       tanggal:  document.getElementById('f-pTgl').value,
       jumlah,
-      satuan:   document.getElementById('f-pSatuan').value || 'kg',
+      satuan:   satuan,
       kualitas: document.getElementById('f-pKual').value,
-      harga,
-      // total = GENERATED ALWAYS AS (jumlah * harga), tidak perlu dikirim
+      harga:    effectiveHarga,
+      multiplier_label: multiplierLabel, // Simpan untuk referensi saat edit
+      harga_raw: rawHarga, 
       karyawan: document.getElementById('f-pKary').value || null
     };
 
