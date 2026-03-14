@@ -152,15 +152,27 @@ CREATE TABLE public.aktivitas (
 -- ── 9. TRIGGER AUTHENTICATION (Otomatis buat profil) ────────
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  v_role TEXT;
+  v_onboarding_done BOOLEAN;
 BEGIN
+  v_role := COALESCE(NEW.raw_user_meta_data->>'role', 'owner');
+  
+  -- If role is 'operator', they don't need to do onboarding (setup business)
+  -- because they are joining an existing one.
+  v_onboarding_done := (v_role = 'operator');
+
   INSERT INTO public.profiles (id, nama_pemilik, role, onboarding_done)
   VALUES (
     NEW.id,
     COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
-    COALESCE(NEW.raw_user_meta_data->>'role', 'owner'),
-    FALSE
+    v_role,
+    v_onboarding_done
   )
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT (id) DO UPDATE 
+  SET role = EXCLUDED.role,
+      onboarding_done = EXCLUDED.onboarding_done;
+      
   RETURN NEW;
 END;
 $$;
@@ -197,6 +209,50 @@ RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER AS $$
     FALSE
   )
 $$;
+
+-- ── OPERATOR HELPERS ───────────────────────────────────────
+
+-- Function to safely check if an email + temp_password combination is valid
+CREATE OR REPLACE FUNCTION public.check_operator_invite(p_email TEXT, p_password TEXT)
+RETURNS TABLE (
+    id UUID,
+    owner_id UUID,
+    role_label TEXT,
+    permissions JSONB
+) 
+LANGUAGE plpgsql
+SECURITY DEFINER 
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT tm.id, tm.owner_id, tm.role_label, tm.permissions
+    FROM public.team_members tm
+    WHERE tm.invited_email = LOWER(p_email)
+      AND tm.temp_password = p_password
+      AND tm.status = 'pending';
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.check_operator_invite(TEXT, TEXT) TO anon;
+GRANT EXECUTE ON FUNCTION public.check_operator_invite(TEXT, TEXT) TO authenticated;
+
+-- Link team member to auth user and clear temp password
+CREATE OR REPLACE FUNCTION public.link_team_member(p_invite_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    UPDATE public.team_members
+    SET user_id = auth.uid(),
+        status = 'active',
+        temp_password = NULL
+    WHERE id = p_invite_id 
+      AND status = 'pending';
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.link_team_member(UUID) TO authenticated;
 
 -- ── 11. ROW LEVEL SECURITY ───────────────────────────────────
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
