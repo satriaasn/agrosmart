@@ -9,9 +9,21 @@ async function renderPanen() {
   window._DYNAMIC_SATS_PANEN = listUnits || [];
   const arrPanen = listPanen || [];
   
-  const totalKg  = arrPanen.reduce((a,p) => a + (p.jumlah||0), 0);
+  const MULTIPLIERS = { 'kg': 1, 'ton': 1000, 'kwintal': 100, 'gram': 0.001, 'liter': 1, 'buah': 1, 'ikat': 1 };
+  
+  const totalKg = arrPanen.reduce((a, p) => {
+    const mult = MULTIPLIERS[(p.satuan || 'kg').toLowerCase()] || 1;
+    return a + ((p.jumlah || 0) * mult);
+  }, 0);
+
   const totalRp  = arrPanen.reduce((a,p) => a + (p.total||0), 0);
   const avgKg    = arrPanen.length ? Math.round(totalKg / arrPanen.length) : 0;
+
+  const displayTotal = totalKg >= 1000 ? (totalKg/1000).toFixed(1) : totalKg.toLocaleString('id-ID');
+  const unitTotal = totalKg >= 1000 ? 'ton' : 'kg';
+  
+  const displayAvg = avgKg >= 1000 ? (avgKg/1000).toFixed(1) : avgKg.toLocaleString('id-ID');
+  const unitAvg = avgKg >= 1000 ? 'ton' : 'kg';
   return `
   <div class="page-header">
     <div>
@@ -29,15 +41,15 @@ async function renderPanen() {
   <div class="stats-grid" style="margin-bottom:22px">
     <div class="stat-card" style="--card-accent:#22c55e">
       <div class="stat-header"><span class="stat-label">Total Panen</span><div class="stat-icon-wrapper">📦</div></div>
-      <div class="stat-value">${(totalKg/1000).toFixed(1)}<span class="stat-unit">ton</span></div>
+      <div class="stat-value">${displayTotal}<span class="stat-unit">${unitTotal}</span></div>
     </div>
     <div class="stat-card" style="--card-accent:#10b981">
       <div class="stat-header"><span class="stat-label">Total Pendapatan</span><div class="stat-icon-wrapper">💰</div></div>
-      <div class="stat-value">Rp <span style="font-size:22px">${(totalRp/1000000).toFixed(0)}jt</span></div>
+      <div class="stat-value">Rp <span style="font-size:22px">${(totalRp/1000000).toFixed(1)}jt</span></div>
     </div>
     <div class="stat-card" style="--card-accent:#f59e0b">
       <div class="stat-header"><span class="stat-label">Rata-rata / Panen</span><div class="stat-icon-wrapper">📊</div></div>
-      <div class="stat-value">${(avgKg/1000).toFixed(1)}<span class="stat-unit">ton</span></div>
+      <div class="stat-value">${displayAvg}<span class="stat-unit">${unitAvg}</span></div>
     </div>
     <div class="stat-card" style="--card-accent:#3b82f6">
       <div class="stat-header"><span class="stat-label">Total Sesi Panen</span><div class="stat-icon-wrapper">🗓️</div></div>
