@@ -28,7 +28,7 @@
 
   --text-primary: #1a1a1a;
   --text-secondary: #4b4b43;
-  --text-muted: #717167;
+  --text-muted: #fdfdfd;
   --text-accent: var(--primary);
 
   --accent-primary: var(--primary);
@@ -88,7 +88,7 @@ body.dark-mode {
 
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
-  --text-muted: #6ba2ef;
+  --text-muted: #cad7e9;
 
   --alert-warn-bg: #2d2410;
   --alert-warn-border: #f59e0b;
