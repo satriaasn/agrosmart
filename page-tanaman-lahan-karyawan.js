@@ -199,15 +199,15 @@ async function openTanamanModal(id) {
     // user_id handled by SB config _withUserId
 
     if (t) {
-      await SB.tanaman.update(t.id, data);
+      const { error } = await SB.tanaman.update(t.id, data);
+      if (error) throw error;
       showToast('success','Berhasil','Data tanaman diperbarui.');
     } else {
-      await SB.tanaman.insert(data);
+      const { error } = await SB.tanaman.insert(data);
+      if (error) throw error;
       showToast('success','Berhasil','Tanaman baru ditambahkan.');
     }
     
-    // Note: We skip complex syncLahanTanaman for now to keep it simple, 
-    // relying on the UI to just read the comma separated strings.
     navigate('tanaman');
   });
 
@@ -476,10 +476,12 @@ async function openLahanModal(id) {
     // user_id handled by SB config _withUserId
 
     if (l) {
-      await SB.lahan.update(l.id, data);
+      const { error } = await SB.lahan.update(l.id, data);
+      if (error) throw error;
       showToast('success','Berhasil','Data lahan diperbarui.');
     } else {
-      await SB.lahan.insert(data);
+      const { error } = await SB.lahan.insert(data);
+      if (error) throw error;
       showToast('success','Berhasil','Blok lahan ditambahkan.');
     }
     
@@ -509,7 +511,8 @@ async function openLahanModal(id) {
         }
         
         if (changed) {
-          await SB.tanaman.update(t.id, { lahan: arr.join(', ') || '-' });
+          const { error: syncErr } = await SB.tanaman.update(t.id, { lahan: arr.join(', ') || '-' });
+          if (syncErr) console.warn('Lahan-Tanaman Sync Err:', syncErr);
         }
       }
     }
@@ -721,10 +724,12 @@ async function openKaryawanModal(id) {
     // user_id handled by SB config _withUserId
 
     if (k) {
-      await SB.karyawan.update(k.id, data);
+      const { error } = await SB.karyawan.update(k.id, data);
+      if (error) throw error;
       showToast('success','Berhasil','Data karyawan diperbarui.');
     } else {
-      await SB.karyawan.insert(data);
+      const { error } = await SB.karyawan.insert(data);
+      if (error) throw error;
       showToast('success','Berhasil','Karyawan baru ditambahkan.');
     }
     navigate('karyawan');

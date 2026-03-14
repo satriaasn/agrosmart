@@ -436,17 +436,20 @@ async function openBiayaModal(id) {
       jumlah: jml||0, 
       satuan: sat, 
       harga_satuan: harga||0,
-      coa_id: parseInt(coa_id)
+      total: total||0,
+      coa_id: coa_id ? parseInt(coa_id) : null
     };
     
     try {
       let savedBiaya;
       if (b) { 
-        const { data: res } = await SB.biaya.update(b.id, data);
+        const { data: res, error } = await SB.biaya.update(b.id, data);
+        if (error) throw error;
         savedBiaya = res; 
         showToast('success','Berhasil','Data biaya diperbarui.'); 
       } else { 
-        const { data: res } = await SB.biaya.insert(data);
+        const { data: res, error } = await SB.biaya.insert(data);
+        if (error) throw error;
         savedBiaya = res; 
         showToast('success','Berhasil','Biaya baru ditambahkan.'); 
       }

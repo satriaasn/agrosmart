@@ -255,11 +255,13 @@ async function openPanenModal(id) {
     try {
       let savedPanen;
       if (p?.id) {
-        const { data: res } = await SB.panen.update(p.id, data);
+        const { data: res, error } = await SB.panen.update(p.id, data);
+        if (error) throw error;
         savedPanen = res;
         showToast('success', 'Berhasil', 'Catatan panen diperbarui.');
       } else {
-        const { data: res } = await SB.panen.insert(data);
+        const { data: res, error } = await SB.panen.insert(data);
+        if (error) throw error;
         savedPanen = res;
         showToast('success', 'Berhasil', 'Catatan panen disimpan.');
       }
@@ -272,26 +274,28 @@ async function openPanenModal(id) {
           tanggal: savedPanen.tanggal,
           jumlah: totalRp,
           kategori: 'Hasil Panen',
-          coa_id: parseInt(coa_id),
+          coa_id: coa_id ? parseInt(coa_id) : null,
           deskripsi: `[Panen Lahan: ${lahan}] ${tanaman} (${savedPanen.jumlah} ${savedPanen.satuan})`,
           ref_id: savedPanen.id,
           ref_type: 'panen'
         };
 
-        // Check if cash entry exists
-        const { data: existingCash } = await sb.from('cash_book').select('id').eq('ref_id', savedPanen.id).eq('ref_type', 'panen').maybeSingle();
+        const { data: existingCash, error: fetchErr } = await sb.from('cash_book').select('id').eq('ref_id', savedPanen.id).eq('ref_type', 'panen').maybeSingle();
+        if (fetchErr) console.warn('Panen Sync Fetch Err:', fetchErr);
         
         if (existingCash) {
-          await SB.cash_book.update(existingCash.id, cashData);
+          const { error: upErr } = await SB.cash_book.update(existingCash.id, cashData);
+          if (upErr) throw new Error('Panen tersimpan, tapi gagal update Buku Kas: ' + upErr.message);
         } else {
-          await SB.cash_book.insert(cashData);
+          const { error: insErr } = await SB.cash_book.insert(cashData);
+          if (insErr) throw new Error('Panen tersimpan, tapi gagal masuk ke Buku Kas: ' + insErr.message);
         }
       }
 
-      closeModal();
       navigate('panen');
     } catch (err) {
-      showToast('danger', 'Error', err.message);
+      console.error('Panen CRUD Error:', err);
+      throw err; // app.js handles showing toast
     }
   });
 

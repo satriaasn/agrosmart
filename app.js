@@ -175,8 +175,24 @@ function initModal() {
   document.getElementById('modalOverlay')?.addEventListener('click', e => {
     if (e.target === document.getElementById('modalOverlay')) closeModal();
   });
-  document.getElementById('modalSave')?.addEventListener('click', () => {
-    if (currentModalSave) { currentModalSave(); closeModal(); }
+  document.getElementById('modalSave')?.addEventListener('click', async () => {
+    if (currentModalSave) {
+      const btn = document.getElementById('modalSave');
+      const originalText = btn.innerHTML;
+      try {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner" style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;display:inline-block;animation:spin 0.6s linear infinite;margin-right:8px"></span>Menyimpan...`;
+        
+        await currentModalSave();
+        closeModal();
+      } catch (err) {
+        console.error('Modal save error:', err);
+        showToast('danger', 'Gagal Simpan', err.message || 'Terjadi kesalahan saat menyimpan data.');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
   });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeModal();

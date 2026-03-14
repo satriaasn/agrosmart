@@ -140,36 +140,35 @@ async function openKasModal(id) {
       <label class="form-label">Deskripsi / Catatan</label>
       <textarea class="form-control" id="f-kasDesc" placeholder="Keterangan tambahan..." rows="2">${k?.deskripsi || ''}</textarea>
     </div>
-    <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:8px">
-      <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
-      <button class="btn btn-primary" id="btnSaveKas">Simpan Transaksi</button>
-    </div>
-  `);
-
-  document.getElementById('btnSaveKas').addEventListener('click', async () => {
+  `, async () => {
     const data = {
       tipe: document.getElementById('f-kasTipe').value,
       tanggal: document.getElementById('f-kasTgl').value,
       jumlah: parseFloat(document.getElementById('f-kasJml').value) || 0,
       kategori: document.getElementById('f-kasKat').value || 'Lainnya',
       deskripsi: document.getElementById('f-kasDesc').value,
-      coa_id: null // Manual entry might need COA selection too, but user asked for Biaya/Panen sync specifically.
+      coa_id: null
     };
 
-    if (data.jumlah <= 0) return showToast('danger', 'Error', 'Jumlah harus lebih dari 0');
+    if (data.jumlah <= 0) {
+      showToast('danger', 'Error', 'Jumlah harus lebih dari 0');
+      throw new Error('Jumlah harus lebih dari 0');
+    }
 
     try {
       if (k?.id) {
-        await SB.cash_book.update(k.id, data);
+        const { error } = await SB.cash_book.update(k.id, data);
+        if (error) throw error;
         showToast('success', 'Berhasil', 'Transaksi diperbarui.');
       } else {
-        await SB.cash_book.insert(data);
+        const { error } = await SB.cash_book.insert(data);
+        if (error) throw error;
         showToast('success', 'Berhasil', 'Transaksi disimpan.');
       }
-      closeModal();
       navigate('kas');
     } catch (err) {
-      showToast('danger', 'Error', err.message);
+      console.error('Kas CRUD Error:', err);
+      throw err;
     }
   });
 }
