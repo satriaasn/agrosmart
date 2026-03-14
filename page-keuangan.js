@@ -137,12 +137,12 @@ async function renderKeuangan() {
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <div class="section-title" style="margin-bottom:0">Riwayat Biaya Operasional</div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <select class="form-control" style="width:140px;padding:6px 10px;font-size:12px" onchange="filterBiayaLahan(this.value)">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select class="form-control" style="width:auto;flex:1;min-width:120px;padding:6px 10px;font-size:12px" onchange="filterBiayaLahan(this.value)">
           <option value="">Semua Lahan</option>
           ${arrLahan.map(l => `<option>${l.nama}</option>`).join('')}
         </select>
-        <select class="form-control" style="width:140px;padding:6px 10px;font-size:12px" onchange="filterBiayaKat(this.value)">
+        <select class="form-control" style="width:auto;flex:1;min-width:120px;padding:6px 10px;font-size:12px" onchange="filterBiayaKat(this.value)">
           <option value="">Semua Kategori</option>
           ${Object.keys(BIAYA_COLORS).map(k=>`<option>${k}</option>`).join('')}
         </select>
@@ -233,29 +233,32 @@ function lahanProfitCard(l, listLahan, listBiaya, listPanen) {
 // ─── Biaya Table ──────────────────────────────────────────────────────────────
 function biayaTable(data) {
   if (!data.length) return `<div style="text-align:center;padding:40px;color:var(--text-muted)">Belum ada data biaya</div>`;
-  return `<table>
-    <thead><tr><th>Lahan</th><th>Tanggal</th><th>Kategori</th><th>Deskripsi</th><th>Jumlah</th><th>Harga/Satuan</th><th>Total</th><th>Aksi</th></tr></thead>
-    <tbody>
-    ${data.map(b => {
-      const c = BIAYA_COLORS[b.kategori] || BIAYA_COLORS['Lainnya'];
-      return `<tr>
-        <td><strong>${b.lahan}</strong></td>
-        <td style="font-size:12px;color:var(--text-secondary)">${new Date(b.tanggal).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</td>
-        <td><span class="badge ${c.badge}">${c.icon} ${b.kategori}</span></td>
-        <td style="font-size:13px">${b.deskripsi}</td>
-        <td style="font-size:12px;color:var(--text-secondary)">${b.jumlah} ${b.satuan}</td>
-        <td style="font-size:12px">Rp ${(b.harga_satuan||0).toLocaleString('id-ID')}</td>
-        <td style="font-weight:700;color:var(--red-400)">Rp ${b.total.toLocaleString('id-ID')}</td>
-        <td>
-          <div style="display:flex;gap:6px">
-            ${canAccess('keuangan', 'edit') ? `<button class="btn btn-sm btn-secondary" onclick="editBiaya('${b.id}')">Edit</button>` : ''}
-            ${canAccess('keuangan', 'delete') ? `<button class="btn btn-sm btn-danger" onclick="deleteBiaya('${b.id}')">Hapus</button>` : ''}
-          </div>
-        </td>
-      </tr>`;
-    }).join('')}
-    </tbody>
-  </table>`;
+  return `
+  <div class="table-wrapper">
+    <table>
+      <thead><tr><th>Lahan</th><th>Tanggal</th><th>Kategori</th><th>Deskripsi</th><th>Jumlah</th><th>Harga/Satuan</th><th>Total</th><th>Aksi</th></tr></thead>
+      <tbody>
+      ${data.map(b => {
+        const c = BIAYA_COLORS[b.kategori] || BIAYA_COLORS['Lainnya'];
+        return `<tr>
+          <td><strong>${b.lahan}</strong></td>
+          <td style="font-size:12px;color:var(--text-secondary)">${new Date(b.tanggal).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</td>
+          <td><span class="badge ${c.badge}">${c.icon} ${b.kategori}</span></td>
+          <td style="font-size:13px">${b.deskripsi}</td>
+          <td style="font-size:12px;color:var(--text-secondary)">${b.jumlah} ${b.satuan}</td>
+          <td style="font-size:12px">Rp ${(b.harga_satuan||0).toLocaleString('id-ID')}</td>
+          <td style="font-weight:700;color:var(--red-400)">Rp ${b.total.toLocaleString('id-ID')}</td>
+          <td>
+            <div style="display:flex;gap:6px">
+              ${canAccess('keuangan', 'edit') ? `<button class="btn btn-sm btn-secondary" onclick="editBiaya('${b.id}')">Edit</button>` : ''}
+              ${canAccess('keuangan', 'delete') ? `<button class="btn btn-sm btn-danger" onclick="deleteBiaya('${b.id}')">Hapus</button>` : ''}
+            </div>
+          </td>
+        </tr>`;
+      }).join('')}
+      </tbody>
+    </table>
+  </div>`;
 }
 
 // ─── Filter Biaya ─────────────────────────────────────────────────────────────
@@ -411,7 +414,7 @@ async function openBiayaModal(id) {
       </div>
       <div class="form-group">
         <label class="form-label">Total Biaya (Rp)</label>
-        <input class="form-control" type="number" id="f-bTotal" value="${b?.total||''}" style="font-weight:700;color:var(--red-400)" placeholder="Auto-hitung atau isi manual">
+        <input class="form-control" type="number" id="f-bTotal" value="${b?.total||''}" style="font-weight:700;color:var(--red-400)" placeholder="Isi total atau biarkan auto">
       </div>
     </div>
   `, async () => {

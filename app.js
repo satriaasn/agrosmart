@@ -155,6 +155,7 @@ function openModal(title, bodyHtml, onSave) {
   document.getElementById('modalTitle').textContent = title;
   document.getElementById('modalBody').innerHTML = bodyHtml;
   document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
   currentModalSave = onSave;
 
   // Ensure footer is visible and save button is shown only if onSave is provided
@@ -179,6 +180,7 @@ function openModal(title, bodyHtml, onSave) {
 
 function closeModal() {
   document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
   currentModalSave = null;
 }
 
