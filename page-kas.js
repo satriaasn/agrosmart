@@ -21,6 +21,10 @@ async function renderKas() {
       <div class="page-subtitle">Kontrol uang masuk dan keluar untuk keseimbangan kas usaha.</div>
     </div>
     <div class="page-actions">
+      <button class="btn btn-secondary" onclick="forceSyncKeuangan(this)" style="margin-right:8px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Sinkron Data
+      </button>
       <button class="btn btn-primary" onclick="openKasModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Catat Transaksi
@@ -176,4 +180,76 @@ async function deleteKas(id) {
   await SB.cash_book.remove(id);
   showToast('success', 'Dihapus', 'Transaksi kas dihapus.');
   navigate('kas');
+}
+
+async function forceSyncKeuangan(btn) {
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner" style="width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;display:inline-block;animation:spin 1s linear infinite;"></span> Menyingkronkan...';
+
+  try {
+    const [{ data: listBiaya }, { data: listPanen }, { data: listKas }, { data: listKats }] = await Promise.all([
+      SB.biaya.fetch(),
+      SB.panen.fetch(),
+      SB.cash_book.fetch(),
+      SB.expense_categories.fetch()
+    ]);
+
+    const arrBiaya = listBiaya || [];
+    const arrPanen = listPanen || [];
+    const arrKas   = listKas || [];
+    const arrKats  = listKats || [];
+
+    let count = 0;
+
+    // Sync Biaya
+    for (const b of arrBiaya) {
+      const exists = arrKas.some(k => String(k.ref_id) === String(b.id) && k.ref_type === 'biaya');
+      if (!exists) {
+        let cid = b.coa_id;
+        if (!cid) {
+          const cat = arrKats.find(c => c.name === b.kategori);
+          if (cat) cid = cat.coa_id;
+        }
+
+        await SB.cash_book.insert({
+          tipe: 'keluar',
+          tanggal: b.tanggal,
+          jumlah: b.total || 0,
+          kategori: b.kategori,
+          coa_id: cid ? parseInt(cid) : null,
+          deskripsi: `[Biaya Lahan: ${b.lahan}] ${b.deskripsi}`,
+          ref_id: String(b.id),
+          ref_type: 'biaya'
+        });
+        count++;
+      }
+    }
+
+    // Sync Panen
+    for (const p of arrPanen) {
+      const exists = arrKas.some(k => String(k.ref_id) === String(p.id) && k.ref_type === 'panen');
+      if (!exists) {
+        await SB.cash_book.insert({
+          tipe: 'masuk',
+          tanggal: p.tanggal || new Date(p.created_at).toISOString().split('T')[0],
+          jumlah: p.total || 0,
+          kategori: 'Hasil Panen',
+          coa_id: p.coa_id ? parseInt(p.coa_id) : null,
+          deskripsi: `[Panen: ${p.tanaman}] ${p.lahan}`,
+          ref_id: String(p.id),
+          ref_type: 'panen'
+        });
+        count++;
+      }
+    }
+
+    showToast('success', 'Berhasil', `${count} data berhasil disinkronkan ke Buku Kas.`);
+    navigate('kas');
+  } catch (err) {
+    showToast('danger', 'Error', 'Gagal sinkron: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
 }
