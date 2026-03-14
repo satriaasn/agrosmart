@@ -269,6 +269,10 @@ function applyRoleUI(role, permissions) {
     Object.entries(moduleNavMap).forEach(([mod, navId]) => {
       const navEl = document.getElementById(navId);
       if (navEl && permissions[mod] === false) navEl.style.display = 'none';
+      
+      // Sembunyikan juga di Bottom Nav (Mobile)
+      const bnavEl = document.querySelector(`.bnav-item[data-page="${mod}"]`);
+      if (bnavEl && permissions[mod] === false) bnavEl.style.display = 'none';
     });
   }
 
@@ -316,15 +320,15 @@ async function initUserProfile() {
 
     window.state = { session, profile };
 
-    const nama    = profile?.nama_pemilik || session.user.user_metadata?.full_name || session.user.email;
-    const usaha   = profile?.nama_usaha   || 'AgroSmart';
-    const initials = nama.split(' ').map(function(n){ return n[0]; }).slice(0, 2).join('').toUpperCase();
+    const nama     = profile?.nama_pemilik || session.user.user_metadata?.full_name || session.user.email;
+    const roleLabel = profile?.role_label || (window.APP_ROLE === 'owner' ? 'Owner / Pemilik' : window.APP_ROLE === 'superadmin' ? 'Superadmin' : 'Operator');
+    const initials  = nama.split(' ').map(function(n){ return n[0]; }).slice(0, 2).join('').toUpperCase();
 
     const nEl = document.getElementById('sidebarNama');
     const uEl = document.getElementById('sidebarUsaha');
     const aEl = document.getElementById('sidebarAvatar');
     if (nEl) nEl.textContent = nama;
-    if (uEl) uEl.textContent = usaha;
+    if (uEl) uEl.textContent = roleLabel; // Tampilkan ROLE, bukan Nama Usaha
     if (aEl) aEl.textContent = initials;
 
     applyRoleUI(window.APP_ROLE, window.APP_PERMISSIONS);
