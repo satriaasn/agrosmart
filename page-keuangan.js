@@ -435,8 +435,8 @@ async function openBiayaModal(id) {
       deskripsi: desc, 
       jumlah: jml||0, 
       satuan: sat, 
-      harga_satuan: harga||0,
-      coa_id: coa_id ? parseInt(coa_id) : null
+      harga_satuan: harga||0
+      // coa_id removed to avoid 400 error (column missing in DB)
     };
     
     try {

@@ -248,8 +248,8 @@ async function openPanenModal(id) {
       harga:    effectiveHarga,
       multiplier_label: multiplierLabel,
       harga_raw: rawHarga, 
-      karyawan: karySelect.value || null,
-      coa_id: parseInt(coa_id)
+      karyawan: karySelect.value || null
+      // coa_id removed to avoid 400 error (column missing in DB)
     };
 
     try {
@@ -268,7 +268,7 @@ async function openPanenModal(id) {
 
       // --- SYNC TO CASH BOOK ---
       if (savedPanen) {
-        const totalRp = (savedPanen.jumlah || 0) * (savedPanen.harga || 0);
+        const totalRp = (parseFloat(savedPanen.jumlah) || 0) * (parseFloat(savedPanen.harga) || 0);
         const cashData = {
           tipe: 'masuk',
           tanggal: savedPanen.tanggal,
@@ -280,21 +280,27 @@ async function openPanenModal(id) {
           ref_type: 'panen'
         };
 
+        console.log('[DEBUG] Panen Syncing to Cash Book:', cashData);
+
         const { data: existingCash, error: fetchErr } = await sb.from('cash_book').select('id').eq('ref_id', savedPanen.id).eq('ref_type', 'panen').maybeSingle();
-        if (fetchErr) console.warn('Panen Sync Fetch Err:', fetchErr);
+        if (fetchErr) console.warn('[DEBUG] Panen Sync Fetch Err:', fetchErr);
         
+        let syncRes;
         if (existingCash) {
-          const { error: upErr } = await SB.cash_book.update(existingCash.id, cashData);
-          if (upErr) throw new Error('Panen tersimpan, tapi gagal update Buku Kas: ' + upErr.message);
+          syncRes = await SB.cash_book.update(existingCash.id, cashData);
         } else {
-          const { error: insErr } = await SB.cash_book.insert(cashData);
-          if (insErr) throw new Error('Panen tersimpan, tapi gagal masuk ke Buku Kas: ' + insErr.message);
+          syncRes = await SB.cash_book.insert(cashData);
+        }
+
+        if (syncRes.error) {
+          console.error('[DEBUG] Panen Cash Book Sync Error:', syncRes.error);
+          throw new Error('Panen tersimpan, tapi GAGAL sinkron ke Buku Kas: ' + (syncRes.error.message || 'Terjadi kesalahan database.'));
         }
       }
 
       navigate('panen');
     } catch (err) {
-      console.error('Panen CRUD Error:', err);
+      console.error('[DEBUG] Panen CRUD Error Full:', err);
       throw err; // app.js handles showing toast
     }
   });
