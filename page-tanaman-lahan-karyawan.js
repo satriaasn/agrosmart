@@ -372,9 +372,7 @@ async function openLahanModal(id) {
       emoji: l?.emoji || '📍'
     };
     
-    if (window.APP_ROLE === 'operator' && window.APP_OWNER_ID) {
-      data.owner_id = window.APP_OWNER_ID;
-    }
+    // user_id handled by SB config _withUserId
 
     if (l) {
       await SB.lahan.update(l.id, data);
@@ -600,9 +598,7 @@ async function openKaryawanModal(id) {
       kehadiran: k?.kehadiran || 100
     };
 
-    if (window.APP_ROLE === 'operator' && window.APP_OWNER_ID) {
-      data.owner_id = window.APP_OWNER_ID;
-    }
+    // user_id handled by SB config _withUserId
 
     if (k) {
       await SB.karyawan.update(k.id, data);
