@@ -27,7 +27,7 @@ async function navigate(page) {
   if (bnavEl) bnavEl.classList.add('active');
 
   // Update breadcrumb
-  const labels = { dashboard:'Dashboard', tanaman:'Tanaman', lahan:'Lahan', karyawan:'Karyawan', panen:'Panen', kas:'Buku Kas', keuangan:'Keuangan', coa:'Daftar Akun', laporan:'Laporan', cuaca:'Cuaca', peta:'Peta Lahan', tim:'Manajemen Tim', profil:'Profil & Pengaturan' };
+  const labels = { dashboard:'Dashboard', tanaman:'Tanaman', lahan:'Lahan', karyawan:'Karyawan', panen:'Panen', kas:'Buku Kas', keuangan:'Biaya Olah Lahan', coa:'Daftar Akun', laporan:'Laporan', cuaca:'Cuaca', peta:'Peta Lahan', tim:'Manajemen Tim', profil:'Profil & Pengaturan' };
   const bc = document.getElementById('breadcrumb');
   if (bc) bc.innerHTML = `<span style="color:var(--text-muted)">AgroSmart</span> <span style="color:var(--text-muted);margin:0 6px">/</span> <span>${labels[page] || page}</span>`;
 

@@ -75,8 +75,8 @@ async function renderKeuangan() {
   return `
   <div class="page-header">
     <div>
-      <div class="page-title">Kontrol Keuangan</div>
-      <div class="page-subtitle">Monitor biaya operasional, hasil panen, dan keuntungan per lahan.</div>
+      <div class="page-title">Biaya Olah Lahan</div>
+      <div class="page-subtitle">Monitor rincian biaya operasional, hasil panen, dan laba kotor per lahan.</div>
     </div>
     <div class="page-actions">
       <button class="btn btn-secondary" onclick="navigate('keuangan-biaya')">

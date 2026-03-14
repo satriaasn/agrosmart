@@ -539,35 +539,53 @@ function renderSatList(data) {
 }
 
 async function seedDefaults() {
-  const defaultKats = [
-    { name: 'Pupuk & Nutrisi', icon: '🌱', color: '#22c55e' },
-    { name: 'Obat & Pestisida', icon: '🧪', color: '#f59e0b' },
-    { name: 'Bibit / Benih', icon: '🥯', color: '#84cc16' },
-    { name: 'Gaji Karyawan', icon: '👷', color: '#3b82f6' },
-    { name: 'Peralatan Kebun', icon: '⚙️', color: '#ef4444' },
-    { name: 'BBM & Transport', icon: '🚛', color: '#6b7280' },
-    { name: 'Lain-lain', icon: '📋', color: '#64748b' }
+  const ownerId = window.APP_OWNER_ID || window._currentUserId;
+  if (!ownerId) return;
+
+  const defaultCOA = [
+    { account_code: '1101', account_name: 'Kas & Saldo Bank', account_type: 'Asset', is_header: false },
+    { account_code: '4101', account_name: 'Pendapatan Panen', account_type: 'Revenue', is_header: false },
+    { account_code: '5101', account_name: 'Beban Pupuk & Nutrisi', account_type: 'Expense', is_header: false },
+    { account_code: '5102', account_name: 'Beban Obat & Pestisida', account_type: 'Expense', is_header: false },
+    { account_code: '5103', account_name: 'Beban Bibit / Benih', account_type: 'Expense', is_header: false },
+    { account_code: '5201', account_name: 'Beban Gaji Karyawan', account_type: 'Expense', is_header: false },
+    { account_code: '5301', account_name: 'Beban BBM & Transport', account_type: 'Expense', is_header: false },
+    { account_code: '5999', account_name: 'Beban Operasional Lain', account_type: 'Expense', is_header: false }
   ];
-  const defaultSats = [
-    { name: 'kg', type: 'semua' },
-    { name: 'liter', type: 'semua' },
-    { name: 'ton', type: 'panen' },
-    { name: 'karung', type: 'biaya' },
-    { name: 'botol', type: 'biaya' },
-    { name: 'orang/hari', type: 'biaya' },
-    { name: 'buah', type: 'panen' },
-    { name: 'ikat', type: 'panen' }
-  ];
-  
+
   try {
-    const ownerId = window.APP_OWNER_ID || window._currentUserId;
-    if (!ownerId) throw new Error('User context not ready for seeding');
+    // 1. Seed COA first
+    const coaMap = {};
+    for (const c of defaultCOA) {
+      const { data } = await SB.coa.insert(c);
+      if (data) coaMap[c.account_code] = data.id;
+    }
+
+    // 2. Seed Categories linked to COA
+    const defaultKats = [
+      { name: 'Pupuk & Nutrisi', icon: '🌱', coa_id: coaMap['5101'] },
+      { name: 'Obat & Pestisida', icon: '🧪', coa_id: coaMap['5102'] },
+      { name: 'Bibit / Benih', icon: '🥯', coa_id: coaMap['5103'] },
+      { name: 'Gaji Karyawan', icon: '👷', coa_id: coaMap['5201'] },
+      { name: 'BBM & Transport', icon: '🚛', coa_id: coaMap['5301'] },
+      { name: 'Lain-lain', icon: '📋', coa_id: coaMap['5999'] }
+    ];
+
+    const defaultSats = [
+      { name: 'kg', type: 'semua' },
+      { name: 'liter', type: 'semua' },
+      { name: 'ton', type: 'panen' },
+      { name: 'karung', type: 'biaya' },
+      { name: 'botol', type: 'biaya' },
+      { name: 'orang/hari', type: 'biaya' },
+      { name: 'buah', type: 'panen' }
+    ];
     
     await Promise.all([
       ...defaultKats.map(k => SB.expense_categories.insert(k)),
       ...defaultSats.map(s => SB.units.insert(s))
     ]);
-    console.log('[DEBUG] Seeding completed successfully.');
+    console.log('[DEBUG] Seeding completed with COA mapping.');
   } catch(e) {
     console.error('[DEBUG] Seeding failed:', e);
   }
