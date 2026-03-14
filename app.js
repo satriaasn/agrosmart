@@ -157,6 +157,19 @@ function openModal(title, bodyHtml, onSave) {
   document.getElementById('modalOverlay').classList.add('open');
   currentModalSave = onSave;
 
+  // Ensure footer is visible and save button is shown only if onSave is provided
+  const saveBtn = document.getElementById('modalSave');
+  const footer = document.getElementById('modalFooter');
+  
+  if (onSave) {
+    if (saveBtn) saveBtn.style.display = '';
+    if (footer) footer.style.display = 'flex';
+  } else {
+    // If no onSave, hide the default footer and let the body handle any buttons
+    // unless you want a simple 'Tutup' button - for now, we follow coa.js behavior
+    if (footer) footer.style.display = 'none';
+  }
+
   // Focus first input
   setTimeout(() => {
     const first = document.querySelector('#modalBody input, #modalBody select');

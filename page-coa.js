@@ -97,13 +97,8 @@ async function openCOAModal(id) {
         </select>
       </div>
     </div>
-    <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:8px">
-      <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
-      <button class="btn btn-primary" id="btnSaveCOA">Simpan Akun</button>
     </div>
-  `);
-
-  document.getElementById('btnSaveCOA').addEventListener('click', async () => {
+  `, async () => {
     const data = {
       account_code: document.getElementById('f-coaCode').value.trim(),
       account_name: document.getElementById('f-coaName').value.trim(),
@@ -111,21 +106,22 @@ async function openCOAModal(id) {
       is_header: document.getElementById('f-coaHeader').value === 'true'
     };
 
-    if (!data.account_code || !data.account_name) return showToast('danger', 'Error', 'Kode dan Nama Akun wajib diisi');
-
-    try {
-      if (a?.id) {
-        await SB.coa.update(a.id, data);
-        showToast('success', 'Berhasil', 'Akun diperbarui.');
-      } else {
-        await SB.coa.insert(data);
-        showToast('success', 'Berhasil', 'Akun disimpan.');
-      }
-      closeModal();
-      navigate('coa');
-    } catch (err) {
-      showToast('danger', 'Error', err.message);
+    if (!data.account_code || !data.account_name) {
+      showToast('danger', 'Error', 'Kode dan Nama Akun wajib diisi');
+      return; 
     }
+
+    if (a?.id) {
+      const { error } = await SB.coa.update(a.id, data);
+      if (error) throw error;
+      showToast('success', 'Berhasil', 'Akun diperbarui.');
+    } else {
+      const { error } = await SB.coa.insert(data);
+      if (error) throw error;
+      showToast('success', 'Berhasil', 'Akun disimpan.');
+    }
+    
+    navigate('coa');
   });
 }
 

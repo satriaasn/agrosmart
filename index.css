@@ -705,7 +705,9 @@ select.form-control { cursor: pointer; appearance: none; background-image: url("
   border: 1px solid var(--border-strong);
   border-radius: var(--border-radius-lg);
   width: 100%; max-width: 520px;
-  max-height: 85vh; overflow-y: auto;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 20px 50px rgba(0,0,0,0.3);
   animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -729,7 +731,11 @@ select.form-control { cursor: pointer; appearance: none; background-image: url("
   transition: all var(--transition);
 }
 .modal-close:hover { background: var(--red-600); color: #fff; border-color: var(--red-600); }
-.modal-body { padding: 20px 24px; }
+.modal-body { 
+  padding: 20px 24px; 
+  overflow-y: auto;
+  flex: 1;
+}
 .modal-footer {
   display: flex; justify-content: flex-end; gap: 10px;
   padding: 16px 24px;
