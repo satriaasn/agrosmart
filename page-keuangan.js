@@ -394,29 +394,6 @@ async function openBiayaModal(id) {
     <div class="form-group"><label class="form-label">Deskripsi / Vendor *</label>
       <input class="form-control" id="f-bDesc" value="${b?.deskripsi||''}" placeholder="cth. Pupuk NPK 25 kg dari Toko Tani">
     </div>
-    <script>
-      (function() {
-        const katSelect = document.getElementById('f-bKat');
-        const coaSelect = document.getElementById('f-bCOA');
-        const dynamicKats = ${JSON.stringify(arrKats)};
-
-        function updateCOA() {
-          const selectedKat = katSelect.value;
-          const catObj = dynamicKats.find(k => k.name === selectedKat);
-          console.log('[DEBUG] updateCOA selected:', selectedKat, 'found:', catObj?.coa_id);
-          if (catObj && catObj.coa_id) {
-            coaSelect.value = catObj.coa_id;
-          } else {
-            coaSelect.value = "";
-          }
-        }
-
-        katSelect.addEventListener('change', updateCOA);
-        // Run immediately and after a short delay to ensure DOM is settled
-        updateCOA();
-        setTimeout(updateCOA, 200);
-      })();
-    </script>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Jumlah</label>
         <input class="form-control" type="number" step="0.01" id="f-bJml" value="${b?.jumlah||''}" oninput="hitungTotalBiaya()">
@@ -504,6 +481,42 @@ async function openBiayaModal(id) {
       navigate('keuangan');
     }
   });
+
+  // ─── Direct DOM Manipulation after Modal Opened ─────────────────────────────
+  const katSelect = document.getElementById('f-bKat');
+  const coaSelect = document.getElementById('f-bCOA');
+
+  function updateCOA() {
+    if (!katSelect || !coaSelect) return;
+    const selectedKat = katSelect.value;
+    const catObj = arrKats.find(k => k.name === selectedKat);
+    
+    // Debug log to console (User can see this if they open console)
+    console.log('[AgroSmart] updateCOA:', {
+        selected: selectedKat,
+        foundCat: catObj?.name,
+        linkedCOA: catObj?.coa_id,
+        availableCOAs: arrCOA.length
+    });
+
+    if (catObj && catObj.coa_id) {
+      // Force value even if types differ (id as number vs string)
+      coaSelect.value = catObj.coa_id;
+      
+      // Verification
+      if (coaSelect.value != catObj.coa_id) {
+          console.warn('[AgroSmart] COA ID ' + catObj.coa_id + ' not found in the dropdown list.');
+      }
+    } else {
+      coaSelect.value = "";
+    }
+  }
+
+  if (katSelect && coaSelect) {
+    katSelect.addEventListener('change', updateCOA);
+    // Sync immediately (for initial render in edit mode or when opening new form)
+    updateCOA(); 
+  }
 }
 
 function hitungTotalBiaya() {

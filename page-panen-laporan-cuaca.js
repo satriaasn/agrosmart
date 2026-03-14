@@ -203,68 +203,6 @@ async function openPanenModal(id) {
     <style>
       #f-pJml, #f-pHarga { transition: border-color 0.2s; }
     </style>
-    <script>
-      (function(){
-        function updatePreview() {
-            const jInput = document.getElementById('f-pJml');
-            const hInput = document.getElementById('f-pHarga');
-            const sSelect = document.getElementById('f-pSatuan');
-            const tSelect = document.getElementById('f-pHargaTipe');
-            const box = document.getElementById('previewTotal');
-            const val = document.getElementById('previewTotalVal');
-            const info = document.getElementById('previewInfo');
-            
-            if (!jInput || !hInput || !sSelect || !box || !val) return;
-
-            const j = parseFloat(jInput.value || 0);
-            const h = parseFloat(hInput.value || 0);
-            const s = sSelect.value;
-            const t = tSelect.value;
-            
-            const MULTIPLIERS = {
-              'kg': 1,
-              'ton': 1000,
-              'kwintal': 100,
-              'gram': 0.001,
-              'liter': 1,
-              'buah': 1,
-              'ikat': 1
-            };
-
-            if (j > 0 && h > 0) {
-                let multiplier = 1;
-                if (t === 'per_kg') {
-                    multiplier = MULTIPLIERS[s.toLowerCase()] || 1;
-                }
-                
-                const total = j * h * multiplier;
-                box.style.display = 'block';
-                val.textContent = 'Rp ' + total.toLocaleString('id-ID');
-                
-                let detail = j.toLocaleString('id-ID') + ' ' + s + ' × Rp ' + h.toLocaleString('id-ID');
-                if (t === 'per_kg' && multiplier > 1) {
-                    detail = j.toLocaleString('id-ID') + ' ' + s + ' (' + (j*multiplier).toLocaleString('id-ID') + ' kg) × Rp ' + h.toLocaleString('id-ID') + '/kg';
-                } else if (t === 'per_kg') {
-                    detail = j.toLocaleString('id-ID') + ' ' + s + ' × Rp ' + h.toLocaleString('id-ID') + '/kg';
-                } else {
-                    detail = j.toLocaleString('id-ID') + ' ' + s + ' × Rp ' + h.toLocaleString('id-ID') + '/' + s;
-                }
-                info.textContent = detail;
-            } else {
-                box.style.display = 'none';
-            }
-        }
-        ['input','change'].forEach(ev => {
-            document.getElementById('f-pJml')?.addEventListener(ev, updatePreview);
-            document.getElementById('f-pHarga')?.addEventListener(ev, updatePreview);
-            document.getElementById('f-pSatuan')?.addEventListener(ev, updatePreview);
-            document.getElementById('f-pHargaTipe')?.addEventListener(ev, updatePreview);
-        });
-        
-        // Initial run
-        setTimeout(updatePreview, 100);
-      })();
-    </script>
   `, async () => {
     const jumlahInput = document.getElementById('f-pJml');
     const hargaInput  = document.getElementById('f-pHarga');
@@ -353,11 +291,52 @@ async function openPanenModal(id) {
       closeModal();
       navigate('panen');
     } catch (err) {
-      console.error('Accounting Sync Error:', err);
-      showToast('danger', 'Error Sync', 'Data tersimpan tapi gagal sinkron ke Buku Kas.');
-      navigate('panen');
+      showToast('danger', 'Error', err.message);
     }
   });
+
+  // ─── Direct DOM Manipulation after Modal Opened ─────────────────────────────
+  const jInput = document.getElementById('f-pJml');
+  const hInput = document.getElementById('f-pHarga');
+  const sSelect = document.getElementById('f-pSatuan');
+  const tSelect = document.getElementById('f-pHargaTipe');
+  const box = document.getElementById('previewTotal');
+  const val = document.getElementById('previewTotalVal');
+  const info = document.getElementById('previewInfo');
+
+  function updatePreview() {
+    if (!jInput || !hInput || !sSelect || !box || !val) return;
+    const j = parseFloat(jInput.value || 0);
+    const h = parseFloat(hInput.value || 0);
+    const s = sSelect.value;
+    const t = tSelect.value;
+    const MULTIPLIERS = window.APP_MULTIPLIERS || { 'kg': 1, 'ton': 1000, 'kwintal': 100, 'gram': 0.001, 'liter': 1, 'buah': 1, 'ikat': 1 };
+
+    if (j > 0 && h > 0) {
+      let multiplier = 1;
+      if (t === 'per_kg') multiplier = MULTIPLIERS[s.toLowerCase()] || 1;
+      const total = j * h * multiplier;
+      box.style.display = 'block';
+      val.textContent = 'Rp ' + total.toLocaleString('id-ID');
+      let detail = j.toLocaleString('id-ID') + ' ' + s + ' × Rp ' + h.toLocaleString('id-ID');
+      if (t === 'per_kg' && multiplier > 1) {
+        detail = j.toLocaleString('id-ID') + ' ' + s + ' (' + (j*multiplier).toLocaleString('id-ID') + ' kg) × Rp ' + h.toLocaleString('id-ID') + '/kg';
+      } else if (t === 'per_kg') {
+        detail = j.toLocaleString('id-ID') + ' ' + s + ' × Rp ' + h.toLocaleString('id-ID') + '/kg';
+      } else {
+        detail = j.toLocaleString('id-ID') + ' ' + s + ' × Rp ' + h.toLocaleString('id-ID') + '/' + s;
+      }
+      info.textContent = detail;
+    } else {
+      box.style.display = 'none';
+    }
+  }
+
+  [jInput, hInput, sSelect, tSelect].forEach(el => {
+    el?.addEventListener('input', updatePreview);
+    el?.addEventListener('change', updatePreview);
+  });
+  updatePreview();
 }
 
 // ── Cascade: Filter Tanaman berdasarkan Lahan yang dipilih ────────────────────
