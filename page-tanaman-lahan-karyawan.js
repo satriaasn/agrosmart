@@ -109,7 +109,6 @@ async function filterTanaman(kategori) {
 }
 
 async function openTanamanModal(id) {
-  _isManualEmoji = false; // Reset flag setiap kali buka modal
   const { data: listTanaman } = await SB.tanaman.fetch();
   const { data: listLahan } = await SB.lahan.fetch();
   
@@ -215,7 +214,7 @@ async function openTanamanModal(id) {
   // ─── Attach Events for Tanaman Modal ───────────────────
   const namaInput = document.getElementById('f-tNama');
   const emojiInput = document.getElementById('f-tEmoji');
-  let isManual = false;
+  let isManual = !!t;
 
   if (namaInput && emojiInput) {
     namaInput.addEventListener('input', () => {
