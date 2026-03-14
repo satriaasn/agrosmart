@@ -341,13 +341,15 @@ async function showLahanDetail(lahanNama) {
 
 // ─── Add/Edit Biaya Modal ─────────────────────────────────────────────────────
 async function openBiayaModal(id) {
-  const [{ data: listBiaya }, { data: listLahan }, { data: listCOA }] = await Promise.all([
+  const [{ data: listBiaya }, { data: listLahan }, { data: listCOA }, { data: listKats }] = await Promise.all([
     SB.biaya.fetch(),
     SB.lahan.fetch(),
-    SB.coa.fetch()
+    SB.coa.fetch(),
+    SB.expense_categories.fetch()
   ]);
   const arrLahan = listLahan || [];
   const arrCOA   = (listCOA || []).filter(a => !a.is_header && a.account_type === 'Expense');
+  const arrKats  = listKats || [];
   
   let b = null;
   if (id) b = (listBiaya||[]).find(x => String(x.id) === String(id));
@@ -394,7 +396,7 @@ async function openBiayaModal(id) {
       (function() {
         const katSelect = document.getElementById('f-bKat');
         const coaSelect = document.getElementById('f-bCOA');
-        const dynamicKats = window._DYNAMIC_KATS || [];
+        const dynamicKats = ${JSON.stringify(arrKats)};
 
         function updateCOA() {
           const selectedKat = katSelect.value;
@@ -407,7 +409,7 @@ async function openBiayaModal(id) {
         }
 
         katSelect.addEventListener('change', updateCOA);
-        if (!'${b?.id || ''}') setTimeout(updateCOA, 100); 
+        setTimeout(updateCOA, 100); 
       })();
     </script>
     <div class="form-row">
