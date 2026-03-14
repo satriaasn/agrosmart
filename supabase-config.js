@@ -254,7 +254,9 @@ const SB = {
     fetch:  (type, uid) => {
       let ownerId = uid || window.APP_OWNER_ID || window._currentUserId;
       let q = sb.from('units').select('*').eq('user_id', ownerId);
-      if (type) q = q.eq('type', type);
+      if (type && type !== 'semua') {
+        q = q.or(`type.eq.${type},type.eq.semua`);
+      }
       return q.order('name');
     },
     insert: (data)      => sb.from('units').insert(_withUserId(data)).select().single(),
