@@ -143,13 +143,6 @@ async function openTanamanModal(id) {
           ${['Palma','Lateks','Buah','Gula','Umbi','Serealia'].map(k=>`<option ${t?.kategori===k?'selected':''}>${k}</option>`).join('')}
         </select>
       </div>
-      <div style="flex:1"><label class="form-label">Satuan</label>
-        <select class="form-control" id="f-tSatuan">
-          ${(window._DYNAMIC_SATS||[]).map(s => `<option ${t?.satuan===s.name?'selected':''}>${s.name}</option>`).join('')}
-          ${!(window._DYNAMIC_SATS||[]).some(s=>s.name==='hektar') ? '<option>hektar</option>' : ''}
-          ${!(window._DYNAMIC_SATS||[]).some(s=>s.name==='m2') ? '<option>m2</option>' : ''}
-        </select>
-      </div>
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Luas (ha)</label><input class="form-control" type="number" id="f-tLuas" value="${t?.luas||''}"></div>
@@ -193,7 +186,6 @@ async function openTanamanModal(id) {
       catatan: document.getElementById('f-tCatatan').value,
       emoji: document.getElementById('f-tEmoji').value || '🌱',
       hasil_kg: t?.hasil_kg || 0,
-      satuan: document.getElementById('f-tSatuan').value,
     };
     
     // user_id handled by SB config _withUserId
