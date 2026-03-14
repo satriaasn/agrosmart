@@ -114,7 +114,8 @@ body {
   flex-direction: column;
   position: fixed;
   left: 0; top: 0; bottom: 0;
-  z-index: 100;
+  z-index: 200; /* Higher z-index for mobile overlap */
+  height: 100dvh; /* Use dynamic viewport height */
   transition: width var(--transition), transform var(--transition);
   overflow: hidden;
 }
@@ -342,6 +343,15 @@ body {
   position: sticky;
   top: 0; z-index: 50;
   box-shadow: 0 2px 12px rgba(16, 185, 129, 0.2);
+  transition: background var(--transition);
+}
+
+@media (max-width: 768px) {
+  .top-header {
+    position: fixed;
+    left: 0; right: 0;
+    z-index: 150;
+  }
 }
 
 .header-left { display: flex; align-items: center; gap: 16px; }
@@ -961,10 +971,24 @@ select.form-control { cursor: pointer; appearance: none; background-image: url("
   
   .main-content, .main-content.sidebar-collapsed { 
     margin-left: 0; 
+    padding-top: var(--header-height); /* Offset for fixed header */
     padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 16px);
     width: 100%;
     max-width: 100vw;
     overflow-x: hidden;
+  }
+  
+  .sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 20px;
+  }
+
+  .sidebar-footer {
+    background: var(--bg-sidebar);
+    padding: 12px 16px;
+    margin-top: auto; /* Push to bottom */
+    border-top: 1px solid rgba(0,0,0,0.05);
   }
   
   .bottom-nav { display: block; }
