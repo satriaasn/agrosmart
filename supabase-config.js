@@ -273,6 +273,16 @@ const SB = {
     update: (id, data)  => sb.from('cash_book').update(data).eq('id', id).select().single(),
     remove: (id)        => sb.from('cash_book').delete().eq('id', id),
   },
+  /** CHART OF ACCOUNTS */
+  coa: {
+    fetch:  (uid)      => {
+      let ownerId = uid || window.APP_OWNER_ID || window._currentUserId;
+      return sb.from('chart_of_accounts').select('*').eq('user_id', ownerId).order('account_code');
+    },
+    insert: (data)      => sb.from('chart_of_accounts').insert(_withUserId(data)).select().single(),
+    update: (id, data)  => sb.from('chart_of_accounts').update(data).eq('id', id).select().single(),
+    remove: (id)        => sb.from('chart_of_accounts').delete().eq('id', id),
+  },
   /** AKTIVITAS */
   aktivitas: {
     fetch:  (limit = 10, uid) => {

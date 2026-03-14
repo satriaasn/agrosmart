@@ -455,10 +455,12 @@ window.loadMetadata = async function() {
     return;
   }
 
-  const [{ data: kats, error: kErr }, { data: sats, error: sErr }] = await Promise.all([
+  const [{ data: kats, error: kErr }, { data: sats, error: sErr }, { data: coas }] = await Promise.all([
     SB.expense_categories.fetch(),
-    SB.units.fetch()
+    SB.units.fetch(),
+    SB.coa.fetch()
   ]);
+  window._CACHE_COA = coas || [];
 
   if (kErr || sErr) {
     console.error('Metadata fetch error:', kErr || sErr);
@@ -557,14 +559,22 @@ async function seedDefaults() {
 }
 
 window.openAddKatModal = function() {
+  const coas = window._CACHE_COA || [];
   openModal('Tambah Kategori Biaya', `
     <div class="form-group"><label class="form-label">Nama Kategori</label><input class="form-control" id="f-katNama" placeholder="Contoh: Listrik"></div>
     <div class="form-group"><label class="form-label">Ikon (Emoji)</label><input class="form-control" id="f-katIkon" value="📋"></div>
+    <div class="form-group"><label class="form-label">Hubungkan ke Akun (COA)</label>
+      <select class="form-control" id="f-katCOA">
+        <option value="">-- Tanpa Hubungan --</option>
+        ${coas.filter(a => !a.is_header).map(a => `<option value="${a.id}">${a.account_code} - ${a.account_name}</option>`).join('')}
+      </select>
+    </div>
   `, async () => {
-    const name = document.getElementById('f-katNama').value.trim();
-    const icon = document.getElementById('f-katIkon').value.trim();
+    const name  = document.getElementById('f-katNama').value.trim();
+    const icon  = document.getElementById('f-katIkon').value.trim();
+    const coa_id = document.getElementById('f-katCOA').value || null;
     if (!name) return;
-    await SB.expense_categories.insert({ name, icon });
+    await SB.expense_categories.insert({ name, icon, coa_id });
     showToast('success','Berhasil','Kategori ditambahkan');
     loadMetadata();
   });
