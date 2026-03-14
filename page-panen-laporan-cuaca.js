@@ -353,14 +353,16 @@ async function deletePanen(id) {
 
 /* ---- LAPORAN ---- */
 async function renderLaporan() {
-  const [{ data: listPanen }, { data: listKaryawan }, { data: listLahan }] = await Promise.all([
+  const [{ data: listPanen }, { data: listKaryawan }, { data: listLahan }, { data: listKas }] = await Promise.all([
     SB.panen.fetch(),
     SB.karyawan.fetch(),
-    SB.lahan.fetch()
+    SB.lahan.fetch(),
+    SB.cash_book.fetch()
   ]);
   const arrPanen = listPanen || [];
   const arrKaryawan = listKaryawan || [];
   const arrLahan = listLahan || [];
+  const arrKas = listKas || [];
 
   const MULTIPLIERS = window.APP_MULTIPLIERS || { 'kg': 1, 'ton': 1000 };
   const totalKg = arrPanen.reduce((a, p) => {
@@ -368,7 +370,12 @@ async function renderLaporan() {
     return a + ((p.jumlah || 0) * mult);
   }, 0);
   const totalLahanHa = arrLahan.reduce((a,l)=>a+(l.luas||0),0);
-  const totalPendapatan = arrPanen.reduce((a,p)=>a+(p.total||0),0);
+  const totalPendapatanPanen = arrPanen.reduce((a,p)=>a+(p.total||0),0);
+  
+  // Cash Flow Stats
+  const cashMasuk = arrKas.filter(k=>k.tipe==='masuk').reduce((a,b)=>a+b.jumlah, 0);
+  const cashKeluar = arrKas.filter(k=>k.tipe==='keluar').reduce((a,b)=>a+b.jumlah, 0);
+  const netCashFlow = cashMasuk - cashKeluar;
   
   const displayTotal = totalKg >= 1000 ? (totalKg/1000).toFixed(1) + ' ton' : totalKg.toLocaleString('id-ID') + ' kg';
 

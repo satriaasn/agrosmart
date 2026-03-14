@@ -27,7 +27,7 @@ async function navigate(page) {
   if (bnavEl) bnavEl.classList.add('active');
 
   // Update breadcrumb
-  const labels = { dashboard:'Dashboard', tanaman:'Tanaman', lahan:'Lahan', karyawan:'Karyawan', panen:'Panen', keuangan:'Keuangan', laporan:'Laporan', cuaca:'Cuaca', peta:'Peta Lahan', tim:'Manajemen Tim', profil:'Profil & Pengaturan' };
+  const labels = { dashboard:'Dashboard', tanaman:'Tanaman', lahan:'Lahan', karyawan:'Karyawan', panen:'Panen', kas:'Buku Kas', keuangan:'Keuangan', laporan:'Laporan', cuaca:'Cuaca', peta:'Peta Lahan', tim:'Manajemen Tim', profil:'Profil & Pengaturan' };
   const bc = document.getElementById('breadcrumb');
   if (bc) bc.innerHTML = `<span style="color:var(--text-muted)">AgroSmart</span> <span style="color:var(--text-muted);margin:0 6px">/</span> <span>${labels[page] || page}</span>`;
 
@@ -36,7 +36,7 @@ async function navigate(page) {
   if (!container) return;
 
   // ── Permission Guard untuk operator ──────────────────────────────
-  const gatedPages = ['tanaman','lahan','karyawan','panen','keuangan','laporan','peta','cuaca','tim'];
+  const gatedPages = ['tanaman','lahan','karyawan','panen','kas','keuangan','laporan','peta','cuaca','tim'];
   if (window.APP_ROLE === 'operator' && gatedPages.includes(page)) {
     if (!canAccess(page === 'tim' ? 'lahan' : page)) {
       container.innerHTML = `
@@ -65,6 +65,7 @@ async function navigate(page) {
       case 'lahan':     html = await renderLahan();     break;
       case 'karyawan':  html = await renderKaryawan();  break;
       case 'panen':     html = await renderPanen();     break;
+      case 'kas':       html = await renderKas();       break;
       case 'keuangan':  html = await renderKeuangan();  break;
       case 'keuangan-biaya': html = await renderKeuangan(); break; // Reuse same renderer
       case 'laporan':   html = await renderLaporan();   break;
