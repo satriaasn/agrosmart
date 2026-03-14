@@ -131,9 +131,9 @@ async function openPanenModal(id) {
       </div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Tanggal Panen</label><input class="form-control" type="date" id="f-pTgl" value="${p?.tanggal || new Date().toISOString().slice(0,10)}"></div>
+      <div class="form-group"><label class="form-label">Jumlah Panen *</label><input class="form-control" type="number" id="f-pJml" value="${p?.jumlah||''}" placeholder="0" min="0"></div>
       <div class="form-group">
-        <label class="form-label">Satuan</label>
+        <label class="form-label">Satuan Panen</label>
         <select class="form-control" id="f-pSatuan">
           ${(window._DYNAMIC_SATS_PANEN||[]).map(s => `<option ${(p?.satuan||'kg')===s.name?'selected':''}>${s.name}</option>`).join('')}
           ${!(window._DYNAMIC_SATS_PANEN||[]).some(s=>s.name==='kg') ? '<option>kg</option>' : ''}
@@ -141,14 +141,14 @@ async function openPanenModal(id) {
       </div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Jumlah *</label><input class="form-control" type="number" id="f-pJml" value="${p?.jumlah||''}" placeholder="0" min="0"></div>
+      <div class="form-group"><label class="form-label">Tanggal Panen</label><input class="form-control" type="date" id="f-pTgl" value="${p?.tanggal || new Date().toISOString().slice(0,10)}"></div>
       <div class="form-group">
         <label class="form-label">Harga (Rp) *</label>
         <div style="display:flex;gap:4px">
             <input class="form-control" type="number" id="f-pHarga" value="${p?.harga_raw||p?.harga||''}" placeholder="0" min="0" style="flex:1">
             <select class="form-control" id="f-pHargaTipe" style="width:100px;font-size:11px">
                 <option value="per_kg" ${p?.multiplier_label==='per_kg'?'selected':''}>/ kg</option>
-                <option value="per_satuan" ${p?.multiplier_label==='per_satuan'?'selected':''}>/ unit</option>
+                <option value="per_satuan" ${p?.multiplier_label==='per_satuan'?'selected':''}>/ unit panen</option>
             </select>
         </div>
       </div>
@@ -197,11 +197,20 @@ async function openPanenModal(id) {
             const s = sSelect.value;
             const t = tSelect.value;
             
+            const MULTIPLIERS = {
+              'kg': 1,
+              'ton': 1000,
+              'kwintal': 100,
+              'gram': 0.001,
+              'liter': 1,
+              'buah': 1,
+              'ikat': 1
+            };
+
             if (j > 0 && h > 0) {
                 let multiplier = 1;
                 if (t === 'per_kg') {
-                    if (s === 'ton') multiplier = 1000;
-                    else if (s === 'kwintal') multiplier = 100;
+                    multiplier = MULTIPLIERS[s.toLowerCase()] || 1;
                 }
                 
                 const total = j * h * multiplier;
@@ -257,10 +266,11 @@ async function openPanenModal(id) {
     if (!rawHarga || rawHarga <= 0) { showToast('warning','Gagal','Harga harus lebih dari 0.'); return false; }
 
     // Calculate effective price for database storage (which calculates total as jumlah * harga)
+    const MULTIPLIERS = { 'kg': 1, 'ton': 1000, 'kwintal': 100, 'gram': 0.001, 'liter': 1, 'buah': 1, 'ikat': 1 };
     let effectiveHarga = rawHarga;
     if (multiplierLabel === 'per_kg') {
-      if (satuan === 'ton') effectiveHarga = rawHarga * 1000;
-      else if (satuan === 'kwintal') effectiveHarga = rawHarga * 100;
+      const mult = MULTIPLIERS[satuan.toLowerCase()] || 1;
+      effectiveHarga = rawHarga * mult;
     }
 
     const data = {
