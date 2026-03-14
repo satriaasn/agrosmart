@@ -3,8 +3,12 @@
    ============================================= */
 
 async function renderKas() {
-  const { data: listKas } = await SB.cash_book.fetch();
+  const [{ data: listKas }, { data: listCOA }] = await Promise.all([
+    SB.cash_book.fetch(),
+    SB.coa.fetch()
+  ]);
   const arrKas = listKas || [];
+  const arrCOA = listCOA || [];
 
   const totalMasuk = arrKas.filter(k => k.tipe === 'masuk').reduce((a, b) => a + (b.jumlah || 0), 0);
   const totalKeluar = arrKas.filter(k => k.tipe === 'keluar').reduce((a, b) => a + (b.jumlah || 0), 0);
@@ -47,7 +51,7 @@ async function renderKas() {
           <tr>
             <th>Tanggal</th>
             <th>Tipe</th>
-            <th>Kategori</th>
+            <th>Akun & Kategori</th>
             <th>Deskripsi</th>
             <th style="text-align:right">Jumlah (Rp)</th>
             <th style="text-align:right">Aksi</th>
@@ -62,7 +66,15 @@ async function renderKas() {
                   ${k.tipe === 'masuk' ? '🟢 MASUK' : '🔴 KELUAR'}
                 </span>
               </td>
-              <td style="font-weight:600; font-size:13px">${k.kategori}</td>
+              <td>
+                <div style="font-weight:700; font-size:12px; color:var(--text-primary)">
+                  ${(() => {
+                    const coa = arrCOA.find(a => String(a.id) === String(k.coa_id));
+                    return coa ? `[${coa.account_code}] ${coa.account_name}` : k.kategori;
+                  })()}
+                </div>
+                <div style="font-size:10px; color:var(--text-muted)">${k.kategori}</div>
+              </td>
               <td style="color:var(--text-secondary); font-size:12px">${k.deskripsi || '-'}</td>
               <td style="text-align:right; font-weight:700; color:${k.tipe === 'masuk' ? 'var(--emerald-400)' : 'var(--red-400)'}">
                 ${k.tipe === 'masuk' ? '+' : '-'} ${k.jumlah.toLocaleString('id-ID')}
@@ -136,7 +148,8 @@ async function openKasModal(id) {
       tanggal: document.getElementById('f-kasTgl').value,
       jumlah: parseFloat(document.getElementById('f-kasJml').value) || 0,
       kategori: document.getElementById('f-kasKat').value || 'Lainnya',
-      deskripsi: document.getElementById('f-kasDesc').value
+      deskripsi: document.getElementById('f-kasDesc').value,
+      coa_id: null // Manual entry might need COA selection too, but user asked for Biaya/Panen sync specifically.
     };
 
     if (data.jumlah <= 0) return showToast('danger', 'Error', 'Jumlah harus lebih dari 0');

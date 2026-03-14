@@ -340,12 +340,13 @@ async function showLahanDetail(lahanNama) {
 }
 
 // ─── Add/Edit Biaya Modal ─────────────────────────────────────────────────────
-async function openBiayaModal(id) {
-  const [{ data: listBiaya }, { data: listLahan }] = await Promise.all([
+  const [{ data: listBiaya }, { data: listLahan }, { data: listCOA }] = await Promise.all([
     SB.biaya.fetch(),
-    SB.lahan.fetch()
+    SB.lahan.fetch(),
+    SB.coa.fetch()
   ]);
   const arrLahan = listLahan || [];
+  const arrCOA   = (listCOA || []).filter(a => !a.is_header && a.account_type === 'Expense');
   
   let b = null;
   if (id) b = (listBiaya||[]).find(x => String(x.id) === String(id));
@@ -358,24 +359,34 @@ async function openBiayaModal(id) {
 
   openModal(b ? 'Edit Pos Biaya' : 'Tambah Biaya Operasional', `
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Blok Lahan</label>
+      <div class="form-group"><label class="form-label">Blok Lahan *</label>
         <select class="form-control" id="f-bLahan">
           ${arrLahan.map(l=>`<option ${b?.lahan===l.nama?'selected':''}>${l.nama}</option>`).join('')}
         </select>
       </div>
-      <div class="form-group"><label class="form-label">Tanggal</label>
+      <div class="form-group"><label class="form-label">Tanggal *</label>
         <input class="form-control" type="date" id="f-bTgl" value="${b?.tanggal||new Date().toISOString().slice(0,10)}">
       </div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Kategori Biaya</label>
+      <div class="form-group"><label class="form-label">Kategori Biaya *</label>
         <select class="form-control" id="f-bKat">
           ${Object.keys(BIAYA_COLORS).map(k=>`<option ${b?.kategori===k?'selected':''}>${k}</option>`).join('')}
         </select>
       </div>
-      <div class="form-group"><label class="form-label">Deskripsi</label>
-        <input class="form-control" id="f-bDesc" value="${b?.deskripsi||''}" placeholder="cth. Pupuk NPK 25 kg">
+      <div class="form-group"><label class="form-label">Akun COA (Accounting) *</label>
+        <select class="form-control" id="f-bCOA">
+          <option value="">— Pilih Akun Beban —</option>
+          ${arrCOA.map(a=>(`
+            <option value="${a.id}" ${String(b?.coa_id)===String(a.id)?'selected':''}>
+              [${a.account_code}] ${a.account_name}
+            </option>
+          `)).join('')}
+        </select>
       </div>
+    </div>
+    <div class="form-group"><label class="form-label">Deskripsi / Vendor *</label>
+      <input class="form-control" id="f-bDesc" value="${b?.deskripsi||''}" placeholder="cth. Pupuk NPK 25 kg dari Toko Tani">
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Jumlah</label>
@@ -398,37 +409,64 @@ async function openBiayaModal(id) {
       </div>
     </div>
   `, async () => {
-    const lahan = document.getElementById('f-bLahan').value;
-    const kat   = document.getElementById('f-bKat').value;
-    const desc  = document.getElementById('f-bDesc').value.trim();
-    const jml   = parseFloat(document.getElementById('f-bJml').value);
-    const sat   = document.getElementById('f-bSat').value;
-    const harga = parseFloat(document.getElementById('f-bHarga').value);
-    const total = parseFloat(document.getElementById('f-bTotal').value);
+    const coa_id = document.getElementById('f-bCOA').value;
+    const tgl    = document.getElementById('f-bTgl').value;
 
     if (!desc || !total) { showToast('danger','Gagal','Deskripsi dan total biaya wajib diisi.'); return; }
+    if (!coa_id) { showToast('warning','Peringatan','Mohon pilih akun COA untuk pencatatan akuntansi.'); return; }
 
     const data = { 
       lahan, 
-      tanggal: document.getElementById('f-bTgl').value, 
+      tanggal: tgl, 
       kategori: kat, 
       deskripsi: desc, 
       jumlah: jml||0, 
       satuan: sat, 
-      harga_satuan: harga||0
-      // total adalah GENERATED ALWAYS AS (jumlah * harga_satuan), tidak perlu dikirim
+      harga_satuan: harga||0,
+      coa_id: parseInt(coa_id)
     };
     
-    // user_id handled by SB config _withUserId
+    try {
+      let savedBiaya;
+      if (b) { 
+        const { data: res } = await SB.biaya.update(b.id, data);
+        savedBiaya = res; 
+        showToast('success','Berhasil','Data biaya diperbarui.'); 
+      } else { 
+        const { data: res } = await SB.biaya.insert(data);
+        savedBiaya = res; 
+        showToast('success','Berhasil','Biaya baru ditambahkan.'); 
+      }
 
-    if (b) { 
-      await SB.biaya.update(b.id, data); 
-      showToast('success','Berhasil','Data biaya diperbarui.'); 
-    } else { 
-      await SB.biaya.insert(data); 
-      showToast('success','Berhasil','Biaya baru ditambahkan.'); 
+      // --- SYNC TO CASH BOOK ---
+      if (savedBiaya) {
+        const cashData = {
+          tipe: 'keluar',
+          tanggal: tgl,
+          jumlah: total,
+          kategori: kat,
+          coa_id: parseInt(coa_id),
+          deskripsi: `[Biaya Lahan: ${lahan}] ${desc}`,
+          ref_id: savedBiaya.id,
+          ref_type: 'biaya'
+        };
+
+        // Check if cash entry exists
+        const { data: existingCash } = await sb.from('cash_book').select('id').eq('ref_id', savedBiaya.id).eq('ref_type', 'biaya').maybeSingle();
+        
+        if (existingCash) {
+          await SB.cash_book.update(existingCash.id, cashData);
+        } else {
+          await SB.cash_book.insert(cashData);
+        }
+      }
+
+      navigate('keuangan');
+    } catch (err) {
+      console.error('Accounting Sync Error:', err);
+      showToast('danger', 'Error Sync', 'Data tersimpan tapi gagal sinkron ke Buku Kas.');
+      navigate('keuangan');
     }
-    navigate('keuangan');
   });
 }
 
@@ -441,9 +479,13 @@ function hitungTotalBiaya() {
 
 function editBiaya(id) { openBiayaModal(id); }
 async function deleteBiaya(id) {
-  if(!confirm('Yakin hapus biaya ini?')) return;
+  if(!confirm('Yakin hapus biaya ini? Transaksi di Buku Kas juga akan dihapus.')) return;
+  
+  // Delete linked cash book entry first
+  await sb.from('cash_book').delete().eq('ref_id', id).eq('ref_type', 'biaya');
+  
   await SB.biaya.remove(id);
-  showToast('success','Dihapus','Pos biaya dihapus.');
+  showToast('success','Dihapus','Pos biaya dan transaksi kas dihapus.');
   navigate('keuangan');
 }
 

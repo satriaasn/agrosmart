@@ -90,16 +90,18 @@ async function renderPanen() {
 }
 
 async function openPanenModal(id) {
-  const [{ data: listPanen }, { data: listTanaman }, { data: listLahan }, { data: listKaryawan }] = await Promise.all([
+  const [{ data: listPanen }, { data: listTanaman }, { data: listLahan }, { data: listKaryawan }, { data: listCOA }] = await Promise.all([
     SB.panen.fetch(),
     SB.tanaman.fetch(),
     SB.lahan.fetch(),
-    SB.karyawan.fetch()
+    SB.karyawan.fetch(),
+    SB.coa.fetch()
   ]);
   const arrPanen    = listPanen    || [];
   const arrTanaman  = listTanaman  || [];
   const arrLahan    = listLahan    || [];
   const arrKaryawan = listKaryawan || [];
+  const arrCOA      = (listCOA || []).filter(a => !a.is_header && a.account_type === 'Revenue');
 
   // Simpan data tanaman semua ke window agar bisa diakses cascade handler
   window._allTanaman = arrTanaman;
@@ -171,12 +173,22 @@ async function openPanenModal(id) {
           ${['Super','A','B','C'].map(k => `<option ${(p?.kualitas||'A')===k?'selected':''}>${k}</option>`).join('')}
         </select>
       </div>
-      <div class="form-group"><label class="form-label">Penanggung Jawab</label>
-        <select class="form-control" id="f-pKary">
-          <option value="">— Pilih karyawan —</option>
-          ${arrKaryawan.map(k => `<option ${p?.karyawan===k.nama?'selected':''}>${k.nama}</option>`).join('')}
+      <div class="form-group"><label class="form-label">Akun COA (Pendapatan) *</label>
+        <select class="form-control" id="f-pCOA">
+          <option value="">— Pilih Akun Pendapatan —</option>
+          ${arrCOA.map(a=>(`
+            <option value="${a.id}" ${String(p?.coa_id)===String(a.id)?'selected':''}>
+              [${a.account_code}] ${a.account_name}
+            </option>
+          `)).join('')}
         </select>
       </div>
+    </div>
+    <div class="form-group"><label class="form-label">Penanggung Jawab</label>
+      <select class="form-control" id="f-pKary">
+        <option value="">— Pilih karyawan —</option>
+        ${arrKaryawan.map(k => `<option ${p?.karyawan===k.nama?'selected':''}>${k.nama}</option>`).join('')}
+      </select>
     </div>
     <div id="previewTotal" style="margin-top:12px;padding:16px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:14px;display:none">
       <div style="display:flex;justify-content:space-between;align-items:center">
@@ -272,10 +284,13 @@ async function openPanenModal(id) {
     const satuan  = satuanSelect.value;
     const multiplierLabel = multiplierSelect.value || 'per_kg';
 
+    const coa_id  = document.getElementById('f-pCOA').value;
+
     if (!lahan)   { showToast('warning','Gagal','Pilih blok lahan terlebih dahulu.'); return false; }
     if (!tanaman) { showToast('warning','Gagal','Pilih tanaman terlebih dahulu.'); return false; }
     if (!jumlah || jumlah <= 0) { showToast('warning','Gagal','Jumlah harus lebih dari 0.'); return false; }
     if (!rawHarga || rawHarga <= 0) { showToast('warning','Gagal','Harga harus lebih dari 0.'); return false; }
+    if (!coa_id) { showToast('warning','Peringatan','Mohon pilih akun COA untuk pencatatan pendapatan.'); return false; }
 
     // Calculate effective price for database storage (which calculates total as jumlah * harga)
     const MULTIPLIERS = { 'kg': 1, 'ton': 1000, 'kwintal': 100, 'gram': 0.001, 'liter': 1, 'buah': 1, 'ikat': 1 };
@@ -295,24 +310,52 @@ async function openPanenModal(id) {
       harga:    effectiveHarga,
       multiplier_label: multiplierLabel,
       harga_raw: rawHarga, 
-      karyawan: karySelect.value || null
+      karyawan: karySelect.value || null,
+      coa_id: parseInt(coa_id)
     };
 
-    // user_id handled by SB config _withUserId
-
     try {
+      let savedPanen;
       if (p?.id) {
-        await SB.panen.update(p.id, data);
+        const { data: res } = await SB.panen.update(p.id, data);
+        savedPanen = res;
         showToast('success', 'Berhasil', 'Catatan panen diperbarui.');
       } else {
-        await SB.panen.insert(data);
+        const { data: res } = await SB.panen.insert(data);
+        savedPanen = res;
         showToast('success', 'Berhasil', 'Catatan panen disimpan.');
       }
+
+      // --- SYNC TO CASH BOOK ---
+      if (savedPanen) {
+        const totalRp = (savedPanen.jumlah || 0) * (savedPanen.harga || 0);
+        const cashData = {
+          tipe: 'masuk',
+          tanggal: savedPanen.tanggal,
+          jumlah: totalRp,
+          kategori: 'Hasil Panen',
+          coa_id: parseInt(coa_id),
+          deskripsi: `[Panen Lahan: ${lahan}] ${tanaman} (${savedPanen.jumlah} ${savedPanen.satuan})`,
+          ref_id: savedPanen.id,
+          ref_type: 'panen'
+        };
+
+        // Check if cash entry exists
+        const { data: existingCash } = await sb.from('cash_book').select('id').eq('ref_id', savedPanen.id).eq('ref_type', 'panen').maybeSingle();
+        
+        if (existingCash) {
+          await SB.cash_book.update(existingCash.id, cashData);
+        } else {
+          await SB.cash_book.insert(cashData);
+        }
+      }
+
       closeModal();
       navigate('panen');
     } catch (err) {
-      console.error('Save error:', err);
-      showToast('danger', 'Error', 'Gagal menyimpan data: ' + err.message);
+      console.error('Accounting Sync Error:', err);
+      showToast('danger', 'Error Sync', 'Data tersimpan tapi gagal sinkron ke Buku Kas.');
+      navigate('panen');
     }
   });
 }
@@ -344,9 +387,13 @@ window.cascadeTanamanByLahan = function(lahanNama) {
 
 function editPanen(id)  { openPanenModal(id); }
 async function deletePanen(id) {
-  if (!confirm('Yakin hapus catatan panen ini?')) return;
+  if (!confirm('Yakin hapus catatan panen ini? Transaksi di Buku Kas juga akan dihapus.')) return;
+  
+  // Delete linked cash book entry first
+  await sb.from('cash_book').delete().eq('ref_id', id).eq('ref_type', 'panen');
+  
   await SB.panen.remove(id);
-  showToast('success', 'Dihapus', 'Catatan panen dihapus.');
+  showToast('success', 'Dihapus', 'Catatan panen dan transaksi kas dihapus.');
   navigate('panen');
 }
 
