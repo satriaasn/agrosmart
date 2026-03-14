@@ -375,8 +375,8 @@ async function openBiayaModal(id) {
           ${Object.keys(BIAYA_COLORS).map(k=>`<option ${b?.kategori===k?'selected':''}>${k}</option>`).join('')}
         </select>
       </div>
-      <div class="form-group"><label class="form-label">Akun COA (Accounting) *</label>
-        <select class="form-control" id="f-bCOA">
+      <div class="form-group"><label class="form-label">Akun COA (Accounting)</label>
+        <select class="form-control" id="f-bCOA" disabled style="background:var(--bg-input); cursor:not-allowed">
           <option value="">— Pilih Akun Beban —</option>
           ${arrCOA.map(a=>(`
             <option value="${a.id}" ${String(b?.coa_id)===String(a.id)?'selected':''}>
@@ -384,11 +384,32 @@ async function openBiayaModal(id) {
             </option>
           `)).join('')}
         </select>
+        <div style="font-size:10px; color:var(--text-muted); margin-top:2px">Ditentukan otomatis berdasarkan kategori biaya.</div>
       </div>
     </div>
     <div class="form-group"><label class="form-label">Deskripsi / Vendor *</label>
       <input class="form-control" id="f-bDesc" value="${b?.deskripsi||''}" placeholder="cth. Pupuk NPK 25 kg dari Toko Tani">
     </div>
+    <script>
+      (function() {
+        const katSelect = document.getElementById('f-bKat');
+        const coaSelect = document.getElementById('f-bCOA');
+        const dynamicKats = window._DYNAMIC_KATS || [];
+
+        function updateCOA() {
+          const selectedKat = katSelect.value;
+          const catObj = dynamicKats.find(k => k.name === selectedKat);
+          if (catObj && catObj.coa_id) {
+            coaSelect.value = catObj.coa_id;
+          } else {
+            coaSelect.value = "";
+          }
+        }
+
+        katSelect.addEventListener('change', updateCOA);
+        if (!'${b?.id || ''}') setTimeout(updateCOA, 100); 
+      })();
+    </script>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Jumlah</label>
         <input class="form-control" type="number" step="0.01" id="f-bJml" value="${b?.jumlah||''}" oninput="hitungTotalBiaya()">
@@ -410,6 +431,13 @@ async function openBiayaModal(id) {
       </div>
     </div>
   `, async () => {
+    const lahan = document.getElementById('f-bLahan').value;
+    const kat   = document.getElementById('f-bKat').value;
+    const desc  = document.getElementById('f-bDesc').value.trim();
+    const jml   = parseFloat(document.getElementById('f-bJml').value);
+    const sat   = document.getElementById('f-bSat').value;
+    const harga = parseFloat(document.getElementById('f-bHarga').value);
+    const total = parseFloat(document.getElementById('f-bTotal').value);
     const coa_id = document.getElementById('f-bCOA').value;
     const tgl    = document.getElementById('f-bTgl').value;
 

@@ -444,6 +444,11 @@ async function renderLaporan() {
           <div class="stat-value" style="font-size:22px">Rp ${cashMasuk.toLocaleString('id-ID')}</div>
           <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Uang nyata yang masuk ke kas</div>
         </div>
+        <div class="stat-card" style="--card-accent:#ef4444">
+          <div class="stat-header"><span class="stat-label">Arus Kas Keluar</span><div class="stat-icon-wrapper">📤</div></div>
+          <div class="stat-value" style="font-size:22px">Rp ${cashKeluar.toLocaleString('id-ID')}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Uang nyata yang keluar dari kas</div>
+        </div>
         <div class="stat-card" style="--card-accent:${netCashFlow < 0 ? '#ef4444' : '#14b8a6'}">
           <div class="stat-header"><span class="stat-label">Net Cash Flow</span><div class="stat-icon-wrapper">📊</div></div>
           <div class="stat-value" style="font-size:22px">Rp ${netCashFlow.toLocaleString('id-ID')}</div>
