@@ -302,12 +302,14 @@ async function initUserProfile() {
     window._currentUserId = session.user.id;
 
     // 1. Load basic role info
-    await getMyRole(session.user.id); // Sets window.APP_ROLE
+    const role = await getMyRole(session.user.id); // Sets window.APP_ROLE
+    console.log('[DEBUG] User Role Detected:', role);
     
     let profile = await loadProfile(session.user.id);
     
     // 2. Handle Operator Context
     if (isOperator()) {
+      console.log('[DEBUG] Role is operator, loading context...');
       const opData = await initOperatorContext(session.user.id); // Sets window.APP_OWNER_ID + APP_PERMISSIONS
       if (opData && opData.owner_id) {
         // Fetch owner's profile to get business name
@@ -332,6 +334,7 @@ async function initUserProfile() {
     if (aEl) aEl.textContent = initials;
 
     applyRoleUI(window.APP_ROLE, window.APP_PERMISSIONS);
+    console.log('[DEBUG] User profile & context initialized successfully.');
 
   } catch (e) {
     console.error('initUserProfile error:', e);

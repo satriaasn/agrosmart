@@ -20,6 +20,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 window.APP_ROLE        = null;   // 'superadmin' | 'owner' | 'operator'
 window.APP_PERMISSIONS = null;   // null (owner/superadmin = full) | jsonb object (operator)
 window.APP_OWNER_ID    = null;   // untuk operator: UUID pemilik bisnis
+window.APP_ASSIGNED_LAHAN = [];     // untuk filtering lahan
 window.APP_ASSIGNED_LAHAN_NAMES = []; // untuk filtering modul (Tanaman, Biaya)
 
 // ─── Auth Helpers ─────────────────────────────────────────────────────────────
@@ -74,13 +75,21 @@ function isOperator()   { return window.APP_ROLE === 'operator'; }
  * — ambil owner_id dan permissions dari team_members
  */
 async function initOperatorContext(userId) {
-  const { data } = await sb
+  console.log('[DEBUG] initOperatorContext for:', userId);
+  const { data, error } = await sb
     .from('team_members')
     .select('owner_id, permissions, assigned_lahan, role_label, status')
     .eq('user_id', userId)
     .eq('status', 'active')
-    .single();
+    .maybeSingle(); // maybeSingle doesn't error on 0 rows
+  
+  if (error) {
+    console.error('[DEBUG] initOperatorContext Error:', error.message);
+    return null;
+  }
+  
   if (data) {
+    console.log('[DEBUG] initOperatorContext Found Data:', data);
     window.APP_OWNER_ID    = data.owner_id;
     window.APP_PERMISSIONS = data.permissions;
     window.APP_ASSIGNED_LAHAN = data.assigned_lahan || [];
@@ -89,7 +98,10 @@ async function initOperatorContext(userId) {
     if (window.APP_ASSIGNED_LAHAN.length > 0) {
       const { data: names } = await sb.from('lahan').select('nama').in('id', window.APP_ASSIGNED_LAHAN);
       window.APP_ASSIGNED_LAHAN_NAMES = (names || []).map(n => n.nama);
+      console.log('[DEBUG] Assigned Lahan Names:', window.APP_ASSIGNED_LAHAN_NAMES);
     }
+  } else {
+    console.warn('[DEBUG] initOperatorContext: No active team member row found for this user.');
   }
   return data;
 }
@@ -133,11 +145,18 @@ const SB = {
   lahan: {
     fetch:  (uid)       => {
       let ownerId = uid || window.APP_OWNER_ID || window._currentUserId;
+      console.log('[DEBUG] lahan.fetch ownerId:', ownerId, 'isOperator:', isOperator());
       let q = sb.from('lahan').select('*').eq('user_id', ownerId).order('created_at');
       
       // Filter lahan spesifik untuk operator
-      if (isOperator() && window.APP_ASSIGNED_LAHAN && window.APP_ASSIGNED_LAHAN.length > 0) {
-        q = q.in('id', window.APP_ASSIGNED_LAHAN);
+      if (isOperator() && window.APP_OWNER_ID) {
+        const assigned = window.APP_ASSIGNED_LAHAN || [];
+        console.log('[DEBUG] lahan.fetch operator assigned:', assigned);
+        if (assigned.length > 0) {
+          q = q.in('id', assigned);
+        } else {
+          q = q.eq('id', -1); 
+        }
       }
       return q;
     },
@@ -149,14 +168,18 @@ const SB = {
   tanaman: {
     fetch:  (uid)       => {
       let ownerId = uid || window.APP_OWNER_ID || window._currentUserId;
+      console.log('[DEBUG] tanaman.fetch ownerId:', ownerId, 'isOperator:', isOperator());
       let q = sb.from('tanaman').select('*').eq('user_id', ownerId).order('created_at');
 
       // Filter tanaman berdasarkan lahan (string) yang diijinkan
-      if (isOperator() && window.APP_ASSIGNED_LAHAN_NAMES && window.APP_ASSIGNED_LAHAN_NAMES.length > 0) {
-         // Karena filter string 'in' di Supabase sulit untuk 'comma separated', 
-         // idealnya filter ini dilakukan di JS jika datanya tidak terlalu besar.
-         // Tapi kita coba dengan filter IN jika kolom lahan hanya berisi satu nama per tanaman.
-         q = q.in('lahan', window.APP_ASSIGNED_LAHAN_NAMES);
+      if (isOperator() && window.APP_OWNER_ID) {
+         const assignedNames = window.APP_ASSIGNED_LAHAN_NAMES || [];
+         console.log('[DEBUG] tanaman.fetch operator assignedNames:', assignedNames);
+         if (assignedNames.length > 0) {
+           q = q.in('lahan', assignedNames);
+         } else {
+           q = q.eq('lahan', '___NONE___'); 
+         }
       }
       return q;
     },
@@ -179,10 +202,16 @@ const SB = {
   panen: {
     fetch:  (uid)       => {
       let ownerId = uid || window.APP_OWNER_ID || window._currentUserId;
+      console.log('[DEBUG] panen.fetch ownerId:', ownerId);
       let q = sb.from('panen').select('*').eq('user_id', ownerId).order('tanggal', { ascending: false });
       
-      if (isOperator() && window.APP_ASSIGNED_LAHAN_NAMES && window.APP_ASSIGNED_LAHAN_NAMES.length > 0) {
-        q = q.in('lahan', window.APP_ASSIGNED_LAHAN_NAMES);
+      if (isOperator() && window.APP_OWNER_ID) {
+        const assignedNames = window.APP_ASSIGNED_LAHAN_NAMES || [];
+        if (assignedNames.length > 0) {
+          q = q.in('lahan', assignedNames);
+        } else {
+          q = q.eq('lahan', '___NONE___');
+        }
       }
       return q;
     },
@@ -194,10 +223,16 @@ const SB = {
   biaya: {
     fetch:  (uid)       => {
       let ownerId = uid || window.APP_OWNER_ID || window._currentUserId;
+      console.log('[DEBUG] biaya.fetch ownerId:', ownerId);
       let q = sb.from('biaya').select('*').eq('user_id', ownerId).order('tanggal', { ascending: false });
       
-      if (isOperator() && window.APP_ASSIGNED_LAHAN_NAMES && window.APP_ASSIGNED_LAHAN_NAMES.length > 0) {
-        q = q.in('lahan', window.APP_ASSIGNED_LAHAN_NAMES);
+      if (isOperator() && window.APP_OWNER_ID) {
+        const assignedNames = window.APP_ASSIGNED_LAHAN_NAMES || [];
+        if (assignedNames.length > 0) {
+          q = q.in('lahan', assignedNames);
+        } else {
+          q = q.eq('lahan', '___NONE___');
+        }
       }
       return q;
     },
@@ -208,8 +243,10 @@ const SB = {
   /** AKTIVITAS */
   aktivitas: {
     fetch:  (limit = 10, uid) => {
-      let ownerId = uid || window.APP_OWNER_ID || window._currentUserId;
-      let q = sb.from('aktivitas').select('*').eq('user_id', ownerId).order('created_at', { ascending: false }).limit(limit);
+      // Fix: jika limit diteruskan sbg angka, jangan gunakan sbg ownerId
+      let ownerId = (typeof limit === 'string' && limit.length > 20) ? limit : (uid || window.APP_OWNER_ID || window._currentUserId);
+      console.log('[DEBUG] aktivitas.fetch ownerId:', ownerId, 'limit:', limit);
+      let q = sb.from('aktivitas').select('*').eq('user_id', ownerId).order('created_at', { ascending: false }).limit(typeof limit === 'number' ? limit : 10);
       return q;
     },
     insert: (judul, desc)=> sb.from('aktivitas').insert(_withUserId({ judul, deskripsi: desc })),
