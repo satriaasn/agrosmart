@@ -353,18 +353,30 @@ async function deletePanen(id) {
 
 /* ---- LAPORAN ---- */
 async function renderLaporan() {
-  const [{ data: listPanen }, { data: listKaryawan }] = await Promise.all([
+  const [{ data: listPanen }, { data: listKaryawan }, { data: listLahan }] = await Promise.all([
     SB.panen.fetch(),
-    SB.karyawan.fetch()
+    SB.karyawan.fetch(),
+    SB.lahan.fetch()
   ]);
   const arrPanen = listPanen || [];
   const arrKaryawan = listKaryawan || [];
+  const arrLahan = listLahan || [];
+
+  const MULTIPLIERS = window.APP_MULTIPLIERS || { 'kg': 1, 'ton': 1000 };
+  const totalKg = arrPanen.reduce((a, p) => {
+    const mult = MULTIPLIERS[(p.satuan || 'kg').toLowerCase()] || 1;
+    return a + ((p.jumlah || 0) * mult);
+  }, 0);
+  const totalLahanHa = arrLahan.reduce((a,l)=>a+(l.luas||0),0);
+  const totalPendapatan = arrPanen.reduce((a,p)=>a+(p.total||0),0);
+  
+  const displayTotal = totalKg >= 1000 ? (totalKg/1000).toFixed(1) + ' ton' : totalKg.toLocaleString('id-ID') + ' kg';
 
   return `
   <div class="page-header">
     <div>
       <div class="page-title">Laporan & Analitik</div>
-      <div class="page-subtitle">Analisis performa perkebunan Anda secara lengkap.</div>
+      <div class="page-subtitle">Ringkasan performa perkebunan secara visual dan mendalam.</div>
     </div>
     <div class="page-actions">
       <button class="btn btn-secondary" onclick="showToast('info','Ekspor','Laporan berhasil diekspor ke PDF.')">
@@ -376,8 +388,19 @@ async function renderLaporan() {
 
   <div class="grid-2" style="margin-bottom:22px">
     <div class="card">
-      <div class="section-title">Produksi per Tanaman (Bulan Ini)</div>
-      <div class="chart-container" style="height:240px"><canvas id="chartDonut"></canvas></div>
+      <div class="section-title">Ringkasan Performa</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        ${[
+          { label:'Total Luas Lahan', val: totalLahanHa + ' ha', color:'var(--emerald-400)' },
+          { label:'Total Produksi', val: displayTotal, color:'var(--green-400)' },
+          { label:'Total Pendapatan', val:'Rp '+totalPendapatan.toLocaleString('id-ID'), color:'var(--emerald-400)' },
+        ].map(r=>`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg-secondary);border-radius:8px">
+            <span style="font-size:13px;color:var(--text-secondary)">${r.label}</span>
+            <span style="font-weight:700;font-size:14px;color:${r.color}">${r.val}</span>
+          </div>
+        `).join('')}
+      </div>
     </div>
     <div class="card">
       <div class="section-title">Pendapatan per Tanaman (Rp juta)</div>
@@ -395,9 +418,9 @@ async function renderLaporan() {
       <div class="section-title">Ringkasan Keuangan</div>
       <div style="display:flex;flex-direction:column;gap:12px">
         ${[
-          { label:'Total Pendapatan Panen', val:'Rp '+arrPanen.reduce((a,p)=>a+(p.total||0),0).toLocaleString('id-ID'), color:'var(--green-400)' },
+          { label:'Total Pendapatan Panen', val:'Rp '+totalPendapatan.toLocaleString('id-ID'), color:'var(--green-400)' },
           { label:'Estimasi Biaya Operasional', val:'Rp 38.500.000', color:'var(--red-400)' },
-          { label:'Laba Bersih Estimasi', val:'Rp '+(arrPanen.reduce((a,p)=>a+(p.total||0),0)-38500000).toLocaleString('id-ID'), color:'var(--blue-400)' },
+          { label:'Laba Bersih Estimasi', val:'Rp '+(totalPendapatan-38500000).toLocaleString('id-ID'), color:'var(--blue-400)' },
           { label:'Total Gaji Karyawan', val:'Rp '+arrKaryawan.reduce((a,k)=>a+(k.gaji||0),0).toLocaleString('id-ID'), color:'var(--amber-400)' },
         ].map(r=>`
           <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg-secondary);border-radius:8px">
@@ -420,11 +443,12 @@ async function initLaporanCharts() {
 
   const colors = ['#16a34a','#059669','#0d9488','#15803d','#166534','#14532d','#365314','#713f12'];
 
+  const MULTIPLIERS = window.APP_MULTIPLIERS || { 'kg': 1, 'ton': 1000 };
   const ctxD = document.getElementById('chartDonut');
   if (ctxD && !ctxD._chart) {
     ctxD._chart = new Chart(ctxD, { type: 'doughnut', data: {
       labels: arrPanen.map(p=>p.tanaman),
-      datasets: [{ data: arrPanen.map(p=>p.jumlah), backgroundColor: colors, borderWidth: 0, hoverOffset: 8 }]
+      datasets: [{ data: arrPanen.map(p => (p.jumlah||0) * (MULTIPLIERS[(p.satuan||'kg').toLowerCase()]||1)), backgroundColor: colors, borderWidth: 0, hoverOffset: 8 }]
     }, options: { responsive:true, maintainAspectRatio:false, plugins: { legend: { position:'right', labels: { color:'#a3b5a8', font:{size:11} } } } } });
   }
 

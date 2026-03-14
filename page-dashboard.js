@@ -17,8 +17,16 @@ async function renderDashboard() {
   
   const totalLahanHa = arrLahan.reduce((a,l) => a + (l.luas||0), 0);
   const totalKaryawan = arrKaryawan.length;
-  const totalPanen = arrPanen.reduce((a,p) => a + (p.jumlah||0), 0);
+  
+  const totalKg = arrPanen.reduce((a, p) => {
+    const mult = window.APP_MULTIPLIERS[(p.satuan || 'kg').toLowerCase()] || 1;
+    return a + ((p.jumlah || 0) * mult);
+  }, 0);
+  
   const totalPendapatan = arrPanen.reduce((a,p) => a + (p.total||0), 0);
+
+  const displayTotal = totalKg >= 1000 ? (totalKg/1000).toFixed(1) : totalKg.toLocaleString('id-ID');
+  const unitTotal = totalKg >= 1000 ? 'ton' : 'kg';
 
   return `
   <div class="page-header">
@@ -79,7 +87,7 @@ async function renderDashboard() {
           </span>
         </div>
         <p style="color:var(--text-muted); font-size:12px; font-weight:600; margin:0;">Produksi Total</p>
-        <h3 style="font-size:24px; font-weight:700; margin:4px 0 0 0; color:var(--text-primary);">${(totalPanen/1000).toFixed(1)} <span style="font-size:16px;color:var(--text-secondary)">ton</span></h3>
+        <h3 style="font-size:24px; font-weight:700; margin:4px 0 0 0; color:var(--text-primary);">${displayTotal} <span style="font-size:16px;color:var(--text-secondary)">${unitTotal}</span></h3>
       </div>
 
       <!-- Card 3 -->

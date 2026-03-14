@@ -55,7 +55,7 @@ function tanamanCard(t) {
       <div class="grid-3" style="gap:8px;margin-bottom:12px">
         <div><div style="font-size:10px;color:var(--text-muted);font-weight:600">LUAS</div><div style="font-size:13px;font-weight:600">${t.luas} ha</div></div>
         <div><div style="font-size:10px;color:var(--text-muted);font-weight:600">UMUR</div><div style="font-size:13px;font-weight:600">${t.umur}</div></div>
-        <div><div style="font-size:10px;color:var(--text-muted);font-weight:600">HASIL</div><div style="font-size:13px;font-weight:600">${((t.hasil_kg||0)/1000).toFixed(1)}t</div></div>
+        <div><div style="font-size:10px;color:var(--text-muted);font-weight:600">HASIL</div><div style="font-size:13px;font-weight:600">${(t.hasil_kg||0) < 1000 ? (t.hasil_kg||0).toFixed(0)+'kg' : ((t.hasil_kg||0)/1000).toFixed(1)+'t'}</div></div>
       </div>
       <div class="tanaman-footer">
         <span style="font-size:11px;color:var(--text-muted)">💡 ${t.catatan||''}</span>

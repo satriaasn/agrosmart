@@ -9,6 +9,8 @@
 let currentPage = 'dashboard';
 let sidebarCollapsed = false;
 let currentModalSave = null;
+// ─── Global Constants ───────────────────────────────────────────────────────
+window.APP_MULTIPLIERS = { 'kg': 1, 'ton': 1000, 'kwintal': 100, 'gram': 0.001, 'liter': 1, 'buah': 1, 'ikat': 1 };
 
 // ─── Navigate ─────────────────────────────────────────────────────────────────
 async function navigate(page) {
