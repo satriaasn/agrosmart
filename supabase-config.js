@@ -208,8 +208,8 @@ const SB = {
   /** AKTIVITAS */
   aktivitas: {
     fetch:  (limit = 10, uid) => {
-      let q = sb.from('aktivitas').select('*').order('created_at', { ascending: false }).limit(limit);
-      if (uid) q = q.eq('user_id', uid);
+      let ownerId = uid || window.APP_OWNER_ID || window._currentUserId;
+      let q = sb.from('aktivitas').select('*').eq('user_id', ownerId).order('created_at', { ascending: false }).limit(limit);
       return q;
     },
     insert: (judul, desc)=> sb.from('aktivitas').insert(_withUserId({ judul, deskripsi: desc })),
