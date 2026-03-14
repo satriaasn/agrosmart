@@ -109,6 +109,7 @@ async function filterTanaman(kategori) {
 }
 
 async function openTanamanModal(id) {
+  _isManualEmoji = false; // Reset flag setiap kali buka modal
   const { data: listTanaman } = await SB.tanaman.fetch();
   const { data: listLahan } = await SB.lahan.fetch();
   
@@ -125,9 +126,21 @@ async function openTanamanModal(id) {
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Icon / Emoji</label>
-        <div style="display:flex;gap:8px">
-          <input class="form-control" id="f-tEmoji" value="${t?.emoji||'🌱'}" style="width:50px;text-align:center;font-size:20px" readonly>
-          <div style="font-size:11px;color:var(--text-muted);align-self:center">Auto-set dari nama</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:8px">
+            <input class="form-control" id="f-tEmoji" value="${t?.emoji||'🌱'}" style="width:50px;text-align:center;font-size:20px;background:var(--bg-secondary)" readonly>
+            <div style="font-size:11px;color:var(--text-muted);align-self:center">Pilih icon di bawah atau auto-set dari nama</div>
+          </div>
+          <!-- Emoji Picker Grid -->
+          <div style="display:grid;grid-template-columns:repeat(8, 1fr);gap:6px;background:var(--bg-secondary);padding:8px;border-radius:10px;border:1px solid var(--border)">
+            ${['🌴','🥥','🪵','🌾','☕','🍫','🌽','🥔','🍠','🌶️','🍈','🍊','🥭','🍌','🌿','🍃','🍂','🧅','🍅','🥜','🍍','🥦','🥬','🍎'].map(em => `
+              <div class="emoji-opt" onclick="setManualEmoji('${em}')" style="cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;aspect-ratio:1;border-radius:6px;transition:all 0.2s;${(t?.emoji||'🌱')===em ? 'background:var(--accent-glow-soft);border:1px solid var(--accent-primary)' : ''}">${em}</div>
+            `).join('')}
+          </div>
+          <style>
+            .emoji-opt:hover{background:rgba(255,255,255,0.05);transform:scale(1.2)}
+            .emoji-opt.active{background:var(--accent-glow-soft);border:1px solid var(--accent-primary)}
+          </style>
         </div>
       </div>
       <div class="form-group"><label class="form-label">Kategori</label>
@@ -216,7 +229,25 @@ function toggleLahanChip(el) {
   el.classList.toggle('tlc-on');
 }
 
+let _isManualEmoji = false;
+
+function setManualEmoji(em) {
+  _isManualEmoji = true;
+  const input = document.getElementById('f-tEmoji');
+  if (input) input.value = em;
+  // Visual feedback
+  document.querySelectorAll('.emoji-opt').forEach(el => {
+    el.style.background = '';
+    el.style.border = '';
+    if (el.textContent === em) {
+      el.style.background = 'var(--accent-glow-soft)';
+      el.style.border = '1px solid var(--accent-primary)';
+    }
+  });
+}
+
 function updateTanamanEmoji(val) {
+  if (_isManualEmoji) return; // Jangan timpa jika user sudah pilih manual
   const el = document.getElementById('f-tEmoji');
   if (el) el.value = getAutoEmoji(val);
 }
