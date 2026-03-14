@@ -228,13 +228,20 @@ function initNotif() {
 }
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   initSidebar();
   initTheme();
   initModal();
   initSearch();
   initNotif();
-  navigate('dashboard');
+  
+  // Wait for profile before first navigate
+  await initUserProfile();
+  
+  // Navigate to initial page
+  const startPage = window.location.hash.replace('#', '') || 'dashboard';
+  navigate(startPage);
+  
   // Welcome toast
   setTimeout(() => showToast('success','Selamat datang!','Sistem AgroSmart siap digunakan.'), 600);
 });
@@ -289,8 +296,24 @@ async function initUserProfile() {
 
     window._currentUserId = session.user.id;
 
-    const profile = await loadProfile(session.user.id);
-    window.state = { session, profile }; // Store globally for other modules
+    // 1. Load basic role info
+    await getMyRole(session.user.id); // Sets window.APP_ROLE
+    
+    let profile = await loadProfile(session.user.id);
+    
+    // 2. Handle Operator Context
+    if (isOperator()) {
+      const opData = await initOperatorContext(session.user.id); // Sets window.APP_OWNER_ID + APP_PERMISSIONS
+      if (opData && opData.owner_id) {
+        // Fetch owner's profile to get business name
+        const ownerProfile = await loadProfile(opData.owner_id);
+        if (ownerProfile) {
+          profile = { ...profile, nama_usaha: ownerProfile.nama_usaha };
+        }
+      }
+    }
+
+    window.state = { session, profile };
 
     const nama    = profile?.nama_pemilik || session.user.user_metadata?.full_name || session.user.email;
     const usaha   = profile?.nama_usaha   || 'AgroSmart';
@@ -303,38 +326,18 @@ async function initUserProfile() {
     if (uEl) uEl.textContent = usaha;
     if (aEl) aEl.textContent = initials;
 
-    // ── Inisialisasi Role ──────────────────────────────────────────────
-    await getMyRole(session.user.id); // simpan ke window.APP_ROLE
-
-    if (isOperator()) {
-      await initOperatorContext(session.user.id); // simpan APP_OWNER_ID + APP_PERMISSIONS
-    }
-
     applyRoleUI(window.APP_ROLE, window.APP_PERMISSIONS);
 
-    // Superadmin punya link khusus di sidebar, tidak perlu redirect paksa
-    // if (isSuperadmin()) {
-    //   window.location.href = 'admin.html';
-    // }
-
   } catch (e) {
-    console.info('AgroSmart running in demo mode (Supabase not configured).');
-    const n = document.getElementById('sidebarNama');
-    const u = document.getElementById('sidebarUsaha');
-    const a = document.getElementById('sidebarAvatar');
-    if (n) n.textContent = 'Demo Mode';
-    if (u) u.textContent = 'Konfigurasi Supabase';
-    if (a) a.textContent = 'DM';
+    console.error('initUserProfile error:', e);
+    // Silent fallbacks...
   }
 }
 
-// Override DOMContentLoaded to add initUserProfile call
-document.addEventListener('DOMContentLoaded', function() {
-  // initUserProfile is called after all other init (non-blocking)
-  setTimeout(initUserProfile, 0);
-  // Load sidebar badges setelah data ready
-  setTimeout(updateSidebarBadges, 1500);
-});
+// Override original empty listener
+// (The one at the bottom of app.js is now replaced by the one in Boot section)
+
+// Initialization is now handled in the async DOMContentLoaded block above.
 
 // Update sidebar nav badges dengan jumlah real
 async function updateSidebarBadges() {

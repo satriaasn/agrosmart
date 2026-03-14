@@ -521,6 +521,8 @@
           // Kita coba redirect, jika session belum ada, minta mereka login biasa.
           const session = await getSession();
           if (session) {
+            // Berikan meta data role ke session user secara eksplisit agar redirectAfterAuth tahu
+            session.user.user_metadata = { ...session.user.user_metadata, role: 'operator' };
             await redirectAfterAuth(session.user);
           } else {
             setLoading('btnMasuk', false);
@@ -584,6 +586,14 @@
     // ── Post-auth routing ──────────────────────────────────────────────────────
     async function redirectAfterAuth(user) {
       if (!user) return;
+      
+      // Jika operator, langsung skip ke index.html
+      const role = user.user_metadata?.role;
+      if (role === 'operator') {
+        window.location.href = 'index.html';
+        return;
+      }
+
       const done = await isOnboardingDone(user.id);
       window.location.href = done ? 'index.html' : 'profile-setup.html';
     }
