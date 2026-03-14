@@ -497,11 +497,12 @@
       
       if (error) {
         // Jika login gagal, cek apakah ini operator yang diundang dengan temp password
-        const { data: invite } = await SB.auth.checkInvitation(email);
+        // Gunakan RPC check_operator_invite (p_email, p_password)
+        const { data: invite, error: inviteErr } = await SB.auth.checkInvitation(email, password);
         
-        if (invite && invite.temp_password === password) {
+        if (invite) {
           showAlert('Menyiapkan akun operator Anda...', 'success');
-          // Buat akun auth otomatis
+          // Buat akun auth otomatis dengan password yang sama
           const { data: reg, error: regErr } = await sb.auth.signUp({ 
             email, password, 
             options: { data: { role: 'operator' } } 
@@ -513,16 +514,27 @@
             return;
           }
           
-          // Sukses reg, link-kan user_id ke team_members
-          await SB.auth.completeTeamMember(invite.id, reg.user.id);
+          // Sukses reg, link-kan user_id ke team_members via RPC link_team_member
+          await SB.auth.linkTeamMember(invite.id);
           
-          // Login ulang otomatis (session biasanya sudah ada setelah signup di Supabase)
-          await redirectAfterAuth(reg.user);
+          // Setelah signUp, Supabase biasanya auto-login jika email confirm mati.
+          // Kita coba redirect, jika session belum ada, minta mereka login biasa.
+          const session = await getSession();
+          if (session) {
+            await redirectAfterAuth(session.user);
+          } else {
+            setLoading('btnMasuk', false);
+            showAlert('Akun berhasil dibuat! Silakan klik tombol Masuk sekali lagi.', 'success');
+          }
           return;
         }
 
         setLoading('btnMasuk', false);
-        showAlert('Login gagal: ' + error.message); 
+        // Pesan error lebih user friendly
+        const errMsg = error.message.includes('Invalid login credentials') 
+          ? 'Email atau password salah.' 
+          : error.message;
+        showAlert('Login gagal: ' + errMsg); 
         return; 
       }
       

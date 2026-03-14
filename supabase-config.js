@@ -192,8 +192,8 @@ const SB = {
   },
   /** AUTH FLOW FOR OPERATORS */
   auth: {
-    checkInvitation: (email) => sb.from('team_members').select('*').eq('invited_email', email).eq('status', 'pending').single(),
-    completeTeamMember: (id, userId) => sb.from('team_members').update({ user_id: userId, status: 'active' }).eq('id', id),
+    checkInvitation: (email, password) => sb.rpc('check_operator_invite', { p_email: email, p_password: password }),
+    linkTeamMember: (inviteId) => sb.rpc('link_team_member', { p_invite_id: inviteId }),
   }
 };
 
