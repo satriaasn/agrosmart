@@ -268,6 +268,9 @@ async function renderDashboard() {
 }
 
 async function initDashboardCharts() {
+  if (typeof ChartDataLabels !== 'undefined') {
+    Chart.register(ChartDataLabels);
+  }
   const chartColor = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
 
   const { data: listTanaman } = await SB.tanaman.fetch();
@@ -289,10 +292,23 @@ async function initDashboardCharts() {
       },
       options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        plugins: { 
+          legend: { display: false },
+          datalabels: {
+            anchor: 'end',
+            align: 'top',
+            color: '#6b7d70',
+            font: { weight: 'bold', size: 10 },
+            formatter: (val) => val
+          }
+        },
         scales: {
           x: { grid: { display: false }, ticks: { color: '#6b7d70', font: { size: 10 }, maxRotation: 30 } },
-          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#6b7d70', font: { size: 10 } } }
+          y: { 
+            grid: { color: 'rgba(255,255,255,0.05)' }, 
+            ticks: { color: '#6b7d70', font: { size: 10 } },
+            suggestedMax: Math.max(...arrTanaman.map(t => (t.hasil_kg||0)/1000)) * 1.2
+          }
         }
       }
     });
@@ -317,10 +333,23 @@ async function initDashboardCharts() {
       },
       options: {
         responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        plugins: { 
+          legend: { display: false },
+          datalabels: {
+            anchor: 'end',
+            align: 'top',
+            color: '#22c55e',
+            font: { weight: 'bold', size: 10 },
+            formatter: (val) => val
+          }
+        },
         scales: {
           x: { grid: { display: false }, ticks: { color: '#6b7d70', font: { size: 10 } } },
-          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#6b7d70', font: { size: 10 } } }
+          y: { 
+            grid: { color: 'rgba(255,255,255,0.05)' }, 
+            ticks: { color: '#6b7d70', font: { size: 10 } },
+            suggestedMax: 25
+          }
         }
       }
     });
