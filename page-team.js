@@ -21,12 +21,12 @@ function renderTim() {
 
   <!-- Info banner untuk operator -->
   <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:14px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:flex-start;gap:12px">
-    <span style="font-size:20px">💡</span>
+    <span style="font-size:20px">🔐</span>
     <div>
-      <div style="font-size:13px;font-weight:600;color:var(--text-accent);margin-bottom:4px">Cara Menggunakan Tim</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text-accent);margin-bottom:4px">Manajemen Akses Operator</div>
       <div style="font-size:12px;color:var(--text-secondary);line-height:1.6">
-        Undang operator dengan email mereka. Setelah mereka registrasi di aplikasi, akun mereka akan tertaut ke bisnis Anda secara otomatis.
-        Anda bisa mengatur modul mana yang bisa mereka akses — termasuk apakah mereka bisa mengedit atau hanya melihat data.
+        Gunakan fitur ini untuk menambah anggota tim. Cukup masukkan email mereka dan berikan akses ke modul tertentu. 
+        <br><strong style="color:var(--text-primary)">Baru:</strong> Sekarang operator cukup melakukan <b>Sign Up</b> dengan email yang sama untuk langsung terhubung ke bisnis Anda.
       </div>
     </div>
   </div>
@@ -78,6 +78,7 @@ function memberCard(m) {
     { key: 'keuangan',  label: 'Keuangan' },
     { key: 'laporan',   label: 'Laporan' },
     { key: 'peta',      label: 'Peta' },
+    { key: 'cuaca',     label: 'Cuaca' },
     { key: 'edit',      label: 'Bisa Edit' },
     { key: 'hapus',     label: 'Bisa Hapus' },
   ];
@@ -94,7 +95,7 @@ function memberCard(m) {
           <div style="font-size:12px;color:var(--text-secondary)">${m.invited_email}</div>
           <div style="margin-top:6px;display:flex;gap:6px">
             <span class="badge ${statusColor}" style="font-size:10px"><span class="badge-dot"></span>${statusLabel}</span>
-            ${m.status === 'pending' ? `<span class="badge badge-gray" style="font-size:10px">⏳ Tunggu mereka registrasi</span>` : ''}
+            ${m.status === 'pending' ? `<span class="badge badge-amber" style="font-size:10px">⏳ Menunggu Aktivasi User</span>` : ''}
           </div>
         </div>
       </div>
@@ -120,6 +121,18 @@ function memberCard(m) {
           </div>`).join('')}
       </div>
     </div>
+    <!-- Assigned Lahan -->
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:8px">AKSES LAHAN</div>
+      <div style="font-size:12px;color:var(--text-secondary)">
+        ${(() => {
+          const assigned = m.assigned_lahan || [];
+          if (assigned.length === 0) return '🔓 <i>Semua Lahan (Akses Penuh)</i>';
+          return '📍 Terbatas pada: ' + assigned.length + ' Lahan';
+        })()}
+      </div>
+    </div>
+
     <div style="margin-top:8px;font-size:11px;color:var(--text-muted)">
       Ditambahkan: ${new Date(m.created_at).toLocaleDateString('id-ID')}
     </div>
@@ -127,7 +140,9 @@ function memberCard(m) {
 }
 
 // ── Invite Operator ───────────────────────────────────────────────────────────
-function openInviteModal() {
+async function openInviteModal() {
+  const { data: lahanList } = await SB.lahan.fetch(window._currentUserId);
+  
   openModal('Undang Operator Baru', `
     <div class="form-group">
       <label class="form-label">Email Operator</label>
@@ -137,12 +152,26 @@ function openInviteModal() {
     <div class="form-group">
       <label class="form-label">Password Sementara</label>
       <input class="form-control" id="f-iPassword" type="text" placeholder="Min. 8 karakter">
-      <div style="font-size:11px;color:var(--text-muted);margin-top:5px">Berikan password ini ke operator Anda agar mereka bisa langsung login.</div>
     </div>
     <div class="form-group">
       <label class="form-label">Label Peran / Jabatan</label>
-      <input class="form-control" id="f-iRole" placeholder="cth. Manajer Kebun, Supervisor, Pencatat">
+      <input class="form-control" id="f-iRole" placeholder="cth. Manajer Kebun, Supervisor">
     </div>
+
+    <!-- Land Assignment -->
+    <div style="border-top:1px solid var(--border);margin:16px 0;padding-top:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:0.5px;margin-bottom:12px">📍 PENUGASAN LAHAN</div>
+      <div class="grid-2" style="gap:8px">
+        ${(lahanList || []).map(l => `
+          <label style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;background:var(--bg-input);border:1px solid var(--border);cursor:pointer">
+            <input type="checkbox" class="f-assigned-lahan" value="${l.id}" style="width:14px;height:14px">
+            <span style="font-size:12px;color:var(--text-secondary)">${l.nama}</span>
+          </label>
+        `).join('')}
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:8px">Kosongkan untuk akses ke SEMUA lahan.</div>
+    </div>
+
     <div style="border-top:1px solid var(--border);margin:16px 0;padding-top:16px">
       <div style="font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:0.5px;margin-bottom:12px">⚙️ HAK AKSES AWAL</div>
       <div class="grid-2" style="gap:10px">
@@ -154,6 +183,7 @@ function openInviteModal() {
           { key:'panen',     label:'Panen',     defOn:true },
           { key:'keuangan',  label:'Keuangan',  defOn:false },
           { key:'laporan',   label:'Laporan',   defOn:true },
+          { key:'cuaca',     label:'Cuaca',     defOn:true },
           { key:'peta',      label:'Peta Lahan',defOn:true },
           { key:'edit',      label:'✏️ Edit Data',defOn:true },
           { key:'hapus',     label:'🗑️ Hapus Data',defOn:false },
@@ -172,9 +202,11 @@ function openInviteModal() {
     if (!email) { showToast('danger','Gagal','Email tidak boleh kosong.'); return; }
     if (!password || password.length < 8) { showToast('danger','Gagal','Password minimal 8 karakter.'); return; }
 
-    const pKeys = ['dashboard','lahan','tanaman','karyawan','panen','keuangan','laporan','peta','edit','hapus'];
+    const pKeys = ['dashboard','lahan','tanaman','karyawan','panen','keuangan','laporan','cuaca','peta','edit','hapus'];
     const permissions = {};
     pKeys.forEach(k => { permissions[k] = document.getElementById(`fp-${k}`)?.checked ?? false; });
+    
+    const assignedLahan = Array.from(document.querySelectorAll('.f-assigned-lahan:checked')).map(el => parseInt(el.value));
 
     const { error } = await SB.team.invite({
       owner_id: window._currentUserId,
@@ -182,6 +214,7 @@ function openInviteModal() {
       temp_password: password,
       role_label: role,
       permissions,
+      assigned_lahan: assignedLahan,
       status: 'pending',
     });
 
@@ -201,7 +234,10 @@ async function openPermissionModal(memberId) {
   const m = members?.find(x => x.id === memberId);
   if (!m) return;
 
+  const { data: lahanList } = await SB.lahan.fetch(window._currentUserId);
   const perms = m.permissions || {};
+  const assigned = m.assigned_lahan || [];
+
   const pKeys = [
     { key:'dashboard', label:'Dashboard' },
     { key:'lahan',     label:'Lahan' },
@@ -210,6 +246,7 @@ async function openPermissionModal(memberId) {
     { key:'panen',     label:'Panen' },
     { key:'keuangan',  label:'Keuangan' },
     { key:'laporan',   label:'Laporan' },
+    { key:'cuaca',     label:'Cuaca' },
     { key:'peta',      label:'Peta Lahan' },
     { key:'edit',      label:'✏️ Edit Data' },
     { key:'hapus',     label:'🗑️ Hapus Data' },
@@ -220,22 +257,45 @@ async function openPermissionModal(memberId) {
       <label class="form-label">Label Peran</label>
       <input class="form-control" id="ep-roleLabel" value="${m.role_label}">
     </div>
-    <div style="font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:0.5px;margin-bottom:12px">⚙️ HAK AKSES</div>
-    <div class="grid-2" style="gap:10px">
-      ${pKeys.map(p => `
-        <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:var(--bg-input);border:1px solid var(--border);cursor:pointer">
-          <input type="checkbox" id="ep-${p.key}" ${perms[p.key]?'checked':''} style="accent-color:var(--accent-primary);width:14px;height:14px">
-          <span style="font-size:12px;font-weight:600;color:var(--text-secondary)">${p.label}</span>
-        </label>`).join('')}
+
+    <!-- Land Assignment -->
+    <div style="border-top:1px solid var(--border);margin:16px 0;padding-top:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:0.5px;margin-bottom:12px">📍 PENUGASAN LAHAN</div>
+      <div class="grid-2" style="gap:8px">
+        ${(lahanList || []).map(l => `
+          <label style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;background:var(--bg-input);border:1px solid var(--border);cursor:pointer">
+            <input type="checkbox" class="ep-assigned-lahan" value="${l.id}" ${assigned.includes(l.id) ? 'checked' : ''} style="width:14px;height:14px">
+            <span style="font-size:12px;color:var(--text-secondary)">${l.nama}</span>
+          </label>
+        `).join('')}
+      </div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:8px">Kosongkan semua untuk akses ke SELURUH lahan.</div>
+    </div>
+
+    <div style="border-top:1px solid var(--border);margin:16px 0;padding-top:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:0.5px;margin-bottom:12px">⚙️ HAK AKSES</div>
+      <div class="grid-2" style="gap:10px">
+        ${pKeys.map(p => `
+          <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:var(--bg-input);border:1px solid var(--border);cursor:pointer">
+            <input type="checkbox" id="ep-${p.key}" ${perms[p.key]?'checked':''} style="accent-color:var(--accent-primary);width:14px;height:14px">
+            <span style="font-size:12px;font-weight:600;color:var(--text-secondary)">${p.label}</span>
+          </label>`).join('')}
+      </div>
     </div>
   `, async () => {
     const newPerms = {};
     pKeys.forEach(p => { newPerms[p.key] = document.getElementById(`ep-${p.key}`)?.checked ?? false; });
     const roleLabel = document.getElementById('ep-roleLabel').value.trim() || m.role_label;
+    
+    const newAssigned = Array.from(document.querySelectorAll('.ep-assigned-lahan:checked')).map(el => parseInt(el.value));
 
-    const { error } = await SB.team.update(memberId, { permissions: newPerms, role_label: roleLabel });
+    const { error } = await SB.team.update(memberId, { 
+      permissions: newPerms, 
+      role_label: roleLabel,
+      assigned_lahan: newAssigned 
+    });
     if (error) { showToast('danger','Gagal',error.message); return; }
-    showToast('success','Berhasil','Permission diperbarui.');
+    showToast('success','Berhasil','Permission & Penugasan diperbarui.');
     await loadTimData();
   });
 }

@@ -818,7 +818,6 @@ select.form-control { cursor: pointer; appearance: none; background-image: url("
   border-radius: var(--border-radius);
   padding: 20px;
   transition: all var(--transition);
-  cursor: pointer;
 }
 .plot-card:hover {
   transform: translateY(-3px);

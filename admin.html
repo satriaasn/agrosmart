@@ -356,7 +356,7 @@
       // Fetch profiles + join user email via auth.users view
       const { data, error } = await sb
         .from('profiles')
-        .select('id, role, nama_usaha, nama_pemilik, is_suspended, onboarding_done, created_at')
+        .select('id, role, email, nama_usaha, nama_pemilik, is_suspended, onboarding_done, created_at')
         .order('created_at', { ascending: false });
 
       if (error) {

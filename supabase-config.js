@@ -75,13 +75,14 @@ function isOperator()   { return window.APP_ROLE === 'operator'; }
 async function initOperatorContext(userId) {
   const { data } = await sb
     .from('team_members')
-    .select('owner_id, permissions, role_label, status')
+    .select('owner_id, permissions, assigned_lahan, role_label, status')
     .eq('user_id', userId)
     .eq('status', 'active')
     .single();
   if (data) {
     window.APP_OWNER_ID    = data.owner_id;
     window.APP_PERMISSIONS = data.permissions;
+    window.APP_ASSIGNED_LAHAN = data.assigned_lahan || [];
   }
   return data;
 }
@@ -113,6 +114,11 @@ const SB = {
     fetch:  (uid)       => {
       let q = sb.from('lahan').select('*').order('created_at');
       if (uid) q = q.eq('user_id', uid);
+      
+      // Filter lahan spesifik untuk operator
+      if (isOperator() && window.APP_ASSIGNED_LAHAN && window.APP_ASSIGNED_LAHAN.length > 0) {
+        q = q.in('id', window.APP_ASSIGNED_LAHAN);
+      }
       return q;
     },
     insert: (data)       => sb.from('lahan').insert(_withUserId(data)).select().single(),
@@ -124,6 +130,10 @@ const SB = {
     fetch:  (uid)       => {
       let q = sb.from('tanaman').select('*').order('created_at');
       if (uid) q = q.eq('user_id', uid);
+
+      // Filter tanaman berdasarkan lahan yang diijinkan (jika ada filtering lahan)
+      // Catatan: tanaman tabel menggunakan nama lahan (string), bukan ID. 
+      // Kita perlu menyaring di level aplikasi atau join.
       return q;
     },
     insert: (data)       => sb.from('tanaman').insert(_withUserId(data)).select().single(),

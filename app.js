@@ -40,8 +40,8 @@ async function navigate(page) {
       container.innerHTML = `
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;gap:12px">
           <div style="font-size:48px">🔒</div>
-          <div style="font-size:18px;font-weight:700;color:var(--text-primary)">Akses Ditolak</div>
-          <div style="font-size:13px;color:var(--text-secondary)">Anda tidak memiliki izin untuk mengakses modul ini.<br>Hubungi pemilik akun untuk mengatur permission Anda.</div>
+          <div style="font-size:18px;font-weight:700;color:var(--text-primary)">Akses Terbatas</div>
+          <div style="font-size:13px;color:var(--text-secondary);text-align:center;max-width:300px">Anda tidak memiliki izin untuk mengakses modul <b>${labels[page]||page}</b>.<br><br>Hubungi pemilik akun (Owner) untuk menambahkan hak akses Anda di menu Manajemen Tim.</div>
         </div>`;
       return;
     }
