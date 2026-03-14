@@ -340,6 +340,7 @@ async function showLahanDetail(lahanNama) {
 }
 
 // ─── Add/Edit Biaya Modal ─────────────────────────────────────────────────────
+async function openBiayaModal(id) {
   const [{ data: listBiaya }, { data: listLahan }, { data: listCOA }] = await Promise.all([
     SB.biaya.fetch(),
     SB.lahan.fetch(),
