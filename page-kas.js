@@ -82,8 +82,12 @@ async function renderKas() {
 }
 
 async function openKasModal(id) {
-  const { data: listKas } = await SB.cash_book.fetch();
+  const [{ data: listKas }, { data: listKats }] = await Promise.all([
+    SB.cash_book.fetch(),
+    SB.expense_categories.fetch()
+  ]);
   const k = id ? (listKas || []).find(x => String(x.id) === String(id)) : null;
+  const arrKats = listKats || [];
 
   openModal(k ? 'Edit Transaksi Kas' : 'Catat Transaksi Kas Baru', `
     <div class="form-row">
@@ -105,8 +109,15 @@ async function openKasModal(id) {
         <input class="form-control" type="number" id="f-kasJml" value="${k?.jumlah || ''}" placeholder="0" min="0">
       </div>
       <div class="form-group">
-        <label class="form-label">Kategori</label>
-        <input class="form-control" id="f-kasKat" value="${k?.kategori || ''}" placeholder="cth. Hasil Panen, Pinjaman, Gaji">
+        <label class="form-label">Kategori *</label>
+        <select class="form-control" id="f-kasKat">
+          <option value="Hasil Panen" ${k?.kategori === 'Hasil Panen' ? 'selected' : ''}>Hasil Panen (Pendapatan)</option>
+          <option value="Modal" ${k?.kategori === 'Modal' ? 'selected' : ''}>Modal Awal / Tambahan</option>
+          <optgroup label="Biaya Operasional (Master)">
+            ${arrKats.map(c => `<option value="${c.name}" ${k?.kategori === c.name ? 'selected' : ''}>${c.icon || '💸'} ${c.name}</option>`).join('')}
+          </optgroup>
+          <option value="Lainnya" ${k?.kategori === 'Lainnya' || !k ? 'selected' : ''}>Lainnya / Pribadi</option>
+        </select>
       </div>
     </div>
     <div class="form-group">
