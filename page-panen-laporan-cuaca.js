@@ -273,9 +273,7 @@ async function openPanenModal(id) {
       karyawan: karySelect.value || null
     };
 
-    if (window.APP_ROLE === 'operator' && window.APP_OWNER_ID) {
-      data.owner_id = window.APP_OWNER_ID;
-    }
+    // user_id handled by SB config _withUserId
 
     try {
       if (p?.id) {

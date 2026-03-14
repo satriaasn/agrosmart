@@ -402,9 +402,7 @@ async function openBiayaModal(id) {
       // total adalah GENERATED ALWAYS AS (jumlah * harga_satuan), tidak perlu dikirim
     };
     
-    if (window.APP_ROLE === 'operator' && window.APP_OWNER_ID) {
-      data.owner_id = window.APP_OWNER_ID;
-    }
+    // user_id handled by SB config _withUserId
 
     if (b) { 
       await SB.biaya.update(b.id, data); 

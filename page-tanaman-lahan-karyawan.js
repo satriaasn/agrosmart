@@ -80,7 +80,7 @@ async function openTanamanModal(id) {
   const { data: listTanaman } = await SB.tanaman.fetch();
   const { data: listLahan } = await SB.lahan.fetch();
   
-  const t = id ? listTanaman.find(x => x.id === id) : null;
+  const t = id ? (listTanaman||[]).find(x => String(x.id) === String(id)) : null;
   const selectedLahan = Array.isArray(t?.lahan)
     ? t.lahan
     : (t?.lahan && t.lahan !== '-' ? t.lahan.split(',').map(x => x.trim()).filter(Boolean) : []);
@@ -146,10 +146,7 @@ async function openTanamanModal(id) {
       hasil_kg: t?.hasil_kg || 0
     };
     
-    // Assign owner_id if operator
-    if (window.APP_ROLE === 'operator' && window.APP_OWNER_ID) {
-      data.owner_id = window.APP_OWNER_ID;
-    }
+    // user_id handled by SB config _withUserId
 
     if (t) {
       await SB.tanaman.update(t.id, data);
@@ -277,7 +274,7 @@ async function openLahanModal(id) {
   const { data: listLahan } = await SB.lahan.fetch();
   const { data: listTanaman } = await SB.tanaman.fetch();
   
-  const l = id ? listLahan.find(x => x.id === id) : null;
+  const l = id ? (listLahan||[]).find(x => String(x.id) === String(id)) : null;
   
   // Tanaman currently assigned to this lahan
   const tanamanDiLahan = (listTanaman || [])
