@@ -64,6 +64,7 @@ async function navigate(page) {
       case 'karyawan':  html = await renderKaryawan();  break;
       case 'panen':     html = await renderPanen();     break;
       case 'keuangan':  html = await renderKeuangan();  break;
+      case 'keuangan-biaya': html = await renderKeuangan(); break; // Reuse same renderer
       case 'laporan':   html = await renderLaporan();   break;
       case 'cuaca':     html = await renderCuaca();     break;
       case 'peta':      html = await renderPeta();      break;
