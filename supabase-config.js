@@ -148,17 +148,16 @@ const SB = {
       console.log('[DEBUG] lahan.fetch ownerId:', ownerId, 'isOperator:', isOperator());
       let q = sb.from('lahan').select('*').eq('user_id', ownerId).order('created_at');
       
-      // Filter lahan spesifik untuk operator
       if (isOperator() && window.APP_OWNER_ID) {
         const assigned = window.APP_ASSIGNED_LAHAN || [];
-        console.log('[DEBUG] lahan.fetch operator assigned:', assigned);
-        if (assigned.length > 0) {
-          q = q.in('id', assigned);
-        } else {
-          q = q.eq('id', -1); 
-        }
+        if (assigned.length > 0) q = q.in('id', assigned);
+        else q = q.eq('id', -1); 
       }
-      return q;
+      
+      return q.then(res => {
+        console.log('[DEBUG] lahan.fetch result rows:', (res.data||[]).length, 'error:', res.error);
+        return res;
+      });
     },
     insert: (data)       => sb.from('lahan').insert(_withUserId(data)).select().single(),
     update: (id, data)   => sb.from('lahan').update(data).eq('id', id).select().single(),
@@ -171,17 +170,16 @@ const SB = {
       console.log('[DEBUG] tanaman.fetch ownerId:', ownerId, 'isOperator:', isOperator());
       let q = sb.from('tanaman').select('*').eq('user_id', ownerId).order('created_at');
 
-      // Filter tanaman berdasarkan lahan (string) yang diijinkan
       if (isOperator() && window.APP_OWNER_ID) {
          const assignedNames = window.APP_ASSIGNED_LAHAN_NAMES || [];
-         console.log('[DEBUG] tanaman.fetch operator assignedNames:', assignedNames);
-         if (assignedNames.length > 0) {
-           q = q.in('lahan', assignedNames);
-         } else {
-           q = q.eq('lahan', '___NONE___'); 
-         }
+         if (assignedNames.length > 0) q = q.in('lahan', assignedNames);
+         else q = q.eq('lahan', '___NONE___'); 
       }
-      return q;
+      
+      return q.then(res => {
+        console.log('[DEBUG] tanaman.fetch result rows:', (res.data||[]).length, 'error:', res.error);
+        return res;
+      });
     },
     insert: (data)       => sb.from('tanaman').insert(_withUserId(data)).select().single(),
     update: (id, data)   => sb.from('tanaman').update(data).eq('id', id).select().single(),
@@ -207,13 +205,14 @@ const SB = {
       
       if (isOperator() && window.APP_OWNER_ID) {
         const assignedNames = window.APP_ASSIGNED_LAHAN_NAMES || [];
-        if (assignedNames.length > 0) {
-          q = q.in('lahan', assignedNames);
-        } else {
-          q = q.eq('lahan', '___NONE___');
-        }
+        if (assignedNames.length > 0) q = q.in('lahan', assignedNames);
+        else q = q.eq('lahan', '___NONE___');
       }
-      return q;
+      
+      return q.then(res => {
+        console.log('[DEBUG] panen.fetch result rows:', (res.data||[]).length, 'error:', res.error);
+        return res;
+      });
     },
     insert: (data)       => sb.from('panen').insert(_withUserId(data)).select().single(),
     update: (id, data)   => sb.from('panen').update(data).eq('id', id).select().single(),
@@ -228,13 +227,14 @@ const SB = {
       
       if (isOperator() && window.APP_OWNER_ID) {
         const assignedNames = window.APP_ASSIGNED_LAHAN_NAMES || [];
-        if (assignedNames.length > 0) {
-          q = q.in('lahan', assignedNames);
-        } else {
-          q = q.eq('lahan', '___NONE___');
-        }
+        if (assignedNames.length > 0) q = q.in('lahan', assignedNames);
+        else q = q.eq('lahan', '___NONE___');
       }
-      return q;
+      
+      return q.then(res => {
+        console.log('[DEBUG] biaya.fetch result rows:', (res.data||[]).length, 'error:', res.error);
+        return res;
+      });
     },
     insert: (data)       => sb.from('biaya').insert(_withUserId(data)).select().single(),
     update: (id, data)   => sb.from('biaya').update(data).eq('id', id).select().single(),
