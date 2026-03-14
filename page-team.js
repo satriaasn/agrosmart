@@ -105,7 +105,8 @@ function memberCard(m) {
           : m.status === 'suspended'
             ? `<button class="btn btn-sm" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:var(--text-accent)" onclick="activateMember('${m.id}')">✅ Aktifkan</button>`
             : ''}
-        <button class="btn btn-danger btn-sm" onclick="removeMember('${m.id}')">🗑️</button>
+        <button class="btn btn-sm btn-secondary" onclick="editMember('${m.id}')">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteMember('${m.id}')">Hapus</button>
       </div>
     </div>
 

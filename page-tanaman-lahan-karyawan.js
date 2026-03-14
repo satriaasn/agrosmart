@@ -59,8 +59,8 @@ function tanamanCard(t) {
       <div class="tanaman-footer">
         <span style="font-size:11px;color:var(--text-muted)">💡 ${t.catatan||''}</span>
         <div style="display:flex;gap:6px">
-          <button class="btn btn-sm btn-secondary" onclick="editTanaman(${t.id})">Edit</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteTanaman(${t.id})">Hapus</button>
+          <button class="btn btn-sm btn-secondary" onclick="editTanaman('${t.id}')">Edit</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteTanaman('${t.id}')">Hapus</button>
         </div>
       </div>
     </div>
@@ -251,7 +251,7 @@ function lahanCard(l) {
           </div>`
         : `<div style="display:flex;align-items:center;gap:8px">
             <span style="font-size:11px;color:var(--amber-400)">⚠️ Koordinat belum diset</span>
-            <button class="btn btn-sm btn-secondary" style="margin-left:auto;font-size:10px;padding:4px 8px" onclick="editLahan(${l.id})">📌 Set</button>
+            <button class="btn btn-sm btn-secondary" style="margin-left:auto;font-size:10px;padding:4px 8px" onclick="editLahan('${l.id}')">📌 Set</button>
           </div>`}
     </div>
     <!-- tanaman pills row -->
@@ -265,8 +265,8 @@ function lahanCard(l) {
       </div>
     </div>
     <div style="margin-top:12px;display:flex;align-items:center;justify-content:flex-end;gap:6px">
-      <button class="btn btn-sm btn-secondary" onclick="editLahan(${l.id})">Edit</button>
-      <button class="btn btn-sm btn-danger" onclick="deleteLahan(${l.id})">Hapus</button>
+      <button class="btn btn-sm btn-secondary" onclick="editLahan('${l.id}')">Edit</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteLahan('${l.id}')">Hapus</button>
     </div>
   </div>`;
 }

@@ -231,8 +231,8 @@ function biayaTable(data) {
         <td style="font-weight:700;color:var(--red-400)">Rp ${b.total.toLocaleString('id-ID')}</td>
         <td>
           <div style="display:flex;gap:6px">
-            <button class="btn btn-sm btn-secondary" onclick="editBiaya(${b.id})">Edit</button>
-            <button class="btn btn-sm btn-danger" onclick="deleteBiaya(${b.id})">Hapus</button>
+            <button class="btn btn-sm btn-secondary" onclick="editBiaya('${b.id}')">Edit</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteBiaya('${b.id}')">Hapus</button>
           </div>
         </td>
       </tr>`;
