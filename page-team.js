@@ -208,7 +208,9 @@ async function openInviteModal() {
               { key:'tanaman', label:'Tanaman' },
               { key:'karyawan', label:'Karyawan' },
               { key:'panen', label:'Panen' },
-              { key:'keuangan', label:'Keuangan' },
+              { key:'kas', label:'Buku Kas' },
+              { key:'keuangan', label:'Biaya Olah Lahan' },
+              { key:'coa', label:'Daftar Akun' },
               { key:'laporan', label:'Laporan' },
               { key:'cuaca', label:'Cuaca' },
               { key:'peta', label:'Peta' }
@@ -330,7 +332,9 @@ async function openPermissionModal(memberId) {
               { key:'tanaman', label:'Tanaman' },
               { key:'karyawan', label:'Karyawan' },
               { key:'panen', label:'Panen' },
-              { key:'keuangan', label:'Keuangan' },
+              { key:'kas', label:'Buku Kas' },
+              { key:'keuangan', label:'Biaya Olah Lahan' },
+              { key:'coa', label:'Daftar Akun' },
               { key:'laporan', label:'Laporan' },
               { key:'cuaca', label:'Cuaca' },
               { key:'peta', label:'Peta' }
