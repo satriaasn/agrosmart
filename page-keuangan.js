@@ -67,10 +67,11 @@ async function renderKeuangan() {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         Kelola Biaya
       </button>
+      ${canAccess('keuangan', 'add') ? `
       <button class="btn btn-primary" onclick="openBiayaModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Tambah Biaya
-      </button>
+      </button>` : ''}
     </div>
   </div>
 
@@ -231,8 +232,8 @@ function biayaTable(data) {
         <td style="font-weight:700;color:var(--red-400)">Rp ${b.total.toLocaleString('id-ID')}</td>
         <td>
           <div style="display:flex;gap:6px">
-            <button class="btn btn-sm btn-secondary" onclick="editBiaya('${b.id}')">Edit</button>
-            <button class="btn btn-sm btn-danger" onclick="deleteBiaya('${b.id}')">Hapus</button>
+            ${canAccess('keuangan', 'edit') ? `<button class="btn btn-sm btn-secondary" onclick="editBiaya('${b.id}')">Edit</button>` : ''}
+            ${canAccess('keuangan', 'delete') ? `<button class="btn btn-sm btn-danger" onclick="deleteBiaya('${b.id}')">Hapus</button>` : ''}
           </div>
         </td>
       </tr>`;

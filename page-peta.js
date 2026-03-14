@@ -125,10 +125,11 @@ async function renderPeta() {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
         Fit Semua
       </button>
+      ${canAccess('lahan', 'add') ? `
       <button class="btn btn-primary" onclick="openLahanModal();navigate('lahan')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Tambah Blok
-      </button>
+      </button>` : ''}
     </div>
   </div>
 
@@ -182,8 +183,8 @@ async function renderPeta() {
           <div style="display:flex;gap:6px;margin-top:8px">
             <button class="btn btn-sm btn-secondary" style="flex:1;justify-content:center;font-size:10px" onclick="event.stopPropagation();petaFlyTo('${l.id}')">🎯 Goto</button>
             <a href="${l.maps_url||'#'}" target="_blank" class="btn btn-sm btn-secondary" style="flex:1;justify-content:center;font-size:10px;text-decoration:none">🗺️ Maps</a>
-          </div>` : `
-          <button class="btn btn-sm btn-secondary" style="width:100%;justify-content:center;font-size:10px;margin-top:8px" onclick="event.stopPropagation();editLahan('${l.id}')">📌 Set Koordinat</button>`}
+          </div>` : (canAccess('lahan', 'edit') ? `
+          <button class="btn btn-sm btn-secondary" style="width:100%;justify-content:center;font-size:10px;margin-top:8px" onclick="event.stopPropagation();editLahan('${l.id}')">📌 Set Koordinat</button>` : '')}
         </div>`;
       }).join('')}
     </div>

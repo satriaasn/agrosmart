@@ -17,10 +17,11 @@ async function renderPanen() {
       <div class="page-subtitle">Rekap seluruh kegiatan panen dan hasil produksi.</div>
     </div>
     <div class="page-actions">
+      ${canAccess('panen', 'add') ? `
       <button class="btn btn-primary" onclick="openPanenModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Catat Panen
-      </button>
+      </button>` : ''}
     </div>
   </div>
   <div class="stats-grid" style="margin-bottom:22px">
@@ -62,8 +63,8 @@ async function renderPanen() {
               <td style="font-size:12px;color:var(--text-secondary)">${p.karyawan||'-'}</td>
               <td>
                 <div style="display:flex;gap:6px">
-                  <button class="btn btn-sm btn-secondary" onclick="editPanen('${p.id}')">Edit</button>
-                  <button class="btn btn-sm btn-danger" onclick="deletePanen('${p.id}')">Hapus</button>
+                  ${canAccess('panen', 'edit') ? `<button class="btn btn-sm btn-secondary" onclick="editPanen('${p.id}')">Edit</button>` : ''}
+                  ${canAccess('panen', 'delete') ? `<button class="btn btn-sm btn-danger" onclick="deletePanen('${p.id}')">Hapus</button>` : ''}
                 </div>
               </td>
             </tr>

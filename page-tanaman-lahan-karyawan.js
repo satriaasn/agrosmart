@@ -12,16 +12,17 @@ async function renderTanaman() {
       <div class="page-title">Manajemen Tanaman</div>
       <div class="page-subtitle">Kelola seluruh jenis tanaman di perkebunan Anda.</div>
     </div>
-    <div class="page-actions">
+     <div class="page-actions">
       <select class="form-control" style="width:160px" onchange="filterTanaman(this.value)">
         <option value="">Semua Kategori</option>
         <option>Palma</option><option>Lateks</option><option>Buah</option>
         <option>Gula</option><option>Umbi</option><option>Serealia</option>
       </select>
+      ${canAccess('tanaman', 'add') ? `
       <button class="btn btn-primary" onclick="openTanamanModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Tambah Tanaman
-      </button>
+      </button>` : ''}
     </div>
   </div>
   <div class="grid-auto" id="tanamanGrid">
@@ -59,8 +60,8 @@ function tanamanCard(t) {
       <div class="tanaman-footer">
         <span style="font-size:11px;color:var(--text-muted)">💡 ${t.catatan||''}</span>
         <div style="display:flex;gap:6px">
-          <button class="btn btn-sm btn-secondary" onclick="editTanaman('${t.id}')">Edit</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteTanaman('${t.id}')">Hapus</button>
+          ${canAccess('tanaman', 'edit') ? `<button class="btn btn-sm btn-secondary" onclick="editTanaman('${t.id}')">Edit</button>` : ''}
+          ${canAccess('tanaman', 'delete') ? `<button class="btn btn-sm btn-danger" onclick="deleteTanaman('${t.id}')">Hapus</button>` : ''}
         </div>
       </div>
     </div>
@@ -200,10 +201,11 @@ async function renderLahan() {
       <div class="page-subtitle">Pantau kondisi dan status seluruh blok lahan perkebunan.</div>
     </div>
     <div class="page-actions">
+      ${canAccess('lahan', 'add') ? `
       <button class="btn btn-primary" onclick="openLahanModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Tambah Blok
-      </button>
+      </button>` : ''}
     </div>
   </div>
   <div class="grid-auto">
@@ -265,8 +267,8 @@ function lahanCard(l) {
       </div>
     </div>
     <div style="margin-top:12px;display:flex;align-items:center;justify-content:flex-end;gap:6px">
-      <button class="btn btn-sm btn-secondary" onclick="editLahan('${l.id}')">Edit</button>
-      <button class="btn btn-sm btn-danger" onclick="deleteLahan('${l.id}')">Hapus</button>
+      ${canAccess('lahan', 'edit') ? `<button class="btn btn-sm btn-secondary" onclick="editLahan('${l.id}')">Edit</button>` : ''}
+      ${canAccess('lahan', 'delete') ? `<button class="btn btn-sm btn-danger" onclick="deleteLahan('${l.id}')">Hapus</button>` : ''}
     </div>
   </div>`;
 }
@@ -491,10 +493,11 @@ async function renderKaryawan() {
       <div class="page-subtitle">Kelola data dan kehadiran seluruh karyawan perkebunan.</div>
     </div>
     <div class="page-actions">
+      ${canAccess('karyawan', 'add') ? `
       <button class="btn btn-primary" onclick="openKaryawanModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Tambah Karyawan
-      </button>
+      </button>` : ''}
     </div>
   </div>
   <div style="margin-bottom:22px">
@@ -543,8 +546,8 @@ async function renderKaryawan() {
               <td><span class="badge ${(k.status||'').toLowerCase()==='aktif'?'badge-green':'badge-yellow'}">${k.status || '-'}</span></td>
               <td>
                 <div style="display:flex;gap:6px">
-                  <button class="btn btn-sm btn-secondary" onclick="editKaryawan('${k.id}')">Edit</button>
-                  <button class="btn btn-sm btn-danger" onclick="deleteKaryawan('${k.id}')">Hapus</button>
+                  ${canAccess('karyawan', 'edit') ? `<button class="btn btn-sm btn-secondary" onclick="editKaryawan('${k.id}')">Edit</button>` : ''}
+                  ${canAccess('karyawan', 'delete') ? `<button class="btn btn-sm btn-danger" onclick="deleteKaryawan('${k.id}')">Hapus</button>` : ''}
                 </div>
               </td>
             </tr>

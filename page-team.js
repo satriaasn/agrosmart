@@ -110,15 +110,30 @@ function memberCard(m) {
       </div>
     </div>
 
-    <!-- Permission toggles -->
+    <!-- Permission Summary -->
     <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
       <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:10px">HAK AKSES MODUL</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px">
-        ${modules.map(mod => `
-          <div style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;background:${perms[mod.key] ? 'rgba(16,185,129,0.12)' : 'var(--bg-input)'};border:1px solid ${perms[mod.key] ? 'rgba(16,185,129,0.3)' : 'var(--border)'};font-size:11px;font-weight:600;color:${perms[mod.key] ? 'var(--text-accent)' : 'var(--text-muted)'}">
-            <span style="width:7px;height:7px;border-radius:50%;background:${perms[mod.key] ? 'var(--accent-primary)' : 'var(--border-strong)'}"></span>
-            ${mod.label}
-          </div>`).join('')}
+        ${Object.keys(perms).map(mod => {
+          const p = perms[mod];
+          const hasAny = typeof p === 'object' ? (p.view || p.add || p.edit || p.delete) : p === true;
+          if (!hasAny) return '';
+          
+          let actionLabel = '';
+          if (typeof p === 'object') {
+            const acts = [];
+            if (p.add) acts.push('+');
+            if (p.edit) acts.push('✎');
+            if (p.delete) acts.push('🗑️');
+            actionLabel = acts.length ? ` [${acts.join('')}]` : '';
+          }
+
+          return `
+          <div style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);font-size:11px;font-weight:600;color:var(--text-accent)">
+            <span style="width:7px;height:7px;border-radius:50%;background:var(--accent-primary)"></span>
+            ${mod.toUpperCase()}${actionLabel}
+          </div>`;
+        }).join('')}
       </div>
     </div>
     <!-- Assigned Lahan -->
@@ -173,25 +188,39 @@ async function openInviteModal() {
     </div>
 
     <div style="border-top:1px solid var(--border);margin:16px 0;padding-top:16px">
-      <div style="font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:0.5px;margin-bottom:12px">⚙️ HAK AKSES AWAL</div>
-      <div class="grid-2" style="gap:10px">
-        ${[
-          { key:'dashboard', label:'Dashboard', defOn:true },
-          { key:'lahan',     label:'Lahan',     defOn:true },
-          { key:'tanaman',   label:'Tanaman',   defOn:true },
-          { key:'karyawan',  label:'Karyawan',  defOn:true },
-          { key:'panen',     label:'Panen',     defOn:true },
-          { key:'keuangan',  label:'Keuangan',  defOn:false },
-          { key:'laporan',   label:'Laporan',   defOn:true },
-          { key:'cuaca',     label:'Cuaca',     defOn:true },
-          { key:'peta',      label:'Peta Lahan',defOn:true },
-          { key:'edit',      label:'✏️ Edit Data',defOn:true },
-          { key:'hapus',     label:'🗑️ Hapus Data',defOn:false },
-        ].map(p => `
-          <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:var(--bg-input);border:1px solid var(--border);cursor:pointer">
-            <input type="checkbox" id="fp-${p.key}" ${p.defOn?'checked':''} style="accent-color:var(--accent-primary);width:14px;height:14px">
-            <span style="font-size:12px;font-weight:600;color:var(--text-secondary)">${p.label}</span>
-          </label>`).join('')}
+      <div style="font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:0.5px;margin-bottom:12px">⚙️ HAK AKSES OPERATOR</div>
+      <div class="table-wrapper" style="border:1px solid var(--border);border-radius:10px;overflow:hidden">
+        <table style="width:100%;font-size:12px">
+          <thead>
+            <tr style="background:var(--bg-secondary)">
+              <th style="text-align:left;padding:10px">Modul</th>
+              <th style="padding:10px">Lihat</th>
+              <th style="padding:10px">Tambah</th>
+              <th style="padding:10px">Edit</th>
+              <th style="padding:10px">Hapus</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${[
+              { key:'lahan', label:'Lahan' },
+              { key:'tanaman', label:'Tanaman' },
+              { key:'karyawan', label:'Karyawan' },
+              { key:'panen', label:'Panen' },
+              { key:'keuangan', label:'Keuangan' },
+              { key:'laporan', label:'Laporan' },
+              { key:'cuaca', label:'Cuaca' },
+              { key:'peta', label:'Peta' }
+            ].map(m => `
+              <tr>
+                <td style="padding:8px 10px;font-weight:600">${m.label}</td>
+                <td style="text-align:center"><input type="checkbox" class="perm-row" data-mod="${m.key}" data-act="view" checked></td>
+                <td style="text-align:center"><input type="checkbox" class="perm-row" data-mod="${m.key}" data-act="add"></td>
+                <td style="text-align:center"><input type="checkbox" class="perm-row" data-mod="${m.key}" data-act="edit"></td>
+                <td style="text-align:center"><input type="checkbox" class="perm-row" data-mod="${m.key}" data-act="delete"></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
       </div>
     </div>
   `, async () => {
@@ -202,9 +231,15 @@ async function openInviteModal() {
     if (!email) { showToast('danger','Gagal','Email tidak boleh kosong.'); return; }
     if (!password || password.length < 8) { showToast('danger','Gagal','Password minimal 8 karakter.'); return; }
 
-    const pKeys = ['dashboard','lahan','tanaman','karyawan','panen','keuangan','laporan','cuaca','peta','edit','hapus'];
     const permissions = {};
-    pKeys.forEach(k => { permissions[k] = document.getElementById(`fp-${k}`)?.checked ?? false; });
+    document.querySelectorAll('.perm-row').forEach(cb => {
+      const mod = cb.dataset.mod;
+      const act = cb.dataset.act;
+      if (!permissions[mod]) permissions[mod] = {};
+      permissions[mod][act] = cb.checked;
+    });
+    // Add dashboard view as default
+    permissions.dashboard = { view: true };
     
     const assignedLahan = Array.from(document.querySelectorAll('.f-assigned-lahan:checked')).map(el => parseInt(el.value));
 
@@ -273,18 +308,57 @@ async function openPermissionModal(memberId) {
     </div>
 
     <div style="border-top:1px solid var(--border);margin:16px 0;padding-top:16px">
-      <div style="font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:0.5px;margin-bottom:12px">⚙️ HAK AKSES</div>
-      <div class="grid-2" style="gap:10px">
-        ${pKeys.map(p => `
-          <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:var(--bg-input);border:1px solid var(--border);cursor:pointer">
-            <input type="checkbox" id="ep-${p.key}" ${perms[p.key]?'checked':''} style="accent-color:var(--accent-primary);width:14px;height:14px">
-            <span style="font-size:12px;font-weight:600;color:var(--text-secondary)">${p.label}</span>
-          </label>`).join('')}
+      <div style="font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:0.5px;margin-bottom:12px">⚙️ HAK AKSES OPERATOR</div>
+      <div class="table-wrapper" style="border:1px solid var(--border);border-radius:10px;overflow:hidden">
+        <table style="width:100%;font-size:12px">
+          <thead>
+            <tr style="background:var(--bg-secondary)">
+              <th style="text-align:left;padding:10px">Modul</th>
+              <th style="padding:10px">Lihat</th>
+              <th style="padding:10px">Tambah</th>
+              <th style="padding:10px">Edit</th>
+              <th style="padding:10px">Hapus</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${[
+              { key:'lahan', label:'Lahan' },
+              { key:'tanaman', label:'Tanaman' },
+              { key:'karyawan', label:'Karyawan' },
+              { key:'panen', label:'Panen' },
+              { key:'keuangan', label:'Keuangan' },
+              { key:'laporan', label:'Laporan' },
+              { key:'cuaca', label:'Cuaca' },
+              { key:'peta', label:'Peta' }
+            ].map(m => {
+              const p = perms[m.key] || {};
+              const isOld = typeof perms[m.key] === 'boolean';
+              const v = isOld ? perms[m.key] : p.view;
+              const a = isOld ? false : p.add;
+              const e = isOld ? false : p.edit;
+              const d = isOld ? false : p.delete;
+              return `
+              <tr>
+                <td style="padding:8px 10px;font-weight:600">${m.label}</td>
+                <td style="text-align:center"><input type="checkbox" class="perm-row-e" data-mod="${m.key}" data-act="view" ${v?'checked':''}></td>
+                <td style="text-align:center"><input type="checkbox" class="perm-row-e" data-mod="${m.key}" data-act="add" ${a?'checked':''}></td>
+                <td style="text-align:center"><input type="checkbox" class="perm-row-e" data-mod="${m.key}" data-act="edit" ${e?'checked':''}></td>
+                <td style="text-align:center"><input type="checkbox" class="perm-row-e" data-mod="${m.key}" data-act="delete" ${d?'checked':''}></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
       </div>
     </div>
   `, async () => {
     const newPerms = {};
-    pKeys.forEach(p => { newPerms[p.key] = document.getElementById(`ep-${p.key}`)?.checked ?? false; });
+    document.querySelectorAll('.perm-row-e').forEach(cb => {
+      const mod = cb.dataset.mod;
+      const act = cb.dataset.act;
+      if (!newPerms[mod]) newPerms[mod] = {};
+      newPerms[mod][act] = cb.checked;
+    });
+    newPerms.dashboard = { view: true };
     const roleLabel = document.getElementById('ep-roleLabel').value.trim() || m.role_label;
     
     const newAssigned = Array.from(document.querySelectorAll('.ep-assigned-lahan:checked')).map(el => parseInt(el.value));

@@ -20,6 +20,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 window.APP_ROLE        = null;   // 'superadmin' | 'owner' | 'operator'
 window.APP_PERMISSIONS = null;   // null (owner/superadmin = full) | jsonb object (operator)
 window.APP_OWNER_ID    = null;   // untuk operator: UUID pemilik bisnis
+window.APP_ASSIGNED_LAHAN_NAMES = []; // untuk filtering modul (Tanaman, Biaya)
 
 // ─── Auth Helpers ─────────────────────────────────────────────────────────────
 
@@ -83,18 +84,37 @@ async function initOperatorContext(userId) {
     window.APP_OWNER_ID    = data.owner_id;
     window.APP_PERMISSIONS = data.permissions;
     window.APP_ASSIGNED_LAHAN = data.assigned_lahan || [];
+    
+    // Ambil nama lahan untuk filtering di modul lain
+    if (window.APP_ASSIGNED_LAHAN.length > 0) {
+      const { data: names } = await sb.from('lahan').select('nama').in('id', window.APP_ASSIGNED_LAHAN);
+      window.APP_ASSIGNED_LAHAN_NAMES = (names || []).map(n => n.nama);
+    }
   }
   return data;
 }
 
 /**
- * Cek apakah user berhak akses modul tertentu
- * @param {'lahan'|'tanaman'|'karyawan'|'panen'|'keuangan'|'laporan'|'cuaca'|'peta'|'edit'|'hapus'} module
+ * Cek apakah user berhak akses modul & aksi tertentu
+ * @param {string} module 'lahan','tanaman','karyawan','panen','keuangan','laporan','cuaca','peta'
+ * @param {'view'|'add'|'edit'|'delete'} action
  */
-function canAccess(module) {
+function canAccess(module, action = 'view') {
   if (isSuperadmin() || isOwner()) return true;
   if (!window.APP_PERMISSIONS) return false;
-  return window.APP_PERMISSIONS[module] === true;
+  
+  const mPerms = window.APP_PERMISSIONS[module];
+  if (!mPerms) return false;
+
+  // Jika format lama (boolean), anggap sebagai permission 'view'
+  if (typeof mPerms === 'boolean') {
+    if (action === 'view') return mPerms;
+    if (action === 'edit' || action === 'add') return window.APP_PERMISSIONS['edit'] === true; // backward compat
+    if (action === 'delete') return window.APP_PERMISSIONS['hapus'] === true; // backward compat
+    return false;
+  }
+
+  return mPerms[action] === true;
 }
 
 // ─── Data Helpers (CRUD per tabel) ───────────────────────────────────────────
@@ -112,8 +132,8 @@ const SB = {
   /** LAHAN */
   lahan: {
     fetch:  (uid)       => {
-      let q = sb.from('lahan').select('*').order('created_at');
-      if (uid) q = q.eq('user_id', uid);
+      let ownerId = uid || window.APP_OWNER_ID || window._currentUserId;
+      let q = sb.from('lahan').select('*').eq('user_id', ownerId).order('created_at');
       
       // Filter lahan spesifik untuk operator
       if (isOperator() && window.APP_ASSIGNED_LAHAN && window.APP_ASSIGNED_LAHAN.length > 0) {
@@ -128,12 +148,16 @@ const SB = {
   /** TANAMAN */
   tanaman: {
     fetch:  (uid)       => {
-      let q = sb.from('tanaman').select('*').order('created_at');
-      if (uid) q = q.eq('user_id', uid);
+      let ownerId = uid || window.APP_OWNER_ID || window._currentUserId;
+      let q = sb.from('tanaman').select('*').eq('user_id', ownerId).order('created_at');
 
-      // Filter tanaman berdasarkan lahan yang diijinkan (jika ada filtering lahan)
-      // Catatan: tanaman tabel menggunakan nama lahan (string), bukan ID. 
-      // Kita perlu menyaring di level aplikasi atau join.
+      // Filter tanaman berdasarkan lahan (string) yang diijinkan
+      if (isOperator() && window.APP_ASSIGNED_LAHAN_NAMES && window.APP_ASSIGNED_LAHAN_NAMES.length > 0) {
+         // Karena filter string 'in' di Supabase sulit untuk 'comma separated', 
+         // idealnya filter ini dilakukan di JS jika datanya tidak terlalu besar.
+         // Tapi kita coba dengan filter IN jika kolom lahan hanya berisi satu nama per tanaman.
+         q = q.in('lahan', window.APP_ASSIGNED_LAHAN_NAMES);
+      }
       return q;
     },
     insert: (data)       => sb.from('tanaman').insert(_withUserId(data)).select().single(),
@@ -143,8 +167,8 @@ const SB = {
   /** KARYAWAN */
   karyawan: {
     fetch:  (uid)       => {
-      let q = sb.from('karyawan').select('*').order('created_at');
-      if (uid) q = q.eq('user_id', uid);
+      let ownerId = uid || window.APP_OWNER_ID || window._currentUserId;
+      let q = sb.from('karyawan').select('*').eq('user_id', ownerId).order('created_at');
       return q;
     },
     insert: (data)       => sb.from('karyawan').insert(_withUserId(data)).select().single(),
@@ -154,8 +178,12 @@ const SB = {
   /** PANEN */
   panen: {
     fetch:  (uid)       => {
-      let q = sb.from('panen').select('*').order('tanggal', { ascending: false });
-      if (uid) q = q.eq('user_id', uid);
+      let ownerId = uid || window.APP_OWNER_ID || window._currentUserId;
+      let q = sb.from('panen').select('*').eq('user_id', ownerId).order('tanggal', { ascending: false });
+      
+      if (isOperator() && window.APP_ASSIGNED_LAHAN_NAMES && window.APP_ASSIGNED_LAHAN_NAMES.length > 0) {
+        q = q.in('lahan', window.APP_ASSIGNED_LAHAN_NAMES);
+      }
       return q;
     },
     insert: (data)       => sb.from('panen').insert(_withUserId(data)).select().single(),
@@ -165,8 +193,12 @@ const SB = {
   /** BIAYA */
   biaya: {
     fetch:  (uid)       => {
-      let q = sb.from('biaya').select('*').order('tanggal', { ascending: false });
-      if (uid) q = q.eq('user_id', uid);
+      let ownerId = uid || window.APP_OWNER_ID || window._currentUserId;
+      let q = sb.from('biaya').select('*').eq('user_id', ownerId).order('tanggal', { ascending: false });
+      
+      if (isOperator() && window.APP_ASSIGNED_LAHAN_NAMES && window.APP_ASSIGNED_LAHAN_NAMES.length > 0) {
+        q = q.in('lahan', window.APP_ASSIGNED_LAHAN_NAMES);
+      }
       return q;
     },
     insert: (data)       => sb.from('biaya').insert(_withUserId(data)).select().single(),
