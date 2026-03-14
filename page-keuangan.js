@@ -374,7 +374,9 @@ async function openBiayaModal(id) {
     <div class="form-row">
       <div class="form-group"><label class="form-label">Kategori Biaya *</label>
         <select class="form-control" id="f-bKat">
-          ${Object.keys(BIAYA_COLORS).map(k=>`<option ${b?.kategori===k?'selected':''}>${k}</option>`).join('')}
+          <option value="">— Pilih Kategori —</option>
+          ${arrKats.map(k=>`<option value="${k.name}" ${b?.kategori===k.name?'selected':''}>${k.icon||'💸'} ${k.name}</option>`).join('')}
+          ${!arrKats.some(k=>k.name==='Lainnya') ? `<option value="Lainnya" ${b?.kategori==='Lainnya'?'selected':''}>📋 Lainnya</option>` : ''}
         </select>
       </div>
       <div class="form-group"><label class="form-label">Akun COA (Accounting)</label>
@@ -401,6 +403,7 @@ async function openBiayaModal(id) {
         function updateCOA() {
           const selectedKat = katSelect.value;
           const catObj = dynamicKats.find(k => k.name === selectedKat);
+          console.log('[DEBUG] updateCOA selected:', selectedKat, 'found:', catObj?.coa_id);
           if (catObj && catObj.coa_id) {
             coaSelect.value = catObj.coa_id;
           } else {
@@ -409,7 +412,9 @@ async function openBiayaModal(id) {
         }
 
         katSelect.addEventListener('change', updateCOA);
-        setTimeout(updateCOA, 100); 
+        // Run immediately and after a short delay to ensure DOM is settled
+        updateCOA();
+        setTimeout(updateCOA, 200);
       })();
     </script>
     <div class="form-row">
