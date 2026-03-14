@@ -447,6 +447,14 @@ window.konfirmasiHapusAkun = function() {
 
 // ─── Manajemen Kategori & Satuan ─────────────────────────────────────────────
 window.loadMetadata = async function() {
+  // Tunggu sejenak jika session belum siap
+  const ownerId = window.APP_OWNER_ID || window._currentUserId;
+  if (!ownerId) {
+    console.warn('[DEBUG] loadMetadata: User ID not ready, retrying in 500ms...');
+    setTimeout(loadMetadata, 500);
+    return;
+  }
+
   const [{ data: kats, error: kErr }, { data: sats, error: sErr }] = await Promise.all([
     SB.expense_categories.fetch(),
     SB.units.fetch()
@@ -454,11 +462,20 @@ window.loadMetadata = async function() {
 
   if (kErr || sErr) {
     console.error('Metadata fetch error:', kErr || sErr);
+    const msg = (kErr?.message || sErr?.message || '').includes('not found') 
+      ? 'Tabel tidak ditemukan. Pastikan Anda sudah menjalankan SQL patch.'
+      : 'Gagal memuat data dari server.';
+    
+    if (document.getElementById('katList')) {
+      document.getElementById('katList').innerHTML = `<div class="alert alert-danger" style="font-size:11px;padding:8px">${msg}</div>`;
+      document.getElementById('satList').innerHTML = `<div class="alert alert-danger" style="font-size:11px;padding:8px">${msg}</div>`;
+    }
     return;
   }
 
   // Seed default if empty
   if ((kats||[]).length === 0 && (sats||[]).length === 0) {
+    console.log('[DEBUG] Metadata empty, seeding defaults...');
     await seedDefaults();
     return loadMetadata();
   }
@@ -475,12 +492,14 @@ function renderKatList(data) {
     return;
   }
   el.innerHTML = data.map(k => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-secondary);border-radius:8px">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border)">
       <div style="display:flex;align-items:center;gap:10px">
         <span style="font-size:16px">${k.icon || '📋'}</span>
-        <span style="font-size:13px;font-weight:500">${k.name}</span>
+        <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${k.name}</span>
       </div>
-      <button onclick="deleteKat('${k.id}')" style="background:none;border:none;cursor:pointer;color:#f87171;padding:4px">✕</button>
+      <button onclick="deleteKat('${k.id}')" style="background:none;border:none;cursor:pointer;color:#f87171;padding:4px;display:flex" title="Hapus">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      </button>
     </div>
   `).join('');
 }
@@ -493,35 +512,48 @@ function renderSatList(data) {
     return;
   }
   el.innerHTML = data.map(s => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-secondary);border-radius:8px">
-      <span style="font-size:13px;font-weight:500">${s.name} <small style="color:var(--text-muted);font-weight:400">(${s.type})</small></span>
-      <button onclick="deleteSatuan('${s.id}')" style="background:none;border:none;cursor:pointer;color:#f87171;padding:4px">✕</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border)">
+      <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${s.name} <small style="color:var(--text-muted);font-weight:400;margin-left:4px">(${s.type})</small></span>
+      <button onclick="deleteSatuan('${s.id}')" style="background:none;border:none;cursor:pointer;color:#f87171;padding:4px;display:flex" title="Hapus">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      </button>
     </div>
   `).join('');
 }
 
 async function seedDefaults() {
   const defaultKats = [
-    { name: 'Pupuk', icon: '🌱', color: '#22c55e' },
-    { name: 'Pestisida', icon: '🧪', color: '#f59e0b' },
-    { name: 'Tenaga Kerja', icon: '👷', color: '#3b82f6' },
-    { name: 'Irigasi', icon: '💧', color: '#10b981' },
-    { name: 'Alat & Mesin', icon: '⚙️', color: '#ef4444' },
-    { name: 'Transportasi', icon: '🚛', color: '#6b7280' },
-    { name: 'Lainnya', icon: '📋', color: '#6b7280' }
+    { name: 'Pupuk & Nutrisi', icon: '🌱', color: '#22c55e' },
+    { name: 'Obat & Pestisida', icon: '🧪', color: '#f59e0b' },
+    { name: 'Bibit / Benih', icon: '🥯', color: '#84cc16' },
+    { name: 'Gaji Karyawan', icon: '👷', color: '#3b82f6' },
+    { name: 'Peralatan Kebun', icon: '⚙️', color: '#ef4444' },
+    { name: 'BBM & Transport', icon: '🚛', color: '#6b7280' },
+    { name: 'Lain-lain', icon: '📋', color: '#64748b' }
   ];
   const defaultSats = [
     { name: 'kg', type: 'semua' },
     { name: 'liter', type: 'semua' },
     { name: 'ton', type: 'panen' },
-    { name: 'orang', type: 'karyawan' },
-    { name: 'buah', type: 'panen' }
+    { name: 'karung', type: 'biaya' },
+    { name: 'botol', type: 'biaya' },
+    { name: 'orang/hari', type: 'biaya' },
+    { name: 'buah', type: 'panen' },
+    { name: 'ikat', type: 'panen' }
   ];
   
-  await Promise.all([
-    ...defaultKats.map(k => SB.expense_categories.insert(k)),
-    ...defaultSats.map(s => SB.units.insert(s))
-  ]);
+  try {
+    const ownerId = window.APP_OWNER_ID || window._currentUserId;
+    if (!ownerId) throw new Error('User context not ready for seeding');
+    
+    await Promise.all([
+      ...defaultKats.map(k => SB.expense_categories.insert(k)),
+      ...defaultSats.map(s => SB.units.insert(s))
+    ]);
+    console.log('[DEBUG] Seeding completed successfully.');
+  } catch(e) {
+    console.error('[DEBUG] Seeding failed:', e);
+  }
 }
 
 window.openAddKatModal = function() {
@@ -540,7 +572,7 @@ window.openAddKatModal = function() {
 
 window.openAddSatuanModal = function() {
   openModal('Tambah Satuan', `
-    <div class="form-group"><label class="form-label">Nama Satuan</label><input class="form-control" id="f-satNama" placeholder="Contoh: karung"></div>
+    <div class="form-group"><label class="form-label">Nama Satuan</label><input class="form-control" id="f-satNama" placeholder="Contoh: sak"></div>
     <div class="form-group"><label class="form-label">Gunakan Untuk</label>
       <select class="form-control" id="f-satType">
         <option value="semua">Semua Modul</option>
@@ -569,3 +601,14 @@ window.deleteSatuan = async function(id) {
   await SB.units.remove(id);
   loadMetadata();
 };
+
+// --- Override original renderProfil function to ensure metadata loads ---
+if (typeof window._originalRenderProfil === 'undefined') {
+  window._originalRenderProfil = renderProfil;
+  renderProfil = async function() {
+    const html = await window._originalRenderProfil();
+    // Load metadata shortly after HTML is injected into DOM
+    setTimeout(loadMetadata, 100);
+    return html;
+  };
+}
