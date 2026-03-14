@@ -263,6 +263,16 @@ const SB = {
     update: (id, data)  => sb.from('units').update(data).eq('id', id).select().single(),
     remove: (id)        => sb.from('units').delete().eq('id', id),
   },
+  /** CASH BOOK */
+  cash_book: {
+    fetch:  (uid)      => {
+      let ownerId = uid || window.APP_OWNER_ID || window._currentUserId;
+      return sb.from('cash_book').select('*').eq('user_id', ownerId).order('tanggal', { ascending: false });
+    },
+    insert: (data)      => sb.from('cash_book').insert(_withUserId(data)).select().single(),
+    update: (id, data)  => sb.from('cash_book').update(data).eq('id', id).select().single(),
+    remove: (id)        => sb.from('cash_book').delete().eq('id', id),
+  },
   /** AKTIVITAS */
   aktivitas: {
     fetch:  (limit = 10, uid) => {
