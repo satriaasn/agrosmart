@@ -380,63 +380,80 @@ async function renderLaporan() {
   const displayTotal = totalKg >= 1000 ? (totalKg/1000).toFixed(1) + ' ton' : totalKg.toLocaleString('id-ID') + ' kg';
 
   return `
-  <div class="page-header">
-    <div>
-      <div class="page-title">Laporan & Analitik</div>
-      <div class="page-subtitle">Ringkasan performa perkebunan secara visual dan mendalam.</div>
-    </div>
-    <div class="page-actions">
-      <button class="btn btn-secondary" onclick="showToast('info','Ekspor','Laporan berhasil diekspor ke PDF.')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Ekspor PDF
-      </button>
-    </div>
-  </div>
-
-  <div class="grid-2" style="margin-bottom:22px">
-    <div class="card">
-      <div class="section-title">Ringkasan Performa</div>
-      <div style="display:flex;flex-direction:column;gap:12px">
-        ${[
-          { label:'Total Luas Lahan', val: totalLahanHa + ' ha', color:'var(--emerald-400)' },
-          { label:'Total Produksi', val: displayTotal, color:'var(--green-400)' },
-          { label:'Total Pendapatan', val:'Rp '+totalPendapatan.toLocaleString('id-ID'), color:'var(--emerald-400)' },
-        ].map(r=>`
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg-secondary);border-radius:8px">
-            <span style="font-size:13px;color:var(--text-secondary)">${r.label}</span>
-            <span style="font-weight:700;font-size:14px;color:${r.color}">${r.val}</span>
-          </div>
-        `).join('')}
+    <div class="page-header">
+      <div>
+        <div class="page-title">Analisis Laba Rugi & Kas</div>
+        <div class="page-subtitle">Perbandingan antara log operasional (panen) dan arus kas nyata.</div>
       </div>
     </div>
-    <div class="card">
-      <div class="section-title">Pendapatan per Tanaman (Rp juta)</div>
-      <div class="chart-container" style="height:240px"><canvas id="chartPendapatan"></canvas></div>
+    
+    <div class="stats-grid" style="margin-bottom:24px">
+        <div class="stat-card" style="--card-accent:#10b981">
+          <div class="stat-header"><span class="stat-label">Pendapatan Panen</span><div class="stat-icon-wrapper">💰</div></div>
+          <div class="stat-value" style="font-size:22px">Rp ${totalPendapatanPanen.toLocaleString('id-ID')}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Berdasarkan log panen lapangan</div>
+        </div>
+        <div class="stat-card" style="--card-accent:#3b82f6">
+          <div class="stat-header"><span class="stat-label">Arus Kas Masuk</span><div class="stat-icon-wrapper">📥</div></div>
+          <div class="stat-value" style="font-size:22px">Rp ${cashMasuk.toLocaleString('id-ID')}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Uang nyata yang masuk ke kas</div>
+        </div>
+        <div class="stat-card" style="--card-accent:${netCashFlow < 0 ? '#ef4444' : '#14b8a6'}">
+          <div class="stat-header"><span class="stat-label">Net Cash Flow</span><div class="stat-icon-wrapper">📊</div></div>
+          <div class="stat-value" style="font-size:22px">Rp ${netCashFlow.toLocaleString('id-ID')}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Selisih uang masuk vs keluar</div>
+        </div>
     </div>
-  </div>
 
-  <div class="card" style="margin-bottom:22px">
-    <div class="section-title">Performa Bulanan — Produksi (ton)</div>
-    <div class="chart-container" style="height:200px"><canvas id="chartBulanan"></canvas></div>
-  </div>
-
-  <div class="grid-2">
-    <div class="card">
-      <div class="section-title">Ringkasan Keuangan</div>
-      <div style="display:flex;flex-direction:column;gap:12px">
-        ${[
-          { label:'Total Pendapatan Panen', val:'Rp '+totalPendapatan.toLocaleString('id-ID'), color:'var(--green-400)' },
-          { label:'Estimasi Biaya Operasional', val:'Rp 38.500.000', color:'var(--red-400)' },
-          { label:'Laba Bersih Estimasi', val:'Rp '+(totalPendapatan-38500000).toLocaleString('id-ID'), color:'var(--blue-400)' },
-          { label:'Total Gaji Karyawan', val:'Rp '+arrKaryawan.reduce((a,k)=>a+(k.gaji||0),0).toLocaleString('id-ID'), color:'var(--amber-400)' },
-        ].map(r=>`
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg-secondary);border-radius:8px">
-            <span style="font-size:13px;color:var(--text-secondary)">${r.label}</span>
-            <span style="font-weight:700;font-size:14px;color:${r.color}">${r.val}</span>
-          </div>
-        `).join('')}
+    <div class="grid-2" style="margin-bottom:22px">
+      <div class="card">
+        <div class="section-title">Ringkasan Operasional</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          ${[
+            { label:'Total Luas Lahan', val: totalLahanHa + ' ha', color:'var(--emerald-400)' },
+            { label:'Total Produksi', val: displayTotal, color:'var(--green-400)' },
+            { label:'Total Potensi Pendapatan', val:'Rp '+totalPendapatanPanen.toLocaleString('id-ID'), color:'var(--emerald-400)' },
+          ].map(r=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg-secondary);border-radius:8px">
+              <span style="font-size:13px;color:var(--text-secondary)">${r.label}</span>
+              <span style="font-weight:700;font-size:14px;color:${r.color}">${r.val}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-title">Realisasi Keuangan (Cash)</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          ${[
+            { label:'Uang Masuk Tercatat', val:'Rp '+cashMasuk.toLocaleString('id-ID'), color:'var(--green-400)' },
+            { label:'Uang Keluar Tercatat', val:'Rp '+cashKeluar.toLocaleString('id-ID'), color:'var(--red-400)' },
+            { label:'Efisiensi Kas', val: cashMasuk > 0 ? ((netCashFlow / cashMasuk)*100).toFixed(1) + '%' : '0%', color:'var(--blue-400)' },
+          ].map(r=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--bg-secondary);border-radius:8px">
+              <span style="font-size:13px;color:var(--text-secondary)">${r.label}</span>
+              <span style="font-weight:700;font-size:14px;color:${r.color}">${r.val}</span>
+            </div>
+          `).join('')}
+        </div>
       </div>
     </div>
+    
+    <div class="card" style="margin-bottom:22px">
+      <div class="section-title">Performa Bulanan — Produksi (ton)</div>
+      <div class="chart-container" style="height:200px"><canvas id="chartBulanan"></canvas></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="section-title">Pendapatan per Tanaman (Rp juta)</div>
+        <div class="chart-container" style="height:240px"><canvas id="chartPendapatan"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="section-title">Kualitas Panen</div>
+        <div class="chart-container" style="height:200px"><canvas id="chartKualitas"></canvas></div>
+      </div>
+    </div>`;
+}
     <div class="card">
       <div class="section-title">Kualitas Panen</div>
       <div class="chart-container" style="height:200px"><canvas id="chartKualitas"></canvas></div>
