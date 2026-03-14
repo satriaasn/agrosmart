@@ -96,6 +96,8 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   transition: background var(--transition), color var(--transition);
+  overscroll-behavior: none; /* Prevent rubber-band effect */
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Scrollbar */
@@ -118,6 +120,9 @@ body {
   height: 100dvh; /* Use dynamic viewport height */
   transition: width var(--transition), transform var(--transition);
   overflow: hidden;
+  padding-left: env(safe-area-inset-left, 0); /* iPhone Notch in landscape */
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .sidebar.collapsed {
@@ -191,6 +196,7 @@ body {
   padding: 16px 12px;
   overflow-y: auto;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; /* Smooth iOS scrolling */
 }
 
 .nav-section-label {
@@ -344,6 +350,8 @@ body {
   top: 0; z-index: 50;
   box-shadow: 0 2px 12px rgba(16, 185, 129, 0.2);
   transition: background var(--transition);
+  backface-visibility: hidden;
+  transform: translateZ(0); /* Hardware acceleration */
 }
 
 @media (max-width: 768px) {
@@ -426,6 +434,7 @@ body {
   flex: 1;
   padding: 28px 32px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   animation: pageIn 0.3s ease;
 }
 
@@ -936,8 +945,12 @@ select.form-control { cursor: pointer; appearance: none; background-image: url("
   background: #10b981; /* Bright Emerald Green */
   border-top: 1px solid rgba(0,0,0,0.05);
   z-index: 100;
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom, 16px);
+  height: auto;
+  min-height: var(--bottom-nav-height);
   box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 .bnav-inner {
   display: flex; align-items: center; justify-content: space-around;
