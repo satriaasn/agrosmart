@@ -2,6 +2,38 @@
    AgroSmart — Page: Tanaman, Lahan, Karyawan
    ============================================= */
 
+const CROP_EMOJI_MAP = {
+  'sawit': '🌴',
+  'kelapa': '🥥',
+  'karet': '🪵',
+  'padi': '🌾',
+  'kopi': '☕',
+  'kakao': '🍫',
+  'cokelat': '🍫',
+  'jagung': '🌽',
+  'singkong': '🥔',
+  'ubi': '🍠',
+  'cabai': '🌶️',
+  'durian': '🍈',
+  'jeruk': '🍊',
+  'mangga': '🥭',
+  'pisang': '🍌',
+  'tebu': '🌿',
+  'teh': '🍃',
+  'tembakau': '🍂',
+  'bawang': '🧅',
+  'tomat': '🍅'
+};
+
+function getAutoEmoji(name) {
+  if (!name) return '🌱';
+  const lower = name.toLowerCase();
+  for (const [key, emoji] of Object.entries(CROP_EMOJI_MAP)) {
+    if (lower.includes(key)) return emoji;
+  }
+  return '🌱';
+}
+
 /* ---- TANAMAN ---- */
 async function renderTanaman() {
   const { data: listTanaman } = await SB.tanaman.fetch();
@@ -87,10 +119,17 @@ async function openTanamanModal(id) {
 
   openModal(t ? 'Edit Tanaman' : 'Tambah Tanaman Baru', `
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Nama Tanaman</label><input class="form-control" id="f-tNama" placeholder="cth. Kelapa Sawit" value="${t?.nama||''}"></div>
+      <div class="form-group"><label class="form-label">Nama Tanaman</label><input class="form-control" id="f-tNama" placeholder="cth. Kelapa Sawit" value="${t?.nama||''}" oninput="updateTanamanEmoji(this.value)"></div>
       <div class="form-group"><label class="form-label">Nama Latin</label><input class="form-control" id="f-tLatin" placeholder="cth. Elaeis guineensis" value="${t?.latin||''}"></div>
     </div>
     <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Icon / Emoji</label>
+        <div style="display:flex;gap:8px">
+          <input class="form-control" id="f-tEmoji" value="${t?.emoji||'🌱'}" style="width:50px;text-align:center;font-size:20px" readonly>
+          <div style="font-size:11px;color:var(--text-muted);align-self:center">Auto-set dari nama</div>
+        </div>
+      </div>
       <div class="form-group"><label class="form-label">Kategori</label>
         <select class="form-control" id="f-tKat">
           ${['Palma','Lateks','Buah','Gula','Umbi','Serealia'].map(k=>`<option ${t?.kategori===k?'selected':''}>${k}</option>`).join('')}
@@ -142,9 +181,9 @@ async function openTanamanModal(id) {
       lahan: lahanStr,
       luas: +document.getElementById('f-tLuas').value || 0,
       umur: document.getElementById('f-tUmur').value || 'Baru',
-      status: document.getElementById('f-tStatus').value,
+      status: t?.status || 'Aktif',
       catatan: document.getElementById('f-tCatatan').value,
-      emoji: t?.emoji || '🌱',
+      emoji: document.getElementById('f-tEmoji').value || '🌱',
       hasil_kg: t?.hasil_kg || 0,
       satuan: document.getElementById('f-tSatuan').value,
     };
@@ -177,6 +216,11 @@ function toggleLahanChip(el) {
   el.classList.toggle('tlc-on');
 }
 
+function updateTanamanEmoji(val) {
+  const el = document.getElementById('f-tEmoji');
+  if (el) el.value = getAutoEmoji(val);
+}
+
 // Sync all lahan.tanaman strings from current DB.tanaman assignments
 function syncLahanTanaman() {
   DB.lahan.forEach(l => {
@@ -193,7 +237,12 @@ function syncLahanTanaman() {
 
 /* ---- LAHAN ---- */
 async function renderLahan() {
-  const { data: listLahan } = await SB.lahan.fetch();
+  const [{ data: listLahan }, { data: listTanaman }] = await Promise.all([
+    SB.lahan.fetch(),
+    SB.tanaman.fetch()
+  ]);
+  window._CACHE_TANAMAN_METADATA = listTanaman || [];
+  
   return `
   <div class="page-header">
     <div>
@@ -209,11 +258,11 @@ async function renderLahan() {
     </div>
   </div>
   <div class="grid-auto">
-    ${(listLahan || []).map(l => lahanCard(l)).join('')}
+    ${(listLahan || []).map(l => lahanCard(l, window._CACHE_TANAMAN_METADATA)).join('')}
   </div>`;
 }
 
-function lahanCard(l) {
+function lahanCard(l, allTanaman) {
   const statusColor = l.status === 'Aktif' ? 'badge-green' : 'badge-yellow';
   const kelColor = l.kelembaban < 50 ? '#ef4444' : '#22c55e';
   const hasCoord = !!(l.lat && l.lng);
@@ -261,8 +310,11 @@ function lahanCard(l) {
       <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:0.5px;margin-bottom:6px">TANAMAN DI LAHAN INI</div>
       <div style="display:flex;flex-wrap:wrap;gap:5px;min-height:22px">
         ${(l.tanaman && l.tanaman !== '-')
-          ? l.tanaman.split(',').map(n => n.trim()).filter(Boolean).map(n =>
-              `<span class="badge badge-green" style="font-size:10px">🌿 ${n}</span>`).join('')
+          ? l.tanaman.split(',').map(n => n.trim()).filter(Boolean).map(n => {
+              const matchedT = (allTanaman || []).find(tx => tx.nama.toLowerCase() === n.toLowerCase());
+              const icon = matchedT ? matchedT.emoji : '🌿';
+              return `<span class="badge badge-green" style="font-size:10px">${icon} ${n}</span>`;
+            }).join('')
           : `<span style="font-size:11px;color:var(--text-muted)">Belum ada tanaman</span>`}
       </div>
     </div>
