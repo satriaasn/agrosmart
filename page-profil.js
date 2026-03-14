@@ -482,6 +482,8 @@ window.loadMetadata = async function() {
     return loadMetadata();
   }
 
+  window._CACHE_KATS = kats || [];
+  window._CACHE_SATS = sats || [];
   renderKatList(kats || []);
   renderSatList(sats || []);
 };
@@ -497,11 +499,19 @@ function renderKatList(data) {
     <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border)">
       <div style="display:flex;align-items:center;gap:10px">
         <span style="font-size:16px">${k.icon || '📋'}</span>
-        <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${k.name}</span>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text-primary)">${k.name}</div>
+          ${k.coa_id ? `<div style="font-size:10px;color:var(--text-muted)">🔗 ${window._CACHE_COA?.find(a=>a.id==k.coa_id)?.account_code || ''}</div>` : ''}
+        </div>
       </div>
-      <button onclick="deleteKat('${k.id}')" style="background:none;border:none;cursor:pointer;color:#f87171;padding:4px;display:flex" title="Hapus">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-      </button>
+      <div style="display:flex;gap:6px">
+        <button onclick="editKat('${k.id}')" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px" title="Edit">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button onclick="deleteKat('${k.id}')" style="background:none;border:none;cursor:pointer;color:#f87171;padding:4px" title="Hapus">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
+      </div>
     </div>
   `).join('');
 }
@@ -516,9 +526,14 @@ function renderSatList(data) {
   el.innerHTML = data.map(s => `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border)">
       <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${s.name} <small style="color:var(--text-muted);font-weight:400;margin-left:4px">(${s.type})</small></span>
-      <button onclick="deleteSatuan('${s.id}')" style="background:none;border:none;cursor:pointer;color:#f87171;padding:4px;display:flex" title="Hapus">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-      </button>
+      <div style="display:flex;gap:6px">
+        <button onclick="editSatuan('${s.id}')" style="background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px" title="Edit">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button onclick="deleteSatuan('${s.id}')" style="background:none;border:none;cursor:pointer;color:#f87171;padding:4px" title="Hapus">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </button>
+      </div>
     </div>
   `).join('');
 }
@@ -558,15 +573,17 @@ async function seedDefaults() {
   }
 }
 
-window.openAddKatModal = function() {
+window.openAddKatModal = function(id) {
   const coas = window._CACHE_COA || [];
-  openModal('Tambah Kategori Biaya', `
-    <div class="form-group"><label class="form-label">Nama Kategori</label><input class="form-control" id="f-katNama" placeholder="Contoh: Listrik"></div>
-    <div class="form-group"><label class="form-label">Ikon (Emoji)</label><input class="form-control" id="f-katIkon" value="📋"></div>
+  const k = id ? (window._CACHE_KATS || []).find(x => String(x.id) === String(id)) : null;
+
+  openModal(k ? 'Edit Kategori Biaya' : 'Tambah Kategori Biaya', `
+    <div class="form-group"><label class="form-label">Nama Kategori</label><input class="form-control" id="f-katNama" value="${k?.name || ''}" placeholder="Contoh: Listrik"></div>
+    <div class="form-group"><label class="form-label">Ikon (Emoji)</label><input class="form-control" id="f-katIkon" value="${k?.icon || '📋'}"></div>
     <div class="form-group"><label class="form-label">Hubungkan ke Akun (COA)</label>
       <select class="form-control" id="f-katCOA">
         <option value="">-- Tanpa Hubungan --</option>
-        ${coas.filter(a => !a.is_header).map(a => `<option value="${a.id}">${a.account_code} - ${a.account_name}</option>`).join('')}
+        ${coas.filter(a => !a.is_header).map(a => `<option value="${a.id}" ${k?.coa_id == a.id ? 'selected' : ''}>${a.account_code} - ${a.account_name}</option>`).join('')}
       </select>
     </div>
   `, async () => {
@@ -574,31 +591,48 @@ window.openAddKatModal = function() {
     const icon  = document.getElementById('f-katIkon').value.trim();
     const coa_id = document.getElementById('f-katCOA').value || null;
     if (!name) return;
-    await SB.expense_categories.insert({ name, icon, coa_id });
-    showToast('success','Berhasil','Kategori ditambahkan');
+    
+    if (k) {
+      await SB.expense_categories.update(k.id, { name, icon, coa_id });
+      showToast('success','Berhasil','Kategori diperbarui');
+    } else {
+      await SB.expense_categories.insert({ name, icon, coa_id });
+      showToast('success','Berhasil','Kategori ditambahkan');
+    }
     loadMetadata();
   });
 };
 
-window.openAddSatuanModal = function() {
-  openModal('Tambah Satuan', `
-    <div class="form-group"><label class="form-label">Nama Satuan</label><input class="form-control" id="f-satNama" placeholder="Contoh: sak"></div>
+window.openAddSatuanModal = function(id) {
+  const s = id ? (window._CACHE_SATS || []).find(x => String(x.id) === String(id)) : null;
+
+  openModal(s ? 'Edit Satuan' : 'Tambah Satuan', `
+    <div class="form-group"><label class="form-label">Nama Satuan</label><input class="form-control" id="f-satNama" value="${s?.name || ''}" placeholder="Contoh: sak"></div>
     <div class="form-group"><label class="form-label">Gunakan Untuk</label>
       <select class="form-control" id="f-satType">
-        <option value="semua">Semua Modul</option>
-        <option value="panen">Hanya Panen</option>
-        <option value="biaya">Hanya Biaya</option>
+        <option value="semua" ${s?.type === 'semua' ? 'selected' : ''}>Semua Modul</option>
+        <option value="panen" ${s?.type === 'panen' ? 'selected' : ''}>Hanya Panen</option>
+        <option value="biaya" ${s?.type === 'biaya' ? 'selected' : ''}>Hanya Biaya</option>
       </select>
     </div>
   `, async () => {
     const name = document.getElementById('f-satNama').value.trim();
     const type = document.getElementById('f-satType').value;
     if (!name) return;
-    await SB.units.insert({ name, type });
-    showToast('success','Berhasil','Satuan ditambahkan');
+
+    if (s) {
+      await SB.units.update(s.id, { name, type });
+      showToast('success','Berhasil','Satuan diperbarui');
+    } else {
+      await SB.units.insert({ name, type });
+      showToast('success','Berhasil','Satuan ditambahkan');
+    }
     loadMetadata();
   });
 };
+
+function editKat(id) { openAddKatModal(id); }
+function editSatuan(id) { openAddSatuanModal(id); }
 
 window.deleteKat = async function(id) {
   if (!confirm('Hapus kategori ini?')) return;
