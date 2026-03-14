@@ -257,12 +257,28 @@ function syncLahanTanaman() {
 }
 
 /* ---- LAHAN ---- */
+/* ---- LAHAN ---- */
 async function renderLahan() {
   const [{ data: listLahan }, { data: listTanaman }] = await Promise.all([
     SB.lahan.fetch(),
     SB.tanaman.fetch()
   ]);
-  window._CACHE_TANAMAN_METADATA = listTanaman || [];
+  const arrLahan = listLahan || [];
+  const allTanaman = listTanaman || [];
+  window._CACHE_TANAMAN_METADATA = allTanaman;
+
+  // Pre-fetch weather for each lahan in parallel
+  const weatherMap = {};
+  const promises = arrLahan.map(async (l) => {
+    if (l.lat && l.lng) {
+      try {
+        weatherMap[l.id] = await WeatherService.getForecast(l.lat, l.lng);
+      } catch (e) {
+        console.warn('Failed weather for lahan:', l.id);
+      }
+    }
+  });
+  await Promise.all(promises);
   
   return `
   <div class="page-header">
@@ -279,14 +295,15 @@ async function renderLahan() {
     </div>
   </div>
   <div class="grid-auto">
-    ${(listLahan || []).map(l => lahanCard(l, window._CACHE_TANAMAN_METADATA)).join('')}
+    ${arrLahan.map(l => lahanCard(l, allTanaman, weatherMap[l.id])).join('')}
   </div>`;
 }
 
-function lahanCard(l, allTanaman) {
+function lahanCard(l, allTanaman, weather) {
   const statusColor = l.status === 'Aktif' ? 'badge-green' : 'badge-yellow';
   const kelColor = l.kelembaban < 50 ? '#ef4444' : '#22c55e';
   const hasCoord = !!(l.lat && l.lng);
+  
   return `
   <div class="plot-card">
     <div class="plot-header">
@@ -294,7 +311,14 @@ function lahanCard(l, allTanaman) {
         <div class="plot-name">${l.nama}</div>
         <div class="plot-location">📍 ${l.lokasi}</div>
       </div>
-      <span class="badge ${statusColor}"><span class="badge-dot"></span>${l.status}</span>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <span class="badge ${statusColor}"><span class="badge-dot"></span>${l.status}</span>
+        ${weather ? `
+          <div style="font-size:10px;font-weight:700;background:rgba(16,185,129,0.1);padding:2px 6px;border-radius:4px;color:var(--emerald-500);display:flex;align-items:center;gap:4px;border:1px solid rgba(16,185,129,0.2)">
+            <span>${weather.current.icon}</span> <span>${weather.current.temp}°C</span>
+          </div>
+        ` : ''}
+      </div>
     </div>
     <div class="plot-map">${l.emoji}</div>
     <div style="margin-bottom:14px">

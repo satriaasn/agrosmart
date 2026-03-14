@@ -542,56 +542,103 @@ async function initLaporanCharts() {
 
 /* ---- CUACA ---- */
 async function renderCuaca() {
-  const forecasts = [
-    { hari:'Senin',  ikon:'☀️',  min:24, max:32, hujan:5,  angin:12, humid:65 },
-    { hari:'Selasa', ikon:'⛅',  min:23, max:30, hujan:30, angin:15, humid:72 },
-    { hari:'Rabu',   ikon:'🌧️', min:22, max:27, hujan:80, angin:20, humid:88 },
-    { hari:'Kamis',  ikon:'🌦️', min:23, max:29, hujan:40, angin:14, humid:78 },
-    { hari:'Jumat',  ikon:'☀️',  min:25, max:33, hujan:5,  angin:10, humid:62 },
-    { hari:'Sabtu',  ikon:'⛅',  min:24, max:31, hujan:20, angin:13, humid:68 },
-    { hari:'Minggu', ikon:'☀️',  min:26, max:34, hujan:5,  angin:9,  humid:60 },
-  ];
+  const { data: listLahan } = await SB.lahan.fetch();
+  let lat = null, lng = null, locationName = 'Kalimantan Tengah';
+
+  // Prioritas 1: Karu Lahan dengan Koordinat
+  const lahanWithCoords = (listLahan || []).find(l => l.lat && l.lng);
+  if (lahanWithCoords) {
+    lat = lahanWithCoords.lat;
+    lng = lahanWithCoords.lng;
+    locationName = lahanWithCoords.nama;
+  } else {
+    // Prioritas 2: User GPS
+    try {
+      const pos = await WeatherService.getUserLocation();
+      lat = pos.lat;
+      lng = pos.lng;
+      locationName = 'Lokasi Anda';
+    } catch (e) {
+      // Default: Palangka Raya (Kalteng)
+      lat = -2.21; lng = 113.92;
+      locationName = 'Kalimantan Tengah (Default)';
+    }
+  }
+
+  const forecast = await WeatherService.getForecast(lat, lng);
+  if (!forecast) {
+    return `<div class="alert alert-danger" style="margin-top:20px">
+      <strong>Gagal Memuat Cuaca</strong><br>
+      Pastikan koneksi internet stabil atau izinkan akses lokasi pada browser.
+    </div>`;
+  }
+
+  // Simpan data untuk chart
+  window._curRainData = forecast.daily.map(d => d.rainSum);
+  window._curRainLabels = forecast.daily.map(d => d.shortDay);
+
+  const cur = forecast.current;
 
   return `
   <div class="page-header">
     <div>
-      <div class="page-title">Monitor Cuaca</div>
-      <div class="page-subtitle">Data cuaca real-time dan prakiraan 7 hari ke depan untuk perkebunan.</div>
+      <div class="page-title">Monitor Cuaca Real-time</div>
+      <div class="page-subtitle">Prakiraan akurat berdasarkan lokasi ${locationName.includes('Lokasi') ? locationName : 'Blok ' + locationName}.</div>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-secondary btn-sm" onclick="navigate('cuaca')">
+         <span class="material-symbols-outlined" style="font-size:16px">refresh</span> Refresh
+      </button>
     </div>
   </div>
 
-  <div class="weather-card" style="margin-bottom:22px;position:relative">
-    <div class="weather-bg"></div>
+  <div class="weather-card" style="margin-bottom:22px;position:relative;background:linear-gradient(135deg, #10b981, #059669);color:white;padding:32px;border-radius:24px;overflow:hidden">
+    <div style="position:absolute;top:-20px;right:-20px;font-size:180px;opacity:0.15;line-height:1">${cur.icon}</div>
     <div style="position:relative;z-index:1">
-      <div style="font-size:13px;color:rgba(255,255,255,0.5);font-weight:600;margin-bottom:8px">📍 Kalimantan Tengah — Hari Ini</div>
-      <div style="display:flex;align-items:flex-end;gap:24px">
-        <div>
-          <div class="weather-temp">28°C</div>
-          <div class="weather-desc">Sebagian berawan — Cocok untuk aktivitas kebun</div>
-        </div>
-        <div style="font-size:72px;line-height:1">⛅</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;background:rgba(255,255,255,0.2);width:fit-content;padding:4px 12px;border-radius:99px;margin-bottom:16px">
+        <span class="material-symbols-outlined" style="font-size:14px">location_on</span> ${locationName}
       </div>
-      <div class="weather-details">
-        <div class="weather-detail"><div class="weather-detail-label">Kelembaban</div><div class="weather-detail-val">74%</div></div>
-        <div class="weather-detail"><div class="weather-detail-label">Kecepatan Angin</div><div class="weather-detail-val">13 km/h</div></div>
-        <div class="weather-detail"><div class="weather-detail-label">Peluang Hujan</div><div class="weather-detail-val">20%</div></div>
-        <div class="weather-detail"><div class="weather-detail-label">Tekanan Udara</div><div class="weather-detail-val">1013 hPa</div></div>
-        <div class="weather-detail"><div class="weather-detail-label">Titik Embun</div><div class="weather-detail-val">22°C</div></div>
-        <div class="weather-detail"><div class="weather-detail-label">UV Index</div><div class="weather-detail-val">7 (Tinggi)</div></div>
+      <div style="display:flex;align-items:center;gap:32px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:64px;font-weight:800;line-height:1">${cur.temp}°C</div>
+          <div style="font-size:18px;font-weight:600;margin-top:8px;opacity:0.9">${cur.desc} — Terasa seperti ${cur.feels}°C</div>
+        </div>
+        <div style="font-size:84px;line-height:1">${cur.icon}</div>
+      </div>
+      
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:16px;margin-top:32px;border-top:1px solid rgba(255,255,255,0.1);padding-top:24px">
+        <div class="weather-detail">
+            <div style="font-size:11px;opacity:0.7;text-transform:uppercase;letter-spacing:0.5px">Kelembaban</div>
+            <div style="font-size:18px;font-weight:700">${cur.humid}%</div>
+        </div>
+        <div class="weather-detail">
+            <div style="font-size:11px;opacity:0.7;text-transform:uppercase;letter-spacing:0.5px">Kecepatan Angin</div>
+            <div style="font-size:18px;font-weight:700">${cur.wind} km/h</div>
+        </div>
+        <div class="weather-detail">
+            <div style="font-size:11px;opacity:0.7;text-transform:uppercase;letter-spacing:0.5px">Curah Hujan</div>
+            <div style="font-size:18px;font-weight:700">${cur.rain} mm</div>
+        </div>
+        <div class="weather-detail">
+            <div style="font-size:11px;opacity:0.7;text-transform:uppercase;letter-spacing:0.5px">Suhu Min / Max</div>
+            <div style="font-size:18px;font-weight:700">${forecast.daily[0].min}° / ${forecast.daily[0].max}°</div>
+        </div>
       </div>
     </div>
   </div>
 
   <div class="card" style="margin-bottom:22px">
-    <div class="section-title">Prakiraan 7 Hari</div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:12px">
-      ${forecasts.map((f,i) => `
-        <div style="text-align:center;padding:14px 8px;background:var(--bg-secondary);border-radius:12px;border:1px solid ${i===0?'var(--border-strong)':'var(--border-card)'}">
-          <div style="font-size:11px;font-weight:600;color:var(--text-muted);margin-bottom:8px">${f.hari}</div>
-          <div style="font-size:28px;margin-bottom:8px">${f.ikon}</div>
-          <div style="font-size:13px;font-weight:700;color:var(--text-primary)">${f.max}°</div>
-          <div style="font-size:11px;color:var(--text-muted)">${f.min}°</div>
-          <div style="margin-top:8px;font-size:10px;color:var(--blue-400);font-weight:600">💧 ${f.hujan}%</div>
+    <div class="section-title">Prakiraan 7 Hari Ke Depan</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(100px, 1fr));gap:12px">
+      ${forecast.daily.map((f,i) => `
+        <div style="text-align:center;padding:16px 8px;background:var(--bg-secondary);border-radius:16px;border:1.5px solid ${i===0?'var(--primary)':'var(--border-card)'};transition:all 0.2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='${i===0?'var(--primary)':'var(--border-card)'}'">
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase">${i===0?'Hari Ini':f.day.split(',')[0]}</div>
+          <div style="font-size:32px;margin-bottom:8px">${f.icon}</div>
+          <div style="font-size:15px;font-weight:800;color:var(--text-primary)">${f.max}°</div>
+          <div style="font-size:12px;color:var(--text-muted)">${f.min}°</div>
+          <div style="margin-top:10px;font-size:10px;color:var(--blue-400);font-weight:700;display:flex;align-items:center;justify-content:center;gap:2px">
+            <span class="material-symbols-outlined" style="font-size:10px">water_drop</span> ${f.rainProb}%
+          </div>
         </div>
       `).join('')}
     </div>
@@ -599,28 +646,27 @@ async function renderCuaca() {
 
   <div class="grid-2">
     <div class="card">
-      <div class="section-title">Rekomendasi Kegiatan</div>
-      <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="section-title">Rekomendasi Kegiatan Tani</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
         ${[
-          { ok:true,  kegiatan:'Pemupukan Blok A & B', alasan:'Cuaca cerah, pupuk akan terserap optimal.' },
-          { ok:true,  kegiatan:'Penyemprotan pestisida', alasan:'Tidak ada hujan dalam 6 jam ke depan.' },
-          { ok:false, kegiatan:'Pemangkasan tanaman', alasan:'Angin cukup kencang (13 km/h), tunda besok.' },
-          { ok:true,  kegiatan:'Irigasi Blok E (Tebu)', alasan:'Kelembaban tanah 48% — perlu penyiraman.' },
-          { ok:false, kegiatan:'Panen Karet Blok B', alasan:'Prakiraan hujan Rabu pagi, tunda ke Kamis.' },
-        ].map(r=>`
-          <div style="display:flex;gap:12px;padding:12px;background:var(--bg-secondary);border-radius:10px;border-left:3px solid ${r.ok?'var(--green-500)':'var(--amber-500)'}">
-            <span style="font-size:18px">${r.ok?'✅':'⚠️'}</span>
+          { ok: cur.rain < 0.5 && cur.wind < 15, kegiatan: 'Pemupukan & Penyemprotan', alasan: cur.rain > 0 ? 'Waspada potensi hujan ringan.' : 'Cuaca mendukung penyerapan nutrisi.' },
+          { ok: cur.temp < 32, kegiatan: 'Aktivitas Panen', alasan: cur.temp > 30 ? 'Gunakan pelindung, suhu cukup terik.' : 'Suhu ideal untuk bekerja di lapangan.' },
+          { ok: forecast.daily[0].rainProb < 50, kegiatan: 'Pengeringan Hasil Panen', alasan: forecast.daily[0].rainProb > 30 ? 'Siapkan peneduh, ada potensi hujan.' : 'Terik matahari cukup untuk pengeringan.' },
+          { ok: cur.humid > 60, kegiatan: 'Irigasi Lahan', alasan: cur.humid < 70 ? 'Kelembaban udara rendah, cek kadar air tanah.' : 'Kelembaban terjaga.' }
+        ].map(r => `
+          <div style="display:flex;gap:14px;padding:14px;background:var(--bg-secondary);border-radius:12px;border-left:4px solid ${r.ok?'var(--green-500)':'var(--amber-500)'}">
+            <span style="font-size:20px">${r.ok?'✅':'⚠️'}</span>
             <div>
-              <div style="font-size:13px;font-weight:600;color:var(--text-primary)">${r.kegiatan}</div>
-              <div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${r.alasan}</div>
+              <div style="font-size:14px;font-weight:700;color:var(--text-primary)">${r.kegiatan}</div>
+              <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;line-height:1.4">${r.alasan}</div>
             </div>
           </div>
         `).join('')}
       </div>
     </div>
     <div class="card">
-      <div class="section-title">Curah Hujan Mingguan (mm)</div>
-      <div class="chart-container" style="height:220px"><canvas id="chartHujan"></canvas></div>
+      <div class="section-title">Prakiraan Curah Hujan (mm)</div>
+      <div class="chart-container" style="height:240px"><canvas id="chartHujan"></canvas></div>
     </div>
   </div>`;
 }
@@ -628,12 +674,38 @@ async function renderCuaca() {
 async function initCuacaCharts() {
   const ctxH = document.getElementById('chartHujan');
   if (ctxH && !ctxH._chart) {
-    ctxH._chart = new Chart(ctxH, { type:'bar', data: {
-      labels: ['Sen','Sel','Rab','Kam','Jum','Sab','Min'],
-      datasets: [{ label:'Curah Hujan (mm)', data:[2,8,45,22,3,12,1], backgroundColor: ctx => {
-        const v = ctx.raw;
-        return v > 30 ? 'rgba(239,68,68,0.7)' : v > 15 ? 'rgba(251,191,36,0.7)' : 'rgba(96,165,250,0.7)';
-      }, borderRadius: 8, borderSkipped: false }]
-    }, options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} }, scales: { x:{grid:{display:false},ticks:{color:'#6b7d70',font:{size:11}}}, y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#6b7d70',font:{size:11}},title:{display:true,text:'mm',color:'#6b7d70'}} } } });
+    const labels = window._curRainLabels || ['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
+    const data   = window._curRainData   || [0,0,0,0,0,0,0];
+
+    ctxH._chart = new Chart(ctxH, { 
+      type: 'bar', 
+      data: {
+        labels: labels,
+        datasets: [{ 
+          label: 'Curah Hujan (mm)', 
+          data: data, 
+          backgroundColor: ctx => {
+            const v = ctx.raw;
+            return v > 10 ? 'rgba(239,68,68,0.7)' : v > 2 ? 'rgba(251,191,36,0.7)' : 'rgba(16,185,129,0.7)';
+          }, 
+          borderRadius: 8, 
+          borderSkipped: false 
+        }]
+      }, 
+      options: { 
+        responsive: true, 
+        maintainAspectRatio: false, 
+        plugins: { legend: { display: false } }, 
+        scales: { 
+          x: { grid: { display: false }, ticks: { color: '#6b7d70', font: { size: 11, weight: 'bold' } } }, 
+          y: { 
+            grid: { color: 'rgba(0,0,0,0.05)' }, 
+            beginAtZero: true,
+            ticks: { color: '#6b7d70', font: { size: 11 } },
+            title: { display: true, text: 'millimeter (mm)', color: '#6b7d70', font: { size: 10 } }
+          } 
+        } 
+      } 
+    });
   }
 }
