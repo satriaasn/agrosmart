@@ -12,7 +12,7 @@ async function renderPanen() {
   const MULTIPLIERS = { 'kg': 1, 'ton': 1000, 'kwintal': 100, 'gram': 0.001, 'liter': 1, 'buah': 1, 'ikat': 1 };
   
   const totalKg = arrPanen.reduce((a, p) => {
-    const mult = MULTIPLIERS[(p.satuan || 'kg').toLowerCase()] || 1;
+    const mult = (window.APP_MULTIPLIERS || MULTIPLIERS)[(p.satuan || 'kg').toLowerCase()] || 1;
     return a + ((p.jumlah || 0) * mult);
   }, 0);
 
@@ -364,9 +364,8 @@ async function renderLaporan() {
   const arrLahan = listLahan || [];
   const arrKas = listKas || [];
 
-  const MULTIPLIERS = window.APP_MULTIPLIERS || { 'kg': 1, 'ton': 1000 };
   const totalKg = arrPanen.reduce((a, p) => {
-    const mult = MULTIPLIERS[(p.satuan || 'kg').toLowerCase()] || 1;
+    const mult = (window.APP_MULTIPLIERS || { 'kg': 1, 'ton': 1000 })[(p.satuan || 'kg').toLowerCase()] || 1;
     return a + ((p.jumlah || 0) * mult);
   }, 0);
   const totalLahanHa = arrLahan.reduce((a,l)=>a+(l.luas||0),0);
@@ -404,7 +403,6 @@ async function renderLaporan() {
           <div style="font-size:11px;color:var(--text-muted);margin-top:4px">Selisih uang masuk vs keluar</div>
         </div>
     </div>
-
     <div class="grid-2" style="margin-bottom:22px">
       <div class="card">
         <div class="section-title">Ringkasan Operasional</div>
@@ -453,12 +451,6 @@ async function renderLaporan() {
         <div class="chart-container" style="height:200px"><canvas id="chartKualitas"></canvas></div>
       </div>
     </div>`;
-}
-    <div class="card">
-      <div class="section-title">Kualitas Panen</div>
-      <div class="chart-container" style="height:200px"><canvas id="chartKualitas"></canvas></div>
-    </div>
-  </div>`;
 }
 
 async function initLaporanCharts() {
