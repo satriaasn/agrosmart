@@ -173,7 +173,7 @@ function lahanProfitCard(l, listLahan, listBiaya, listPanen) {
   });
 
   return `
-  <div class="card" style="cursor:pointer" onclick="navigate('keuangan-detail-${l.nama.replace(' ','-')}')">
+  <div class="card" style="cursor:pointer" onclick="showLahanDetail('${l.nama}')">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
       <div>
         <div style="font-family:'Outfit',sans-serif;font-size:16px;font-weight:700">${l.nama}</div>
