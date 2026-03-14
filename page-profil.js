@@ -447,45 +447,35 @@ window.konfirmasiHapusAkun = function() {
 
 // ─── Manajemen Kategori & Satuan ─────────────────────────────────────────────
 window.loadMetadata = async function() {
-  // Tunggu sejenak jika session belum siap
   const ownerId = window.APP_OWNER_ID || window._currentUserId;
   if (!ownerId) {
-    console.warn('[DEBUG] loadMetadata: User ID not ready, retrying in 500ms...');
     setTimeout(loadMetadata, 500);
     return;
   }
 
-  const [{ data: kats, error: kErr }, { data: sats, error: sErr }, { data: coas }] = await Promise.all([
+  const [{ data: kats }, { data: sats }, { data: coas }] = await Promise.all([
     SB.expense_categories.fetch(),
     SB.units.fetch(),
     SB.coa.fetch()
   ]);
-  window._CACHE_COA = coas || [];
 
-  if (kErr || sErr) {
-    console.error('Metadata fetch error:', kErr || sErr);
-    const msg = (kErr?.message || sErr?.message || '').includes('not found') 
-      ? 'Tabel tidak ditemukan. Pastikan Anda sudah menjalankan SQL patch.'
-      : 'Gagal memuat data dari server.';
-    
-    if (document.getElementById('katList')) {
-      document.getElementById('katList').innerHTML = `<div class="alert alert-danger" style="font-size:11px;padding:8px">${msg}</div>`;
-      document.getElementById('satList').innerHTML = `<div class="alert alert-danger" style="font-size:11px;padding:8px">${msg}</div>`;
-    }
-    return;
+  const arrKats = kats || [];
+  const arrSats = sats || [];
+  const arrCoas = coas || [];
+
+  window._CACHE_COA = arrCoas;
+  window._CACHE_KATS = arrKats;
+  window._CACHE_SATS = arrSats;
+
+  // Granular Seeding: If any core metadata is missing, seed it.
+  if (arrCoas.length === 0 || arrKats.length === 0 || arrSats.length === 0) {
+    console.log('[DEBUG] Missing metadata detected, running granular seeding...');
+    await seedDefaults(arrCoas, arrKats, arrSats);
+    return loadMetadata(); // Reload after seeding
   }
 
-  // Seed default if empty
-  if ((kats||[]).length === 0 && (sats||[]).length === 0) {
-    console.log('[DEBUG] Metadata empty, seeding defaults...');
-    await seedDefaults();
-    return loadMetadata();
-  }
-
-  window._CACHE_KATS = kats || [];
-  window._CACHE_SATS = sats || [];
-  renderKatList(kats || []);
-  renderSatList(sats || []);
+  renderKatList(arrKats);
+  renderSatList(arrSats);
 };
 
 function renderKatList(data) {
@@ -538,7 +528,7 @@ function renderSatList(data) {
   `).join('');
 }
 
-async function seedDefaults() {
+async function seedDefaults(existingCoas, existingKats, existingSats) {
   const ownerId = window.APP_OWNER_ID || window._currentUserId;
   if (!ownerId) return;
 
@@ -554,14 +544,18 @@ async function seedDefaults() {
   ];
 
   try {
-    // 1. Seed COA first
     const coaMap = {};
-    for (const c of defaultCOA) {
-      const { data } = await SB.coa.insert(c);
-      if (data) coaMap[c.account_code] = data.id;
+    // 1. Seed COA if missing
+    if (existingCoas.length === 0) {
+      for (const c of defaultCOA) {
+        const { data } = await SB.coa.insert(c);
+        if (data) coaMap[c.account_code] = data.id;
+      }
+    } else {
+      existingCoas.forEach(c => coaMap[c.account_code] = c.id);
     }
 
-    // 2. Seed Categories linked to COA
+    // 2. Seed Categories if missing OR link existing ones
     const defaultKats = [
       { name: 'Pupuk & Nutrisi', icon: '🌱', coa_id: coaMap['5101'] },
       { name: 'Obat & Pestisida', icon: '🧪', coa_id: coaMap['5102'] },
@@ -571,6 +565,21 @@ async function seedDefaults() {
       { name: 'Lain-lain', icon: '📋', coa_id: coaMap['5999'] }
     ];
 
+    if (existingKats.length === 0) {
+      await Promise.all(defaultKats.map(k => SB.expense_categories.insert(k)));
+    } else {
+      // Loop existing kats and link them if they match names but don't have coa_id
+      for (const ek of existingKats) {
+        if (!ek.coa_id) {
+          const matchingDef = defaultKats.find(dk => dk.name.toLowerCase().includes(ek.name.toLowerCase()) || ek.name.toLowerCase().includes(dk.name.toLowerCase()));
+          if (matchingDef && matchingDef.coa_id) {
+            await SB.expense_categories.update(ek.id, { coa_id: matchingDef.coa_id });
+          }
+        }
+      }
+    }
+
+    // 3. Seed Units if missing
     const defaultSats = [
       { name: 'kg', type: 'semua' },
       { name: 'liter', type: 'semua' },
@@ -580,12 +589,12 @@ async function seedDefaults() {
       { name: 'orang/hari', type: 'biaya' },
       { name: 'buah', type: 'panen' }
     ];
-    
-    await Promise.all([
-      ...defaultKats.map(k => SB.expense_categories.insert(k)),
-      ...defaultSats.map(s => SB.units.insert(s))
-    ]);
-    console.log('[DEBUG] Seeding completed with COA mapping.');
+
+    if (existingSats.length === 0) {
+      await Promise.all(defaultSats.map(s => SB.units.insert(s)));
+    }
+
+    console.log('[DEBUG] Granular seeding completed.');
   } catch(e) {
     console.error('[DEBUG] Seeding failed:', e);
   }
