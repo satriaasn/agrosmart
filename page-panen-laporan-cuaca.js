@@ -5,6 +5,8 @@
 /* ---- PANEN ---- */
 async function renderPanen() {
   const { data: listPanen } = await SB.panen.fetch();
+  const { data: listUnits } = await SB.units.fetch('panen');
+  window._DYNAMIC_SATS_PANEN = listUnits || [];
   const arrPanen = listPanen || [];
   
   const totalKg  = arrPanen.reduce((a,p) => a + (p.jumlah||0), 0);
@@ -133,7 +135,8 @@ async function openPanenModal(id) {
       <div class="form-group">
         <label class="form-label">Satuan</label>
         <select class="form-control" id="f-pSatuan">
-          ${['kg','ton','kwintal','ikat','buah'].map(s => `<option ${(p?.satuan||'kg')===s?'selected':''}>${s}</option>`).join('')}
+          ${(window._DYNAMIC_SATS_PANEN||[]).map(s => `<option ${(p?.satuan||'kg')===s.name?'selected':''}>${s.name}</option>`).join('')}
+          ${!(window._DYNAMIC_SATS_PANEN||[]).some(s=>s.name==='kg') ? '<option>kg</option>' : ''}
         </select>
       </div>
     </div>

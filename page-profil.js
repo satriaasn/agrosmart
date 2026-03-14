@@ -171,7 +171,37 @@ async function renderProfil() {
     </div>
     `}
 
-    <!-- 4. Zona Bahaya -->
+    <!-- 4. Pengaturan Data (Kategori & Satuan) -->
+    <div class="card">
+      <div class="card-header" style="border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:18px">
+        <div style="font-size:15px;font-weight:700;color:var(--text-primary)">⚙️ Pengaturan Data</div>
+        <div style="font-size:12px;color:var(--text-muted)">Atur kategori biaya dan satuan produk Anda</div>
+      </div>
+      <div class="grid-2" style="gap:20px">
+        <div id="katBiayaWrap">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-size:13px;font-weight:600">Kategori Biaya</div>
+            <button class="btn btn-sm btn-secondary" onclick="openAddKatModal()">+ Tambah</button>
+          </div>
+          <div id="katList" style="display:flex;flex-direction:column;gap:8px">
+            <div class="skeleton" style="height:32px;border-radius:6px"></div>
+            <div class="skeleton" style="height:32px;border-radius:6px"></div>
+          </div>
+        </div>
+        <div id="satuanWrap">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-size:13px;font-weight:600">Satuan Produk</div>
+            <button class="btn btn-sm btn-secondary" onclick="openAddSatuanModal()">+ Tambah</button>
+          </div>
+          <div id="satList" style="display:flex;flex-direction:column;gap:8px">
+            <div class="skeleton" style="height:32px;border-radius:6px"></div>
+            <div class="skeleton" style="height:32px;border-radius:6px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Zona Bahaya -->
     <div class="card" style="border-color:rgba(239,68,68,0.3)">
       <div style="font-size:15px;font-weight:700;color:#f87171;margin-bottom:8px">⚠️ Zona Bahaya</div>
       <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Tindakan di bawah ini tidak dapat dibatalkan. Harap berhati-hati.</div>
@@ -413,4 +443,129 @@ window.konfirmasiHapusAkun = function() {
       }
     }
   );
+};
+
+// ─── Manajemen Kategori & Satuan ─────────────────────────────────────────────
+window.loadMetadata = async function() {
+  const [{ data: kats, error: kErr }, { data: sats, error: sErr }] = await Promise.all([
+    SB.expense_categories.fetch(),
+    SB.units.fetch()
+  ]);
+
+  if (kErr || sErr) {
+    console.error('Metadata fetch error:', kErr || sErr);
+    return;
+  }
+
+  // Seed default if empty
+  if ((kats||[]).length === 0 && (sats||[]).length === 0) {
+    await seedDefaults();
+    return loadMetadata();
+  }
+
+  renderKatList(kats || []);
+  renderSatList(sats || []);
+};
+
+function renderKatList(data) {
+  const el = document.getElementById('katList');
+  if (!el) return;
+  if (data.length === 0) {
+    el.innerHTML = `<div style="font-size:12px;color:var(--text-muted);padding:8px;text-align:center">Belum ada kategori</div>`;
+    return;
+  }
+  el.innerHTML = data.map(k => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-secondary);border-radius:8px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:16px">${k.icon || '📋'}</span>
+        <span style="font-size:13px;font-weight:500">${k.name}</span>
+      </div>
+      <button onclick="deleteKat('${k.id}')" style="background:none;border:none;cursor:pointer;color:#f87171;padding:4px">✕</button>
+    </div>
+  `).join('');
+}
+
+function renderSatList(data) {
+  const el = document.getElementById('satList');
+  if (!el) return;
+  if (data.length === 0) {
+    el.innerHTML = `<div style="font-size:12px;color:var(--text-muted);padding:8px;text-align:center">Belum ada satuan</div>`;
+    return;
+  }
+  el.innerHTML = data.map(s => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--bg-secondary);border-radius:8px">
+      <span style="font-size:13px;font-weight:500">${s.name} <small style="color:var(--text-muted);font-weight:400">(${s.type})</small></span>
+      <button onclick="deleteSatuan('${s.id}')" style="background:none;border:none;cursor:pointer;color:#f87171;padding:4px">✕</button>
+    </div>
+  `).join('');
+}
+
+async function seedDefaults() {
+  const defaultKats = [
+    { name: 'Pupuk', icon: '🌱', color: '#22c55e' },
+    { name: 'Pestisida', icon: '🧪', color: '#f59e0b' },
+    { name: 'Tenaga Kerja', icon: '👷', color: '#3b82f6' },
+    { name: 'Irigasi', icon: '💧', color: '#10b981' },
+    { name: 'Alat & Mesin', icon: '⚙️', color: '#ef4444' },
+    { name: 'Transportasi', icon: '🚛', color: '#6b7280' },
+    { name: 'Lainnya', icon: '📋', color: '#6b7280' }
+  ];
+  const defaultSats = [
+    { name: 'kg', type: 'semua' },
+    { name: 'liter', type: 'semua' },
+    { name: 'ton', type: 'panen' },
+    { name: 'orang', type: 'karyawan' },
+    { name: 'buah', type: 'panen' }
+  ];
+  
+  await Promise.all([
+    ...defaultKats.map(k => SB.expense_categories.insert(k)),
+    ...defaultSats.map(s => SB.units.insert(s))
+  ]);
+}
+
+window.openAddKatModal = function() {
+  openModal('Tambah Kategori Biaya', `
+    <div class="form-group"><label class="form-label">Nama Kategori</label><input class="form-control" id="f-katNama" placeholder="Contoh: Listrik"></div>
+    <div class="form-group"><label class="form-label">Ikon (Emoji)</label><input class="form-control" id="f-katIkon" value="📋"></div>
+  `, async () => {
+    const name = document.getElementById('f-katNama').value.trim();
+    const icon = document.getElementById('f-katIkon').value.trim();
+    if (!name) return;
+    await SB.expense_categories.insert({ name, icon });
+    showToast('success','Berhasil','Kategori ditambahkan');
+    loadMetadata();
+  });
+};
+
+window.openAddSatuanModal = function() {
+  openModal('Tambah Satuan', `
+    <div class="form-group"><label class="form-label">Nama Satuan</label><input class="form-control" id="f-satNama" placeholder="Contoh: karung"></div>
+    <div class="form-group"><label class="form-label">Gunakan Untuk</label>
+      <select class="form-control" id="f-satType">
+        <option value="semua">Semua Modul</option>
+        <option value="panen">Hanya Panen</option>
+        <option value="biaya">Hanya Biaya</option>
+      </select>
+    </div>
+  `, async () => {
+    const name = document.getElementById('f-satNama').value.trim();
+    const type = document.getElementById('f-satType').value;
+    if (!name) return;
+    await SB.units.insert({ name, type });
+    showToast('success','Berhasil','Satuan ditambahkan');
+    loadMetadata();
+  });
+};
+
+window.deleteKat = async function(id) {
+  if (!confirm('Hapus kategori ini?')) return;
+  await SB.expense_categories.remove(id);
+  loadMetadata();
+};
+
+window.deleteSatuan = async function(id) {
+  if (!confirm('Hapus satuan ini?')) return;
+  await SB.units.remove(id);
+  loadMetadata();
 };

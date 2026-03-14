@@ -24,21 +24,37 @@ function rataHargaLahan(lahanNama, listPanen) {
   return Math.round(records.reduce((a, p) => a + p.harga, 0) / records.length);
 }
 
-// ─── Kategori Warna ───────────────────────────────────────────────────────────
-const BIAYA_COLORS = {
-  'Pupuk':        { badge:'badge-green', bg:'rgba(34,197,94,0.12)',  icon:'🌱' },
-  'Pestisida':    { badge:'badge-yellow',bg:'rgba(251,191,36,0.12)', icon:'🧪' },
-  'Tenaga Kerja': { badge:'badge-blue',  bg:'rgba(96,165,250,0.12)', icon:'👷' },
-  'Irigasi':      { badge:'badge-blue',  bg:'rgba(16,185,129,0.12)', icon:'💧' },
-  'Alat & Mesin': { badge:'badge-red',   bg:'rgba(239,68,68,0.12)',  icon:'⚙️' },
-  'Transportasi': { badge:'badge-gray',  bg:'rgba(255,255,255,0.07)',icon:'🚛' },
-  'Lainnya':      { badge:'badge-gray',  bg:'rgba(255,255,255,0.07)',icon:'📋' },
+// ─── Kategori Warna (Dynamic fallback) ───────────────────────────────────────────
+let BIAYA_COLORS = {
+  'Lainnya': { badge:'badge-gray', bg:'rgba(255,255,255,0.07)', icon:'📋' }
 };
+
+async function loadKeuanganMetadata() {
+  const [{ data: kats }, { data: sats }] = await Promise.all([
+    SB.expense_categories.fetch(),
+    SB.units.fetch('biaya')
+  ]);
+  window._DYNAMIC_KATS = kats || [];
+  window._DYNAMIC_SATS_BIAYA = sats || [];
+  
+  // Update colors object
+  const colors = {};
+  window._DYNAMIC_KATS.forEach(k => {
+    colors[k.name] = { 
+        badge: 'badge-green', // Simple fallback, can be more complex
+        bg: 'rgba(34,197,94,0.12)',
+        icon: k.icon || '📋' 
+    };
+  });
+  if (!colors['Lainnya']) colors['Lainnya'] = { badge:'badge-gray', bg:'rgba(255,255,255,0.07)', icon:'📋' };
+  BIAYA_COLORS = colors;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  MAIN PAGE RENDER
 // ═══════════════════════════════════════════════════════════════════════════════
 async function renderKeuangan() {
+  await loadKeuanganMetadata();
   const [{ data: listBiaya }, { data: listPanen }, { data: listLahan }] = await Promise.all([
     SB.biaya.fetch(),
     SB.panen.fetch(),
@@ -367,7 +383,8 @@ async function openBiayaModal(id) {
       </div>
       <div class="form-group"><label class="form-label">Satuan</label>
         <select class="form-control" id="f-bSat">
-          ${['kg','liter','ton','orang','hari','unit','set','karung','botol','lainnya'].map(s=>`<option ${b?.satuan===s?'selected':''}>${s}</option>`).join('')}
+          ${(window._DYNAMIC_SATS_BIAYA||[]).map(s=>`<option ${b?.satuan===s.name?'selected':''}>${s.name}</option>`).join('')}
+          ${!(window._DYNAMIC_SATS_BIAYA||[]).some(s=>s.name==='kg') ? '<option>kg</option>' : ''}
         </select>
       </div>
     </div>

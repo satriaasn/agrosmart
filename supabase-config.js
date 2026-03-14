@@ -240,6 +240,27 @@ const SB = {
     update: (id, data)   => sb.from('biaya').update(data).eq('id', id).select().single(),
     remove: (id)         => sb.from('biaya').delete().eq('id', id),
   },
+  /** CATEGORIES AND UNITS */
+  expense_categories: {
+    fetch:  (uid)      => {
+      let ownerId = uid || window.APP_OWNER_ID || window._currentUserId;
+      return sb.from('expense_categories').select('*').eq('user_id', ownerId).order('name');
+    },
+    insert: (data)      => sb.from('expense_categories').insert(_withUserId(data)).select().single(),
+    update: (id, data)  => sb.from('expense_categories').update(data).eq('id', id).select().single(),
+    remove: (id)        => sb.from('expense_categories').delete().eq('id', id),
+  },
+  units: {
+    fetch:  (type, uid) => {
+      let ownerId = uid || window.APP_OWNER_ID || window._currentUserId;
+      let q = sb.from('units').select('*').eq('user_id', ownerId);
+      if (type) q = q.eq('type', type);
+      return q.order('name');
+    },
+    insert: (data)      => sb.from('units').insert(_withUserId(data)).select().single(),
+    update: (id, data)  => sb.from('units').update(data).eq('id', id).select().single(),
+    remove: (id)        => sb.from('units').delete().eq('id', id),
+  },
   /** AKTIVITAS */
   aktivitas: {
     fetch:  (limit = 10, uid) => {
