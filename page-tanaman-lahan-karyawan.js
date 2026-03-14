@@ -120,7 +120,7 @@ async function openTanamanModal(id) {
 
   openModal(t ? 'Edit Tanaman' : 'Tambah Tanaman Baru', `
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Nama Tanaman</label><input class="form-control" id="f-tNama" placeholder="cth. Kelapa Sawit" value="${t?.nama||''}" oninput="updateTanamanEmoji(this.value)"></div>
+      <div class="form-group"><label class="form-label">Nama Tanaman</label><input class="form-control" id="f-tNama" placeholder="cth. Kelapa Sawit" value="${t?.nama||''}"></div>
       <div class="form-group"><label class="form-label">Nama Latin</label><input class="form-control" id="f-tLatin" placeholder="cth. Elaeis guineensis" value="${t?.latin||''}"></div>
     </div>
     <div class="form-row">
@@ -134,13 +134,9 @@ async function openTanamanModal(id) {
           <!-- Emoji Picker Grid -->
           <div style="display:grid;grid-template-columns:repeat(8, 1fr);gap:6px;background:var(--bg-secondary);padding:8px;border-radius:10px;border:1px solid var(--border)">
             ${['🌴','🥥','🪵','🌾','☕','🍫','🌽','🥔','🍠','🌶️','🍈','🍊','🥭','🍌','🌿','🍃','🍂','🧅','🍅','🥜','🍍','🥦','🥬','🍎'].map(em => `
-              <div class="emoji-opt" onclick="setManualEmoji('${em}')" style="cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;aspect-ratio:1;border-radius:6px;transition:all 0.2s;${(t?.emoji||'🌱')===em ? 'background:var(--accent-glow-soft);border:1px solid var(--accent-primary)' : ''}">${em}</div>
+              <div class="emoji-opt t-emoji-opt" data-emoji="${em}" style="cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;aspect-ratio:1;border-radius:6px;transition:all 0.2s;${(t?.emoji||'🌱')===em ? 'background:var(--accent-glow-soft);border:1px solid var(--accent-primary)' : ''}">${em}</div>
             `).join('')}
           </div>
-          <style>
-            .emoji-opt:hover{background:rgba(255,255,255,0.05);transform:scale(1.2)}
-            .emoji-opt.active{background:var(--accent-glow-soft);border:1px solid var(--accent-primary)}
-          </style>
         </div>
       </div>
       <div class="form-group"><label class="form-label">Kategori</label>
@@ -215,6 +211,33 @@ async function openTanamanModal(id) {
     // relying on the UI to just read the comma separated strings.
     navigate('tanaman');
   });
+
+  // ─── Attach Events for Tanaman Modal ───────────────────
+  const namaInput = document.getElementById('f-tNama');
+  const emojiInput = document.getElementById('f-tEmoji');
+  let isManual = false;
+
+  if (namaInput && emojiInput) {
+    namaInput.addEventListener('input', () => {
+      if (!isManual) emojiInput.value = getAutoEmoji(namaInput.value);
+    });
+  }
+
+  document.querySelectorAll('.t-emoji-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      isManual = true;
+      const em = opt.dataset.emoji;
+      if (emojiInput) emojiInput.value = em;
+      
+      // Update UI selection
+      document.querySelectorAll('.t-emoji-opt').forEach(x => {
+        x.style.background = '';
+        x.style.border = '';
+      });
+      opt.style.background = 'var(--accent-glow-soft)';
+      opt.style.border = '1px solid var(--accent-primary)';
+    });
+  });
 }
 function editTanaman(id) { openTanamanModal(id); }
 async function deleteTanaman(id) {
@@ -229,30 +252,6 @@ function toggleLahanChip(el) {
   el.classList.toggle('tlc-on');
 }
 
-let _isManualEmoji = false;
-
-function setManualEmoji(em) {
-  _isManualEmoji = true;
-  const input = document.getElementById('f-tEmoji');
-  if (input) input.value = em;
-  // Visual feedback
-  document.querySelectorAll('.emoji-opt').forEach(el => {
-    el.style.background = '';
-    el.style.border = '';
-    if (el.textContent === em) {
-      el.style.background = 'var(--accent-glow-soft)';
-      el.style.border = '1px solid var(--accent-primary)';
-    }
-  });
-}
-
-function updateTanamanEmoji(val) {
-  if (_isManualEmoji) return; // Jangan timpa jika user sudah pilih manual
-  const el = document.getElementById('f-tEmoji');
-  if (el) el.value = getAutoEmoji(val);
-}
-
-// Sync all lahan.tanaman strings from current DB.tanaman assignments
 function syncLahanTanaman() {
   DB.lahan.forEach(l => {
     const list = DB.tanaman
@@ -386,6 +385,23 @@ async function openLahanModal(id) {
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">pH Tanah</label><input class="form-control" type="number" step="0.1" id="f-lPh" value="${l?.ph||'6.5'}"></div>
+      <div class="form-group">
+        <label class="form-label">Icon / Emoji</label>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:8px">
+            <input class="form-control" id="f-lEmoji" value="${l?.emoji||'📍'}" style="width:50px;text-align:center;font-size:20px;background:var(--bg-secondary)" readonly>
+            <div style="font-size:11px;color:var(--text-muted);align-self:center">Pilih icon blok lahan</div>
+          </div>
+          <!-- Emoji Picker Grid -->
+          <div style="display:grid;grid-template-columns:repeat(8, 1fr);gap:6px;background:var(--bg-secondary);padding:8px;border-radius:10px;border:1px solid var(--border)">
+            ${['📍','🏡','🌳','🚜','🏞️','🌉','🛣️','🏔️','🏢','🏬','🏠','🚧','🌳','🌲','🌵','🌻'].map(em => `
+              <div class="emoji-opt l-emoji-opt" data-emoji="${em}" style="cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;aspect-ratio:1;border-radius:6px;transition:all 0.2s;${(l?.emoji||'📍')===em ? 'background:var(--accent-glow-soft);border:1px solid var(--accent-primary)' : ''}">${em}</div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="form-row">
       <div class="form-group"><label class="form-label">Status</label>
         <select class="form-control" id="f-lStatus">
           ${['Aktif','Pemeliharaan','Tidak Aktif'].map(s =>`<option ${l?.status===s?'selected':''}>${s}</option>`).join('')}
@@ -414,7 +430,7 @@ async function openLahanModal(id) {
     <!-- Koordinat GPS Section -->
     <div style="border-top:1px solid var(--border);margin:14px 0 12px;padding-top:14px">
       <div style="font-size:12px;font-weight:700;color:var(--text-secondary);letter-spacing:0.5px;margin-bottom:12px">📡 KOORDINAT GPS LAHAN</div>
-      <button type="button" class="btn btn-secondary" style="width:100%;justify-content:center;margin-bottom:12px" onclick="lahanGetGPS()">
+      <button type="button" class="btn btn-secondary" id="btnLahanGPS" style="width:100%;justify-content:center;margin-bottom:12px">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
         📍 Ambil Lokasi Saat Ini (GPS)
       </button>
@@ -422,8 +438,8 @@ async function openLahanModal(id) {
       <div class="form-group">
         <label class="form-label">Atau Paste Link Google Maps</label>
         <div style="display:flex;gap:8px">
-          <input class="form-control" id="f-lMapsUrl" placeholder="https://maps.google.com/?q=... atau -0.5238,113.9213" value="${l?.maps_url||''}" oninput="lahanParseUrl()" style="flex:1">
-          <button type="button" class="btn btn-secondary" onclick="lahanParseUrl(true)" style="flex-shrink:0;padding:0 12px">✔ Parse</button>
+          <input class="form-control" id="f-lMapsUrl" placeholder="https://maps.google.com/?q=... atau -0.5238,113.9213" value="${l?.maps_url||''}" style="flex:1">
+          <button type="button" class="btn btn-secondary" id="btnLahanParse" style="flex-shrink:0;padding:0 12px">✔ Parse</button>
         </div>
       </div>
       <div class="form-row">
@@ -455,7 +471,7 @@ async function openLahanModal(id) {
       maps_url,
       suhu: l?.suhu || 28,
       kelembaban: l?.kelembaban || 75,
-      emoji: l?.emoji || '📍'
+      emoji: document.getElementById('f-lEmoji').value || '📍'
     };
     
     // user_id handled by SB config _withUserId
@@ -501,6 +517,25 @@ async function openLahanModal(id) {
 
     navigate('lahan');
   });
+
+  // ─── Attach Events for Lahan Modal ───────────────────
+  const emojiInput = document.getElementById('f-lEmoji');
+  document.querySelectorAll('.l-emoji-opt').forEach(opt => {
+    opt.addEventListener('click', () => {
+      const em = opt.dataset.emoji;
+      if (emojiInput) emojiInput.value = em;
+      document.querySelectorAll('.l-emoji-opt').forEach(x => {
+        x.style.background = '';
+        x.style.border = '';
+      });
+      opt.style.background = 'var(--accent-glow-soft)';
+      opt.style.border = '1px solid var(--accent-primary)';
+    });
+  });
+
+  document.getElementById('btnLahanGPS')?.addEventListener('click', lahanGetGPS);
+  document.getElementById('f-lMapsUrl')?.addEventListener('input', () => lahanParseUrl(false));
+  document.getElementById('btnLahanParse')?.addEventListener('click', () => lahanParseUrl(true));
 }
 
 // ─── GPS: get current position ────────────────────────────────────────────────
