@@ -436,7 +436,6 @@ async function openBiayaModal(id) {
       jumlah: jml||0, 
       satuan: sat, 
       harga_satuan: harga||0,
-      total: total||0,
       coa_id: coa_id ? parseInt(coa_id) : null
     };
     
@@ -459,29 +458,36 @@ async function openBiayaModal(id) {
         const cashData = {
           tipe: 'keluar',
           tanggal: tgl,
-          jumlah: total,
+          jumlah: parseFloat(total) || 0,
           kategori: kat,
-          coa_id: parseInt(coa_id),
+          coa_id: coa_id ? parseInt(coa_id) : null,
           deskripsi: `[Biaya Lahan: ${lahan}] ${desc}`,
           ref_id: savedBiaya.id,
           ref_type: 'biaya'
         };
 
-        // Check if cash entry exists
-        const { data: existingCash } = await sb.from('cash_book').select('id').eq('ref_id', savedBiaya.id).eq('ref_type', 'biaya').maybeSingle();
+        console.log('[DEBUG] Syncing to Cash Book:', cashData);
+
+        const { data: existingCash, error: fetchErr } = await sb.from('cash_book').select('id').eq('ref_id', savedBiaya.id).eq('ref_type', 'biaya').maybeSingle();
+        if (fetchErr) console.warn('[DEBUG] Sync Fetch Error:', fetchErr);
         
+        let syncRes;
         if (existingCash) {
-          await SB.cash_book.update(existingCash.id, cashData);
+          syncRes = await SB.cash_book.update(existingCash.id, cashData);
         } else {
-          await SB.cash_book.insert(cashData);
+          syncRes = await SB.cash_book.insert(cashData);
+        }
+
+        if (syncRes.error) {
+          console.error('[DEBUG] Cash Book Sync Error:', syncRes.error);
+          throw new Error('Biaya tersimpan, tapi GAGAL sinkron ke Buku Kas: ' + (syncRes.error.message || 'Terjadi kesalahan database.'));
         }
       }
 
       navigate('keuangan');
     } catch (err) {
-      console.error('Accounting Sync Error:', err);
-      showToast('danger', 'Error Sync', 'Data tersimpan tapi gagal sinkron ke Buku Kas.');
-      navigate('keuangan');
+      console.error('[DEBUG] Accounting Sync Error Full:', err);
+      throw err; // app.js handles showing toast
     }
   });
 
