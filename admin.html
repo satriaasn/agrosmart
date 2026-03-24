@@ -581,20 +581,18 @@
       const result   = document.getElementById('addResult');
 
       if (!email || !password) { result.textContent = '⚠️ Email dan password wajib diisi.'; return; }
-      if (password.length < 8) { result.textContent = '⚠️ Password minimal 8 karakter.'; return; }
+      if (password.length < 6) { result.textContent = '⚠️ Password minimal 6 karakter.'; return; }
 
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span> Membuat akun...';
       result.textContent = '';
 
-      // Create user via Supabase Admin API (requires service role key)
-      // Catatan: sb.auth.admin hanya tersedia dengan service_role key
-      // Alternatif: gunakan signUp biasa lalu update role via SQL
-      const { data, error } = await sb.auth.admin?.createUser({
-        email, password,
-        user_metadata: { full_name: nama, role },
-        email_confirm: true,
-      }) ?? { data: null, error: { message: 'Admin API tidak tersedia. Gunakan Supabase Dashboard → Authentication → Users → Add User.' } };
+      // Gunakan signUp (anon key) lalu update role via profiles table
+      const { data, error } = await sb.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: nama } }
+      });
 
       btn.disabled = false;
       btn.innerHTML = '➕ Buat Akun';
@@ -602,18 +600,40 @@
       if (error) {
         result.style.color = '#fca5a5';
         result.textContent = '❌ ' + error.message;
-      } else {
-        // Update role in profiles
-        if (role !== 'owner') {
-          await SB.admin.setRole(data.user.id, role);
-        }
-        result.style.color = 'var(--primary-light)';
-        result.textContent = '✅ Akun berhasil dibuat untuk ' + email;
-        document.getElementById('addEmail').value = '';
-        document.getElementById('addPassword').value = '';
-        document.getElementById('addNama').value = '';
-        await loadAllUsers();
+        return;
       }
+
+      const userId = data?.user?.id;
+
+      if (!userId) {
+        // Email sudah terdaftar atau perlu konfirmasi — cek profiles
+        result.style.color = '#fbbf24';
+        result.textContent = '⚠️ Email ini mungkin sudah terdaftar, atau perlu konfirmasi email. Cek tab Semua Akun.';
+        await loadAllUsers();
+        return;
+      }
+
+      // Set role di profiles (profil dibuat otomatis oleh trigger)
+      // Tunggu sebentar agar trigger selesai
+      await new Promise(r => setTimeout(r, 800));
+      const { error: roleErr } = await sb.from('profiles').update({
+        role,
+        nama_pemilik: nama || null,
+        onboarding_done: role === 'superadmin' ? true : false
+      }).eq('id', userId);
+
+      if (roleErr) {
+        result.style.color = '#fbbf24';
+        result.textContent = `✅ Akun dibuat, tapi role gagal diset: ${roleErr.message}. Ubah role manual di tab Semua Akun.`;
+      } else {
+        result.style.color = 'var(--primary-light)';
+        result.textContent = `✅ Akun berhasil dibuat untuk ${email} dengan role ${role}.${ data.user?.email_confirmed_at ? '' : ' Pastikan user cek email konfirmasi.' }`;
+      }
+
+      document.getElementById('addEmail').value = '';
+      document.getElementById('addPassword').value = '';
+      document.getElementById('addNama').value = '';
+      await loadAllUsers();
     }
 
     // ── Tabs ──────────────────────────────────────────────────────────────────
@@ -638,23 +658,31 @@
     }
 
     async function loadMonitoring() {
-        const [{data: panen}, {data: lahan}] = await Promise.all([
+        // Gunakan RPC SECURITY DEFINER agar superadmin bisa lihat semua data
+        const { data: stats, error: statErr } = await sb.rpc('get_platform_stats');
+        
+        if (statErr) {
+          // Fallback: query langsung (butuh RLS bypass policy dari superadmin_rls_bypass.sql)
+          const [{data: panen}, {data: lahan}] = await Promise.all([
             sb.from('panen').select('total'),
             sb.from('lahan').select('luas')
-        ]);
-        
-        const totalPanenRp = (panen||[]).reduce((a,b)=>a+(+b.total||0),0);
-        document.getElementById('moTotalPanen').textContent = 'Rp ' + (totalPanenRp/1000000).toFixed(1) + ' jt';
-        document.getElementById('moTotalLahan').textContent = (lahan||[]).reduce((a,b)=>a+(+b.luas||0),0).toFixed(1) + ' ha';
-        
-        const { count: entKaryawan } = await sb.from('karyawan').select('*', { count: 'exact', head: true });
-        document.getElementById('moTotalKaryawan').textContent = entKaryawan || 0;
+          ]);
+          const { count: cKaryawan } = await sb.from('karyawan').select('*', { count: 'exact', head: true });
+          const totalPanenRp = (panen||[]).reduce((a,b)=>a+(+b.total||0),0);
+          document.getElementById('moTotalPanen').textContent = 'Rp ' + (totalPanenRp/1e6).toFixed(1) + ' jt';
+          document.getElementById('moTotalLahan').textContent = (lahan||[]).reduce((a,b)=>a+(+b.luas||0),0).toFixed(1) + ' ha';
+          document.getElementById('moTotalKaryawan').textContent = cKaryawan || 0;
+        } else {
+          document.getElementById('moTotalPanen').textContent = 'Rp ' + ((stats.total_panen_rp||0)/1e6).toFixed(1) + ' jt';
+          document.getElementById('moTotalLahan').textContent = ((stats.total_lahan_ha||0)).toFixed(1) + ' ha';
+          document.getElementById('moTotalKaryawan').textContent = stats.total_karyawan || 0;
+        }
 
         initAdminCharts();
     }
 
     function initAdminCharts() {
-        // Role Distribution
+        // Role Distribution (menggunakan allUsers yang sudah dimuat)
         const ctxRole = document.getElementById('chartRoleDist').getContext('2d');
         if (window.roleChart) window.roleChart.destroy();
         
@@ -665,56 +693,88 @@
             type: 'doughnut',
             data: {
                 labels: ['Owner', 'Operator', 'Superadmin'],
-                datasets: [{
-                    data: [roles.owner, roles.operator, roles.superadmin],
-                    backgroundColor: ['#10b981', '#f59e0b', '#3b82f6'],
-                    borderWidth: 0
-                }]
+                datasets: [{ data: [roles.owner, roles.operator, roles.superadmin],
+                    backgroundColor: ['#10b981', '#f59e0b', '#3b82f6'], borderWidth: 0 }]
             },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#8fb99a', font: { size: 10 } } } } }
         });
 
-        // User Growth (Dummy logic for now)
+        // User Growth — kelompokkan allUsers per bulan (6 bulan terakhir)
         const ctxGrowth = document.getElementById('chartUserGrowth').getContext('2d');
         if (window.growthChart) window.growthChart.destroy();
+
+        const now = new Date();
+        const months = [];
+        const counts = [];
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          months.push(d.toLocaleDateString('id-ID', { month: 'short', year: '2-digit' }));
+          counts.push(allUsers.filter(u => {
+            const c = new Date(u.created_at);
+            return c.getFullYear() === d.getFullYear() && c.getMonth() === d.getMonth();
+          }).length);
+        }
+
         window.growthChart = new Chart(ctxGrowth, {
             type: 'line',
             data: {
-                labels: ['W1', 'W2', 'W3', 'W4'],
-                datasets: [{
-                    label: 'Registrasi Baru',
-                    data: [2, 5, 3, 8],
-                    borderColor: '#10b981',
-                    tension: 0.4,
-                    fill: true,
-                    backgroundColor: 'rgba(16,185,129,0.1)'
-                }]
+                labels: months,
+                datasets: [{ label: 'Registrasi Baru', data: counts, borderColor: '#10b981',
+                    tension: 0.4, fill: true, backgroundColor: 'rgba(16,185,129,0.1)' }]
             },
-            options: { 
-                responsive: true, maintainAspectRatio: false, 
-                scales: { 
-                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#5a7a64' } },
-                    x: { grid: { display: false }, ticks: { color: '#5a7a64' } }
-                },
-                plugins: { legend: { display: false } }
-            }
+            options: { responsive: true, maintainAspectRatio: false,
+                scales: { y: { grid: { color:'rgba(255,255,255,0.05)' }, ticks: { color:'#5a7a64', stepSize: 1 } },
+                           x: { grid: { display:false }, ticks: { color:'#5a7a64' } } },
+                plugins: { legend: { display: false } } }
         });
     }
 
     async function loadActivities() {
         const tbody = document.getElementById('activitiesTable');
         tbody.innerHTML = '<tr><td colspan="4" class="empty"><span class="spinner"></span> Memuat...</td></tr>';
-        
-        const { data, error } = await SB.admin.allActivities();
-        if (error) { tbody.innerHTML = `<tr><td colspan="4" class="empty">Error: ${error.message}</td></tr>`; return; }
-        
-        if (!data.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty">Belum ada aktivitas.</td></tr>'; return; }
-        
-        tbody.innerHTML = data.map(a => `
+
+        // Coba pakai RPC function baru (SECURITY DEFINER, bypass RLS)
+        let activities = [];
+        let errMsg = null;
+
+        const { data: rpcData, error: rpcErr } = await sb.rpc('get_all_aktivitas', { p_limit: 100 });
+
+        if (!rpcErr && rpcData) {
+          activities = rpcData;
+        } else {
+          // Fallback: query langsung (perlu RLS bypass policy)
+          const { data: acts, error: actErr } = await sb
+            .from('aktivitas')
+            .select('id, user_id, judul, deskripsi, created_at')
+            .order('created_at', { ascending: false })
+            .limit(100);
+
+          if (actErr) { errMsg = actErr.message; }
+          else {
+            // Ambil profile data secara terpisah lalu merge
+            const uids = [...new Set((acts||[]).map(a => a.user_id))];
+            let profileMap = {};
+            if (uids.length > 0) {
+              const { data: profs } = await sb.from('profiles').select('id, nama_usaha, nama_pemilik, email').in('id', uids);
+              (profs||[]).forEach(p => { profileMap[p.id] = p; });
+            }
+            activities = (acts||[]).map(a => ({
+              ...a,
+              nama_usaha: profileMap[a.user_id]?.nama_usaha || profileMap[a.user_id]?.nama_pemilik || '—',
+              email: profileMap[a.user_id]?.email || '—'
+            }));
+          }
+        }
+
+        if (errMsg) { tbody.innerHTML = `<tr><td colspan="4" class="empty" style="color:#fca5a5">Error: ${errMsg}</td></tr>`; return; }
+        if (!activities.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty">Belum ada aktivitas.</td></tr>'; return; }
+
+        tbody.innerHTML = activities.map(a => `
             <tr>
                 <td class="td-date">${new Date(a.created_at).toLocaleString('id-ID')}</td>
-                <td><div style="font-weight:600">${a.profiles?.nama_usaha || '—'}</div></td>
-                <td><span class="badge badge-blue">${a.judul}</span></td>
+                <td><div style="font-weight:600">${a.nama_usaha || '—'}</div>
+                    <div style="font-size:10px;color:var(--text-muted)">${a.email || ''}</div></td>
+                <td><span class="badge badge-blue">${a.judul || '—'}</span></td>
                 <td style="font-size:12px;color:var(--text-secondary)">${a.deskripsi || '-'}</td>
             </tr>
         `).join('');
