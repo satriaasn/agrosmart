@@ -662,17 +662,6 @@
         // Gunakan RPC SECURITY DEFINER agar superadmin bisa lihat semua data
         const { data: stats, error: statErr } = await sb.rpc('get_platform_stats');
         
-        // --- DEBUG BOX ---
-        let debugBox = document.getElementById('debugBox');
-        if(!debugBox) {
-           debugBox = document.createElement('pre');
-           debugBox.id = 'debugBox';
-           debugBox.style = "background:#2a2a2a; color:#10b981; padding:10px; border-radius:8px; font-size:11px; white-space:pre-wrap; word-wrap:break-word; margin-bottom:20px;";
-           document.querySelector('.admin-content').prepend(debugBox);
-        }
-        debugBox.textContent = "RAW API RESPONSE:\nSTAT_ERR: " + JSON.stringify(statErr) + "\nSTATS_DATA: " + JSON.stringify(stats, null, 2);
-        // -----------------
-
         if (statErr || (stats && stats.error)) {
           const errMsg = statErr ? statErr.message : stats.error;
           document.getElementById('moTotalPanen').textContent = '⚠️ Error / Akses Ditolak';
@@ -688,6 +677,7 @@
 
         initAdminCharts();
     }
+
 
     function initAdminCharts() {
         // Role Distribution (menggunakan allUsers yang sudah dimuat)
