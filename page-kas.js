@@ -136,9 +136,19 @@ async function openKasModal(id) {
         </select>
       </div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Deskripsi / Catatan</label>
-      <textarea class="form-control" id="f-kasDesc" placeholder="Keterangan tambahan..." rows="2">${k?.deskripsi || ''}</textarea>
+    <div class="form-row">
+      <div class="form-group">
+         <label class="form-label">Terkait Lahan (Opsional)</label>
+         <select class="form-control" id="f-kasLahan">
+           <option value="">— Umum / Semua —</option>
+           ${(window._allLahan || []).map(l => `<option value="${l.nama}" ${k?.lahan === l.nama ? 'selected' : ''}>${l.nama}</option>`).join('')}
+         </select>
+         <div style="font-size:10px; color:var(--text-muted); margin-top:4px">Operator hanya bisa melihat transaksi yang terkait lahan tugasnya.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Deskripsi / Catatan</label>
+        <textarea class="form-control" id="f-kasDesc" placeholder="Keterangan tambahan..." rows="1">${k?.deskripsi || ''}</textarea>
+      </div>
     </div>
   `, async () => {
     const data = {
@@ -146,6 +156,7 @@ async function openKasModal(id) {
       tanggal: document.getElementById('f-kasTgl').value,
       jumlah: parseFloat(document.getElementById('f-kasJml').value) || 0,
       kategori: document.getElementById('f-kasKat').value || 'Lainnya',
+      lahan: document.getElementById('f-kasLahan').value || null,
       deskripsi: document.getElementById('f-kasDesc').value,
       coa_id: null
     };
@@ -217,6 +228,7 @@ async function forceSyncKeuangan(btn) {
           jumlah: b.total || 0,
           kategori: b.kategori,
           coa_id: cid ? parseInt(cid) : null,
+          lahan: b.lahan,
           deskripsi: `[Biaya Lahan: ${b.lahan}] ${b.deskripsi}`,
           ref_id: String(b.id),
           ref_type: 'biaya'
@@ -235,6 +247,7 @@ async function forceSyncKeuangan(btn) {
           jumlah: p.total || 0,
           kategori: 'Hasil Panen',
           coa_id: p.coa_id ? parseInt(p.coa_id) : null,
+          lahan: p.lahan,
           deskripsi: `[Panen: ${p.tanaman}] ${p.lahan}`,
           ref_id: String(p.id),
           ref_type: 'panen'

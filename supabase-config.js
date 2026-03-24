@@ -296,7 +296,19 @@ function _withUserId(data) {
   cash_book: {
     fetch:  (uid)      => {
       let ownerId = uid || window.APP_OWNER_ID || window._currentUserId;
-      return sb.from('cash_book').select('*').eq('user_id', ownerId).order('tanggal', { ascending: false });
+      let q = sb.from('cash_book').select('*').eq('user_id', ownerId).order('tanggal', { ascending: false });
+      
+      if (isOperator() && window.APP_OWNER_ID) {
+        const assignedNames = window.APP_ASSIGNED_LAHAN_NAMES || [];
+        if (assignedNames.length > 0) {
+           // Filter: lahan milik operator ATAU lahan NULL (pengeluaran umum/awal)
+           // Namun user ingin "semua difilter", jadi kita filter strictly ke assignedNames.
+           q = q.in('lahan', assignedNames); 
+        } else {
+           q = q.eq('lahan', '___NONE___');
+        }
+      }
+      return q;
     },
     insert: (data)      => sb.from('cash_book').insert(_withUserId(data)).select().single(),
     update: (id, data)  => sb.from('cash_book').update(data).eq('id', id).select().single(),

@@ -478,6 +478,7 @@ async function openBiayaModal(id) {
           jumlah: parseFloat(total) || 0,
           kategori: kat,
           coa_id: coa_id ? parseInt(coa_id) : null,
+          lahan: lahan,
           deskripsi: `[Biaya Lahan: ${lahan}] ${desc}`,
           ref_id: savedBiaya.id,
           ref_type: 'biaya'

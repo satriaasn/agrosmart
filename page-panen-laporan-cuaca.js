@@ -288,6 +288,7 @@ async function openPanenModal(id) {
           jumlah: totalRp,
           kategori: 'Hasil Panen',
           coa_id: coa_id ? parseInt(coa_id) : null,
+          lahan: lahan,
           deskripsi: `[Panen Lahan: ${lahan}] ${tanaman} (${savedPanen.jumlah} ${savedPanen.satuan})`,
           ref_id: savedPanen.id,
           ref_type: 'panen'
