@@ -176,6 +176,11 @@
         <div class="stat-val" id="stBulan" style="color:#fbbf24">—</div>
         <div class="stat-sub">registrasi baru</div>
       </div>
+      <div class="stat-card">
+        <div class="stat-label">Lisensi Aktif</div>
+        <div class="stat-val" id="stLic" style="color:#c084fc">—</div>
+        <div class="stat-sub">key tersedia</div>
+      </div>
     </div>
 
     <!-- Tabs -->
@@ -184,6 +189,7 @@
       <button class="admin-tab" onclick="switchTab('monitoring')">📊 Monitoring Global</button>
       <button class="admin-tab" onclick="switchTab('activities')">📜 Aktivitas</button>
       <button class="admin-tab" onclick="switchTab('add')">➕ Tambah User</button>
+      <button class="admin-tab" onclick="switchTab('lisensi')">🔑 Kelola Lisensi</button>
     </div>
 
     <!-- Tab: All Users -->
@@ -215,11 +221,12 @@
               <th>Role</th>
               <th>Status</th>
               <th>Tanggal Daftar</th>
+              <th>Lisensi</th>
               <th>Aksi</th>
             </tr>
           </thead>
           <tbody id="usersTable">
-            <tr><td colspan="6" class="empty">Memuat data...</td></tr>
+            <tr><td colspan="7" class="empty">Memuat data...</td></tr>
           </tbody>
         </table>
     </div>
@@ -322,6 +329,108 @@
     </div>
   </div>
 
+  <!-- Tab: Kelola Lisensi -->
+  <div id="tabLisensi" style="display:none">
+    <div class="stats-row" style="margin-bottom:24px">
+      <div class="stat-card">
+        <div class="stat-label">Total Keys</div>
+        <div class="stat-val" id="licTotal">—</div>
+        <div class="stat-sub">dibuat</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Tersedia</div>
+        <div class="stat-val" id="licAvail" style="color:var(--primary)">—</div>
+        <div class="stat-sub">belum dipakai</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Terpakai</div>
+        <div class="stat-val" id="licUsed" style="color:var(--amber)">—</div>
+        <div class="stat-sub">sudah aktif</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Dicabut</div>
+        <div class="stat-val" id="licRevoked" style="color:#fca5a5">—</div>
+        <div class="stat-sub">non-aktif</div>
+      </div>
+    </div>
+    <div class="section-header">
+      <div class="section-title">🔑 Daftar Kunci Lisensi</div>
+      <button class="btn btn-primary" onclick="openGenerateLicenseModal()">✨ Generate Key Baru</button>
+    </div>
+    <div class="toolbar" style="margin-top:12px">
+      <input class="search-input" id="licSearch" placeholder="🔍 Cari key / email / catatan..." oninput="filterLicenses()">
+      <select class="filter-select" id="licFilterPlan" onchange="filterLicenses()">
+        <option value="">Semua Plan</option>
+        <option value="pro">Pro</option>
+        <option value="enterprise">Enterprise</option>
+      </select>
+      <select class="filter-select" id="licFilterStatus" onchange="filterLicenses()">
+        <option value="">Semua Status</option>
+        <option value="unused">Tersedia</option>
+        <option value="used">Terpakai</option>
+        <option value="revoked">Non-aktif</option>
+      </select>
+      <button class="btn btn-secondary btn-sm" onclick="loadLicenses()">↻ Refresh</button>
+    </div>
+    <div class="table-wrap" style="margin-top:16px;overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>Kode Lisensi</th><th>Plan</th><th>Durasi</th><th>Max Ops</th>
+          <th>Assigned To</th><th>Aktif Hingga</th><th>Status</th><th>Aksi</th>
+        </tr></thead>
+        <tbody id="licTable"><tr><td colspan="8" class="empty">Klik Refresh untuk memuat data.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal: Generate License -->
+  <div id="licModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);z-index:999;align-items:center;justify-content:center;padding:20px">
+    <div class="modal-box">
+      <div class="modal-title">✨ Generate Kunci Lisensi Baru</div>
+      <div class="form-group">
+        <label class="form-label">Tipe Plan</label>
+        <select class="form-control" id="licPlan">
+          <option value="pro">Pro — hingga 5 operator</option>
+          <option value="enterprise">Enterprise — unlimited operator</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Durasi Lisensi</label>
+        <select class="form-control" id="licDays">
+          <option value="30">30 hari (1 bulan)</option>
+          <option value="90">90 hari (3 bulan)</option>
+          <option value="180">180 hari (6 bulan)</option>
+          <option value="365" selected>365 hari (1 tahun)</option>
+          <option value="730">730 hari (2 tahun)</option>
+          <option value="36500">Seumur Hidup</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Maks. Operator</label>
+        <select class="form-control" id="licMaxOps">
+          <option value="1">1 operator</option>
+          <option value="3" selected>3 operator</option>
+          <option value="5">5 operator</option>
+          <option value="10">10 operator</option>
+          <option value="999">Unlimited</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catatan (untuk tracking pelanggan)</label>
+        <input class="form-control" id="licNotes" placeholder="cth. Pak Budi — Kebun Sawit Kalteng">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Jumlah Key</label>
+        <input class="form-control" type="number" id="licQty" value="1" min="1" max="20">
+      </div>
+      <div id="genResult" style="margin-top:10px;padding:12px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:10px;display:none;font-size:12px;line-height:1.8"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeLicModal()">Tutup</button>
+        <button class="btn btn-primary" onclick="generateNewKeys()" id="btnGenKey">Generate ✨</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Area -->
   <div class="toast-area" id="toastArea"></div>
 
@@ -346,6 +455,7 @@
         'Platform AgroSmart — ' + new Date().toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
       await loadAllUsers();
+      loadLicenseCountForStats();
     }
 
     // ── Load all users ─────────────────────────────────────────────────────────
@@ -356,7 +466,7 @@
       // Fetch profiles + join user email via auth.users view
       const { data, error } = await sb
         .from('profiles')
-        .select('id, role, email, nama_usaha, nama_pemilik, is_suspended, onboarding_done, created_at')
+        .select('id, role, email, nama_usaha, nama_pemilik, is_suspended, onboarding_done, created_at, license_plan, license_expires, trial_started_at, max_operators')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -392,26 +502,43 @@
       renderTable(filtered);
     }
 
+    function getLicenseStatusBadge(u) {
+      const plan = u.license_plan || 'trial';
+      if (plan === 'pro' || plan === 'enterprise') {
+        const ok = !u.license_expires || new Date(u.license_expires) > new Date();
+        if (ok) return { label: plan === 'enterprise' ? '⭐ Enterprise' : '✅ Pro', cls: 'badge-green' };
+        return { label: '❌ Expired', cls: 'badge-red' };
+      }
+      const start = new Date(u.trial_started_at || u.created_at);
+      const days = 14 - Math.floor((Date.now() - start) / 86400000);
+      return days > 0
+        ? { label: `🕐 Trial (${days}h)`, cls: 'badge-blue' }
+        : { label: '⚠️ Trial Habis', cls: 'badge-red' };
+    }
+
     function renderTable(users) {
       const tbody = document.getElementById('usersTable');
-      if (!users.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Tidak ada data.</td></tr>'; return; }
+      if (!users.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty">Tidak ada data.</td></tr>'; return; }
       tbody.innerHTML = users.map(u => {
         const roleB = u.role === 'superadmin' ? 'badge-blue' : u.role === 'owner' ? 'badge-green' : 'badge-amber';
         const statusB = u.is_suspended ? 'badge-red' : 'badge-green';
         const statusLabel = u.is_suspended ? 'Suspended' : 'Aktif';
         const onboard = u.onboarding_done ? '' : '<span class="badge badge-amber" style="font-size:9px;margin-left:4px">Setup</span>';
+        const lic = getLicenseStatusBadge(u);
+        const safeName = (u.nama_usaha || u.nama_pemilik || '').replace(/'/g, "\\'");
         return `<tr>
           <td>
             <div style="font-weight:600">${u.nama_usaha || '—'} ${onboard}</div>
             <div style="font-size:11px;color:var(--text-muted)">${u.nama_pemilik || '—'}</div>
           </td>
-          <td class="td-email">${u.email}</td>
+          <td class="td-email">${u.email || '—'}</td>
           <td><span class="badge ${roleB}">${u.role}</span></td>
           <td><span class="badge ${statusB}"><span class="badge-dot"></span>${statusLabel}</span></td>
           <td class="td-date">${new Date(u.created_at).toLocaleDateString('id-ID')}</td>
+          <td><span class="badge ${lic.cls}" style="white-space:nowrap;font-size:10px">${lic.label}</span></td>
           <td>
             <div class="actions-cell">
-              <button class="btn btn-secondary btn-sm" onclick="inspectUser('${u.id}', '${u.nama_usaha || u.nama_pemilik}')">👁️ Lihat Data</button>
+              <button class="btn btn-secondary btn-sm" onclick="inspectUser('${u.id}','${safeName}')">👁️ Data</button>
               ${u.is_suspended
                 ? `<button class="btn btn-success btn-sm" onclick="toggleSuspend('${u.id}',false)">✅ Aktifkan</button>`
                 : `<button class="btn btn-danger btn-sm" onclick="toggleSuspend('${u.id}',true)">🚫 Suspend</button>`}
@@ -491,21 +618,23 @@
 
     // ── Tabs ──────────────────────────────────────────────────────────────────
     function switchTab(tab) {
-      document.getElementById('tabUsers').style.display = tab === 'users' ? '' : 'none';
-      document.getElementById('tabMonitoring').style.display = tab === 'monitoring' ? '' : 'none';
-      document.getElementById('tabActivities').style.display = tab === 'activities' ? '' : 'none';
-      document.getElementById('tabAdd').style.display   = tab === 'add'   ? '' : 'none';
-      
-      document.querySelectorAll('.admin-tab').forEach((t) => {
+      ['tabUsers','tabMonitoring','tabActivities','tabAdd','tabLisensi'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+      const key = 'tab' + tab.charAt(0).toUpperCase() + tab.slice(1);
+      const el = document.getElementById(key);
+      if (el) el.style.display = '';
+
+      const labels = { users:'Semua Akun', monitoring:'Monitoring', activities:'Aktivitas', add:'Tambah User', lisensi:'Lisensi' };
+      document.querySelectorAll('.admin-tab').forEach(t => {
         t.classList.remove('active');
-        if (tab === 'users' && t.textContent.includes('Semua Akun')) t.classList.add('active');
-        if (tab === 'monitoring' && t.textContent.includes('Monitoring Global')) t.classList.add('active');
-        if (tab === 'activities' && t.textContent.includes('Aktivitas')) t.classList.add('active');
-        if (tab === 'add' && t.textContent.includes('Tambah User')) t.classList.add('active');
+        if (t.textContent.includes(labels[tab])) t.classList.add('active');
       });
 
       if (tab === 'monitoring') loadMonitoring();
       if (tab === 'activities') loadActivities();
+      if (tab === 'lisensi') loadLicenses();
     }
 
     async function loadMonitoring() {
@@ -625,6 +754,152 @@
       el.textContent = (type === 'success' ? '✅ ' : '❌ ') + msg;
       document.getElementById('toastArea').appendChild(el);
       setTimeout(() => el.remove(), 3500);
+    }
+
+    // ── License Management ─────────────────────────────────────────────────────
+    let allLicenses = [];
+
+    async function loadLicenses() {
+      const tbody = document.getElementById('licTable');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="8" class="empty"><span class="spinner"></span> Memuat...</td></tr>';
+      const { data, error } = await sb.from('licenses').select('*').order('created_at', { ascending: false });
+      if (error) { tbody.innerHTML = `<tr><td colspan="8" class="empty" style="color:#fca5a5">Error: ${error.message}</td></tr>`; return; }
+      allLicenses = data || [];
+      updateLicStats(allLicenses);
+      renderLicTable(allLicenses);
+    }
+
+    function updateLicStats(list) {
+      document.getElementById('licTotal').textContent   = list.length;
+      document.getElementById('licAvail').textContent   = list.filter(l => !l.is_used && l.is_active).length;
+      document.getElementById('licUsed').textContent    = list.filter(l => l.is_used).length;
+      document.getElementById('licRevoked').textContent = list.filter(l => !l.is_active).length;
+    }
+
+    function filterLicenses() {
+      const q  = (document.getElementById('licSearch')?.value || '').toLowerCase();
+      const pl = document.getElementById('licFilterPlan')?.value || '';
+      const st = document.getElementById('licFilterStatus')?.value || '';
+      const filtered = allLicenses.filter(l => {
+        const mQ  = !q  || l.license_key.toLowerCase().includes(q) || (l.owner_email||'').toLowerCase().includes(q) || (l.notes||'').toLowerCase().includes(q);
+        const mPl = !pl || l.plan_type === pl;
+        const mSt = !st || (st==='unused' && !l.is_used && l.is_active) || (st==='used' && l.is_used) || (st==='revoked' && !l.is_active);
+        return mQ && mPl && mSt;
+      });
+      renderLicTable(filtered);
+    }
+
+    function renderLicTable(list) {
+      const tbody = document.getElementById('licTable');
+      if (!tbody) return;
+      if (!list.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty">Tidak ada data.</td></tr>'; return; }
+      const pb = { pro:'badge-green', enterprise:'badge-blue' };
+      tbody.innerHTML = list.map(l => {
+        const sb2 = !l.is_active ? 'badge-red' : l.is_used ? 'badge-amber' : 'badge-green';
+        const sl  = !l.is_active ? 'Non-Aktif' : l.is_used ? 'Terpakai' : 'Tersedia';
+        const exp = l.valid_until ? new Date(l.valid_until).toLocaleDateString('id-ID') : '—';
+        const dur = l.valid_days >= 36000 ? 'Seumur Hidup' : l.valid_days + ' hari';
+        const ops = l.max_operators >= 999 ? '∞' : l.max_operators;
+        return `<tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:6px">
+              <code style="font-size:12px;font-weight:700;color:var(--primary-light);background:rgba(16,185,129,0.1);padding:3px 8px;border-radius:6px;letter-spacing:1px">${l.license_key}</code>
+              <button class="btn btn-secondary btn-sm" style="padding:3px 8px" onclick="copyKey('${l.license_key}')">📋</button>
+            </div>
+            ${l.notes ? `<div style="font-size:10px;color:var(--text-muted);margin-top:3px">📝 ${l.notes}</div>` : ''}
+          </td>
+          <td><span class="badge ${pb[l.plan_type]||'badge-amber'}">${(l.plan_type||'').toUpperCase()}</span></td>
+          <td style="font-size:12px;color:var(--text-secondary)">${dur}</td>
+          <td style="text-align:center;font-weight:700">${ops}</td>
+          <td>
+            <div style="font-size:12px">${l.owner_email || '<span style="color:var(--text-muted)">—</span>'}</div>
+            ${l.activated_at ? `<div style="font-size:10px;color:var(--text-muted)">Aktivasi: ${new Date(l.activated_at).toLocaleDateString('id-ID')}</div>` : ''}
+          </td>
+          <td class="td-date">${exp}</td>
+          <td><span class="badge ${sb2}"><span class="badge-dot"></span>${sl}</span></td>
+          <td><div class="actions-cell">
+            ${l.is_active && !l.is_used ? `<button class="btn btn-danger btn-sm" onclick="revokeLicense(${l.id},'${l.license_key}')">🚫 Cabut</button>` : ''}
+            ${!l.is_active ? `<button class="btn btn-success btn-sm" onclick="reactivateLicense(${l.id})">✅ Aktifkan</button>` : ''}
+            ${l.is_used ? `<button class="btn btn-secondary btn-sm" onclick="viewLicDetail(${l.id})">👁️ Detail</button>` : ''}
+          </div></td>
+        </tr>`;
+      }).join('');
+    }
+
+    function openGenerateLicenseModal() {
+      document.getElementById('genResult').style.display = 'none';
+      document.getElementById('genResult').innerHTML = '';
+      document.getElementById('licModal').style.display = 'flex';
+    }
+    function closeLicModal() { document.getElementById('licModal').style.display = 'none'; }
+
+    async function generateNewKeys() {
+      const plan   = document.getElementById('licPlan').value;
+      const days   = parseInt(document.getElementById('licDays').value);
+      const maxOps = parseInt(document.getElementById('licMaxOps').value);
+      const notes  = document.getElementById('licNotes').value.trim();
+      const qty    = Math.min(parseInt(document.getElementById('licQty').value) || 1, 20);
+      const btn    = document.getElementById('btnGenKey');
+      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Generating...';
+
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      const rows  = [];
+      const generated = [];
+      for (let i = 0; i < qty; i++) {
+        let key = 'AGRO-';
+        for (let g = 0; g < 3; g++) {
+          for (let c = 0; c < 4; c++) key += chars[Math.floor(Math.random() * chars.length)];
+          if (g < 2) key += '-';
+        }
+        rows.push({ license_key: key, plan_type: plan, valid_days: days, max_operators: maxOps, notes: notes || null });
+        generated.push(key);
+      }
+
+      const { error } = await sb.from('licenses').insert(rows);
+      btn.disabled = false; btn.innerHTML = 'Generate ✨';
+      if (error) { showToast('error', 'Gagal: ' + error.message); return; }
+
+      const res = document.getElementById('genResult');
+      res.style.display = 'block';
+      res.innerHTML = '<div style="font-weight:700;margin-bottom:8px;color:var(--primary-light)">✅ Key berhasil dibuat!</div>' +
+        generated.map(k => `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><code style="font-family:monospace;font-size:12px;letter-spacing:1px;color:var(--primary-light)">${k}</code><button class="btn btn-secondary btn-sm" style="padding:2px 8px" onclick="copyKey('${k}')">📋</button></div>`).join('');
+
+      showToast('success', `${qty} kunci lisensi berhasil digenerate!`);
+      await loadLicenses();
+    }
+
+    async function revokeLicense(id, key) {
+      if (!confirm(`Cabut lisensi ${key}?\nKey ini tidak bisa digunakan setelah dicabut.`)) return;
+      const { error } = await sb.from('licenses').update({ is_active: false }).eq('id', id);
+      if (error) { showToast('error', 'Gagal: ' + error.message); return; }
+      showToast('success', `Lisensi ${key} dicabut.`);
+      await loadLicenses();
+    }
+
+    async function reactivateLicense(id) {
+      const { error } = await sb.from('licenses').update({ is_active: true }).eq('id', id);
+      if (error) { showToast('error', 'Gagal: ' + error.message); return; }
+      showToast('success', 'Lisensi diaktifkan kembali.');
+      await loadLicenses();
+    }
+
+    function copyKey(key) {
+      navigator.clipboard.writeText(key).then(() => showToast('success', 'Key disalin: ' + key));
+    }
+
+    function viewLicDetail(id) {
+      const l = allLicenses.find(x => x.id === id);
+      if (!l) return;
+      const exp = l.valid_until ? new Date(l.valid_until).toLocaleDateString('id-ID', {day:'numeric',month:'long',year:'numeric'}) : 'Seumur Hidup';
+      alert(`🔑 Detail Lisensi\n\nKey: ${l.license_key}\nPlan: ${l.plan_type}\nOwner: ${l.owner_email||'—'}\nAktif Hingga: ${exp}\nMaks Operator: ${l.max_operators >= 999 ? 'Unlimited' : l.max_operators}\nCatatan: ${l.notes||'—'}`);
+    }
+
+    // ── Add license stats to main stats row ────────────────────────────────────
+    async function loadLicenseCountForStats() {
+      const { count } = await sb.from('licenses').select('*', { count: 'exact', head: true }).eq('is_active', true);
+      const el = document.getElementById('stLic');
+      if (el) el.textContent = count || 0;
     }
 
     init();

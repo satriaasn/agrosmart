@@ -312,6 +312,16 @@ const SB = {
     setRole:     (id, role) => sb.from('profiles').update({ role }).eq('id', id),
     allActivities:() => sb.from('aktivitas').select('*, profiles(nama_usaha)').order('created_at', { ascending: false }).limit(50),
   },
+  /** LICENSES */
+  licenses: {
+    fetch:       ()        => sb.from('licenses').select('*').order('created_at', { ascending: false }),
+    fetchMine:   ()        => sb.from('licenses').select('*').eq('owner_id', window._currentUserId).maybeSingle(),
+    activate:    (key)     => sb.rpc('activate_license', { p_key: key }),
+    myStatus:    ()        => sb.rpc('get_my_license_status'),
+    insert:      (rows)    => sb.from('licenses').insert(rows),
+    revoke:      (id)      => sb.from('licenses').update({ is_active: false }).eq('id', id),
+    reactivate:  (id)      => sb.from('licenses').update({ is_active: true  }).eq('id', id),
+  },
   /** AUTH FLOW FOR OPERATORS */
   auth: {
     checkInvitation: (email, password) => sb.rpc('check_operator_invite', { p_email: email, p_password: password }),
