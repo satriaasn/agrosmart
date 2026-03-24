@@ -5,8 +5,10 @@
 let allSeasons = [];
 
 async function renderPeriode() {
-  const container = document.getElementById('pageContainer');
-  container.innerHTML = `
+  // Panggil loadPeriodeData setelah DOM diupdate oleh app.js
+  setTimeout(loadPeriodeData, 50);
+
+  return `
     <div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
       <div>
         <h2 class="page-title">Siklus & Periode Tanam</h2>
@@ -24,8 +26,6 @@ async function renderPeriode() {
       </div>
     </div>
   `;
-
-  await loadPeriodeData();
 }
 
 async function loadPeriodeData() {
