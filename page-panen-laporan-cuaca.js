@@ -3,11 +3,19 @@
    ============================================= */
 
 /* ---- PANEN ---- */
+window._panenSeasonFilter = window._panenSeasonFilter || 'active'; // 'all', 'active' atau ID periode
+
 async function renderPanen() {
   const { data: listPanen } = await SB.panen.fetch();
   const { data: listUnits } = await SB.units.fetch('panen');
   window._DYNAMIC_SATS_PANEN = listUnits || [];
-  const arrPanen = listPanen || [];
+  let arrPanen = listPanen || [];
+  
+  if (window._panenSeasonFilter === 'active' && window.APP_SEASON_ID) {
+    arrPanen = arrPanen.filter(p => String(p.season_id) === String(window.APP_SEASON_ID));
+  } else if (window._panenSeasonFilter !== 'all' && window._panenSeasonFilter !== 'active') {
+    arrPanen = arrPanen.filter(p => String(p.season_id) === String(window._panenSeasonFilter));
+  }
   
   const MULTIPLIERS = { 'kg': 1, 'ton': 1000, 'kwintal': 100, 'gram': 0.001, 'liter': 1, 'buah': 1, 'ikat': 1 };
   
@@ -25,12 +33,17 @@ async function renderPanen() {
   const displayAvg = avgKg >= 1000 ? (avgKg/1000).toFixed(1) : avgKg.toLocaleString('id-ID');
   const unitAvg = avgKg >= 1000 ? 'ton' : 'kg';
   return `
-  <div class="page-header">
+  <div class="page-header" style="flex-direction:row; justify-content:space-between; align-items:flex-end;">
     <div>
       <div class="page-title">Catatan Panen</div>
       <div class="page-subtitle">Rekap seluruh kegiatan panen dan hasil produksi.</div>
     </div>
-    <div class="page-actions">
+    <div class="page-actions" style="display:flex; gap:12px; align-items:center;">
+      <select class="form-control" style="width:160px" onchange="window._panenSeasonFilter=this.value; navigate('panen')">
+        <option value="all" ${window._panenSeasonFilter==='all'?'selected':''}>Semua Periode</option>
+        ${window.APP_SEASON ? `<option value="active" ${window._panenSeasonFilter==='active'?'selected':''}>Periode Aktif: ${window.APP_SEASON.nama}</option>` : ''}
+        <!-- Bisa ditambah list semua periode jika allSeasons didefinisikan secara global, sementara pakai 2 ini dulu -->
+      </select>
       ${canAccess('panen', 'add') ? `
       <button class="btn btn-primary" onclick="openPanenModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -388,6 +401,8 @@ async function deletePanen(id) {
 
 
 /* ---- LAPORAN ---- */
+window._laporanSeasonFilter = window._laporanSeasonFilter || 'active'; // 'all', 'active' atau ID periode
+
 async function renderLaporan() {
   const [{ data: listPanen }, { data: listKaryawan }, { data: listLahan }, { data: listKas }] = await Promise.all([
     SB.panen.fetch(),
@@ -395,10 +410,35 @@ async function renderLaporan() {
     SB.lahan.fetch(),
     SB.cash_book.fetch()
   ]);
-  const arrPanen = listPanen || [];
+  let arrPanen = listPanen || [];
   const arrKaryawan = listKaryawan || [];
   const arrLahan = listLahan || [];
-  const arrKas = listKas || [];
+  let arrKas = listKas || [];
+
+  if (window._laporanSeasonFilter === 'active' && window.APP_SEASON_ID) {
+    arrPanen = arrPanen.filter(p => String(p.season_id) === String(window.APP_SEASON_ID));
+    // Asumsi cash_book yang tercatat lewat modul biaya/panen otomatis nempel season_id via ref. Sementara cash_book murni mungkin tidak ada season_id. Kita tidak filter kas di sini untuk sementara agar uang tunai tetap cocok.
+    // Atau jika ingin strict, buku kas juga filter season_id. Kita filter yang terkait ref_type 'panen'/'biaya' yg ada di periode ini.
+    // Untuk simplifikasi:
+    const activePanenIds = new Set(arrPanen.map(p=>p.id));
+    // Harus fetch biaya yg aktif jg
+    const { data: listBiaya } = await SB.biaya.fetch();
+    const activeBiayaIds = new Set((listBiaya||[]).filter(b => String(b.season_id) === String(window.APP_SEASON_ID)).map(b=>b.id));
+    
+    arrKas = arrKas.filter(k => 
+      (k.ref_type === 'panen' ? activePanenIds.has(k.ref_id) : 
+      (k.ref_type === 'biaya' ? activeBiayaIds.has(k.ref_id) : true)) // Transaksi manual tetap masuk
+    );
+  } else if (window._laporanSeasonFilter !== 'all' && window._laporanSeasonFilter !== 'active') {
+    arrPanen = arrPanen.filter(p => String(p.season_id) === String(window._laporanSeasonFilter));
+    const { data: listBiaya } = await SB.biaya.fetch();
+    const activeBiayaIds = new Set((listBiaya||[]).filter(b => String(b.season_id) === String(window._laporanSeasonFilter)).map(b=>b.id));
+    const activePanenIds = new Set(arrPanen.map(p=>p.id));
+    arrKas = arrKas.filter(k => 
+      (k.ref_type === 'panen' ? activePanenIds.has(k.ref_id) : 
+      (k.ref_type === 'biaya' ? activeBiayaIds.has(k.ref_id) : true))
+    );
+  }
 
   const totalKg = arrPanen.reduce((a, p) => {
     const mult = (window.APP_MULTIPLIERS || { 'kg': 1, 'ton': 1000 })[(p.satuan || 'kg').toLowerCase()] || 1;
@@ -415,10 +455,16 @@ async function renderLaporan() {
   const displayTotal = totalKg >= 1000 ? (totalKg/1000).toFixed(1) + ' ton' : totalKg.toLocaleString('id-ID') + ' kg';
 
   return `
-    <div class="page-header">
+    <div class="page-header" style="flex-direction:row; justify-content:space-between; align-items:flex-end;">
       <div>
         <div class="page-title">Analisis Laba Rugi & Kas</div>
         <div class="page-subtitle">Perbandingan antara log operasional (panen) dan arus kas nyata.</div>
+      </div>
+      <div class="page-actions" style="display:flex; gap:12px; align-items:center;">
+        <select class="form-control" style="width:160px" onchange="window._laporanSeasonFilter=this.value; navigate('laporan')">
+          <option value="all" ${window._laporanSeasonFilter==='all'?'selected':''}>Semua Periode</option>
+          ${window.APP_SEASON ? `<option value="active" ${window._laporanSeasonFilter==='active'?'selected':''}>Periode Aktif: ${window.APP_SEASON.nama}</option>` : ''}
+        </select>
       </div>
     </div>
     

@@ -27,7 +27,7 @@ async function navigate(page) {
   if (bnavEl) bnavEl.classList.add('active');
 
   // Update breadcrumb
-  const labels = { dashboard:'Dashboard', tanaman:'Tanaman', lahan:'Lahan', karyawan:'Karyawan', panen:'Panen', kas:'Buku Kas', keuangan:'Biaya Olah Lahan', coa:'Daftar Akun', laporan:'Laporan', cuaca:'Cuaca', peta:'Peta Lahan', tim:'Manajemen Tim', profil:'Profil & Pengaturan' };
+  const labels = { dashboard:'Dashboard', tanaman:'Tanaman', lahan:'Lahan', karyawan:'Karyawan', panen:'Panen', kas:'Buku Kas', keuangan:'Biaya Olah Lahan', coa:'Daftar Akun', laporan:'Laporan', cuaca:'Cuaca', peta:'Peta Lahan', tim:'Manajemen Tim', profil:'Profil & Pengaturan', periode:'Periode Tanam' };
   const bc = document.getElementById('breadcrumb');
   if (bc) bc.innerHTML = `<span style="color:var(--text-muted)">AgroSmart</span> <span style="color:var(--text-muted);margin:0 6px">/</span> <span>${labels[page] || page}</span>`;
 
@@ -74,6 +74,7 @@ async function navigate(page) {
       case 'peta':      html = await renderPeta();      break;
       case 'tim':       html = await renderTim();       break;
       case 'profil':    html = await renderProfil();    break;
+      case 'periode':   html = typeof renderPeriode === 'function' ? await renderPeriode() : '<div class="alert">Modul belum dimuat.</div>'; break;
       default:          html = `<div class="page-header"><div class="page-title">404</div></div><p>Halaman tidak ditemukan.</p>`;
     }
   } catch (err) {

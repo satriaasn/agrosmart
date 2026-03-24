@@ -53,6 +53,8 @@ async function loadKeuanganMetadata() {
 // ═══════════════════════════════════════════════════════════════════════════════
 //  MAIN PAGE RENDER
 // ═══════════════════════════════════════════════════════════════════════════════
+window._keuanganSeasonFilter = window._keuanganSeasonFilter || 'active'; // 'all', 'active' atau ID periode
+
 async function renderKeuangan() {
   await loadKeuanganMetadata();
   const [{ data: listBiaya }, { data: listPanen }, { data: listLahan }] = await Promise.all([
@@ -60,9 +62,17 @@ async function renderKeuangan() {
     SB.panen.fetch(),
     SB.lahan.fetch()
   ]);
-  const arrBiaya = listBiaya || [];
-  const arrPanen = listPanen || [];
+  let arrBiaya = listBiaya || [];
+  let arrPanen = listPanen || [];
   const arrLahan = listLahan || [];
+
+  if (window._keuanganSeasonFilter === 'active' && window.APP_SEASON_ID) {
+    arrBiaya = arrBiaya.filter(b => String(b.season_id) === String(window.APP_SEASON_ID));
+    arrPanen = arrPanen.filter(p => String(p.season_id) === String(window.APP_SEASON_ID));
+  } else if (window._keuanganSeasonFilter !== 'all' && window._keuanganSeasonFilter !== 'active') {
+    arrBiaya = arrBiaya.filter(b => String(b.season_id) === String(window._keuanganSeasonFilter));
+    arrPanen = arrPanen.filter(p => String(p.season_id) === String(window._keuanganSeasonFilter));
+  }
 
   window._CACHE_BIAYA = arrBiaya; // For quick sync filtering
   
@@ -73,12 +83,16 @@ async function renderKeuangan() {
   const margin          = totalPendapatan > 0 ? ((totalLaba / totalPendapatan) * 100).toFixed(1) : 0;
 
   return `
-  <div class="page-header">
+  <div class="page-header" style="flex-direction:row; justify-content:space-between; align-items:flex-end;">
     <div>
       <div class="page-title">Biaya Olah Lahan</div>
       <div class="page-subtitle">Monitor rincian biaya operasional, hasil panen, dan laba kotor per lahan.</div>
     </div>
-    <div class="page-actions">
+    <div class="page-actions" style="display:flex; gap:12px; align-items:center;">
+      <select class="form-control" style="width:160px" onchange="window._keuanganSeasonFilter=this.value; navigate('keuangan')">
+        <option value="all" ${window._keuanganSeasonFilter==='all'?'selected':''}>Semua Periode</option>
+        ${window.APP_SEASON ? `<option value="active" ${window._keuanganSeasonFilter==='active'?'selected':''}>Periode Aktif: ${window.APP_SEASON.nama}</option>` : ''}
+      </select>
       <button class="btn btn-secondary" onclick="navigate('keuangan-biaya')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         Kelola Biaya

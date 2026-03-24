@@ -22,6 +22,8 @@ window.APP_PERMISSIONS = null;   // null (owner/superadmin = full) | jsonb objec
 window.APP_OWNER_ID    = null;   // untuk operator: UUID pemilik bisnis
 window.APP_ASSIGNED_LAHAN = [];     // untuk filtering lahan
 window.APP_ASSIGNED_LAHAN_NAMES = []; // untuk filtering modul (Tanaman, Biaya)
+window.APP_SEASON_ID   = null;   // ID periode tanam aktif (jika ada)
+window.APP_SEASON      = null;   // Object periode tanam aktif
 
 // ─── Auth Helpers ─────────────────────────────────────────────────────────────
 
@@ -135,12 +137,31 @@ function _withUserId(data) {
   // Jika app_owner_id ada (berarti sedang login sbg operator), gunakan itu.
   // Jika tidak, gunakan user id aktif (berarti sedang login sbg owner).
   const uid = window.APP_OWNER_ID || window._currentUserId;
-  return Array.isArray(data) 
-    ? data.map(d => ({ ...d, user_id: d.user_id || uid }))
-    : { ...data, user_id: data.user_id || uid };
+  const inject = d => ({
+    ...d, 
+    user_id: d.user_id || uid,
+    // Jika tidak explicitly set season_id dan ada APP_SEASON_ID, maka otomatis set
+    season_id: d.season_id !== undefined ? d.season_id : (window.APP_SEASON_ID || null)
+  });
+  return Array.isArray(data) ? data.map(inject) : inject(data);
 }
 
 const SB = {
+  /** SEASONS (Periode Tanam) */
+  seasons: {
+    fetch:  () => {
+      let ownerId = window.APP_OWNER_ID || window._currentUserId;
+      return sb.from('planting_seasons').select('*').eq('user_id', ownerId).order('created_at', { ascending: false });
+    },
+    active: () => {
+      let ownerId = window.APP_OWNER_ID || window._currentUserId;
+      return sb.from('planting_seasons').select('*').eq('user_id', ownerId).eq('status', 'aktif').order('created_at', { ascending: false }).limit(1).maybeSingle();
+    },
+    insert: (data)       => sb.from('planting_seasons').insert(_withUserId(data)).select().single(),
+    update: (id, data)   => sb.from('planting_seasons').update(data).eq('id', id).select().single(),
+    remove: (id)         => sb.from('planting_seasons').delete().eq('id', id),
+    close:  (id)         => sb.rpc('close_planting_season', { p_season_id: id })
+  },
   /** LAHAN */
   lahan: {
     fetch:  (uid)       => {

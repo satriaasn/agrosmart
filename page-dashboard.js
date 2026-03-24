@@ -2,6 +2,8 @@
    AgroSmart — Page: Dashboard
    ============================================= */
 
+window._dashboardSeasonFilter = window._dashboardSeasonFilter || 'active';
+
 async function renderDashboard() {
   const [{ data: listLahan }, { data: listKaryawan }, { data: listPanen }, { data: listTanaman }, { data: listAktivitas }] = await Promise.all([
     SB.lahan.fetch(),
@@ -12,8 +14,14 @@ async function renderDashboard() {
   ]);
   const arrLahan = listLahan || [];
   const arrKaryawan = listKaryawan || [];
-  const arrPanen = listPanen || [];
+  let arrPanen = listPanen || [];
   const arrAktivitas = listAktivitas || [];
+
+  if (window._dashboardSeasonFilter === 'active' && window.APP_SEASON_ID) {
+    arrPanen = arrPanen.filter(p => String(p.season_id) === String(window.APP_SEASON_ID));
+  } else if (window._dashboardSeasonFilter !== 'all' && window._dashboardSeasonFilter !== 'active') {
+    arrPanen = arrPanen.filter(p => String(p.season_id) === String(window._dashboardSeasonFilter));
+  }
   
   const totalLahanHa = arrLahan.reduce((a,l) => a + (l.luas||0), 0);
   const totalKaryawan = arrKaryawan.length;
@@ -34,7 +42,11 @@ async function renderDashboard() {
       <div class="page-title">Dashboard</div>
       <div class="page-subtitle">Selamat datang, ${window.state?.profile?.nama_pemilik || window.state?.session?.user?.email?.split('@')[0] || 'Pengguna'}! Berikut ringkasan perkebunan hari ini — ${new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}.</div>
     </div>
-    <div class="page-actions">
+    <div class="page-actions" style="display:flex; gap:12px; align-items:center;">
+      <select class="form-control" style="width:160px" onchange="window._dashboardSeasonFilter=this.value; navigate('dashboard')">
+        <option value="all" ${window._dashboardSeasonFilter==='all'?'selected':''}>Semua Periode</option>
+        ${window.APP_SEASON ? `<option value="active" ${window._dashboardSeasonFilter==='active'?'selected':''}>Periode Aktif: ${window.APP_SEASON.nama}</option>` : ''}
+      </select>
       <button class="btn btn-secondary" onclick="showToast('success','Laporan diperbarui','Data telah disinkronisasi.')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
         Perbarui
