@@ -122,26 +122,26 @@ function openPeriodeModal(id = null) {
   const today = new Date().toISOString().split('T')[0];
 
   const html = `
-    <div style="display:flex;flex-direction:column;gap:12px;">
+    <div class="form-row">
       <input type="hidden" id="pId" value="${s?.id || ''}">
-      <div>
-        <label>Nama Periode <span style="color:#ef4444">*</span></label>
-        <input type="text" id="pNama" placeholder="Cth: Musim Kemarau 2025" value="${s?.nama || ''}" required>
+      <div class="form-group" style="flex:2">
+        <label class="form-label">Nama Periode *</label>
+        <input class="form-control" type="text" id="pNama" placeholder="Cth: Musim Kemarau 2025" value="${s?.nama || ''}" required>
       </div>
-      <div>
-        <label>Tanggal Mulai <span style="color:#ef4444">*</span></label>
-        <input type="date" id="pStart" value="${s ? s.tanggal_mulai : today}" required>
+      <div class="form-group" style="flex:1">
+        <label class="form-label">Tanggal Mulai *</label>
+        <input class="form-control" type="date" id="pStart" value="${s ? s.tanggal_mulai : today}" required>
       </div>
-      <div>
-        <label>Deskripsi (Opsional)</label>
-        <textarea id="pDesc" rows="3" placeholder="Target, kondisi cuaca, atau catatan khusus...">${s?.deskripsi || ''}</textarea>
-      </div>
-      ${isEdit && s.status === 'selesai' ? `
-        <div class="alert alert-warning" style="margin-top:8px;">
-          Periode ini sudah ditutup. Mengubah detail tidak akan mengubah total pendapatan/biaya yang sudah dikunci.
-        </div>
-      ` : ''}
     </div>
+    <div class="form-group">
+      <label class="form-label">Deskripsi (Opsional)</label>
+      <textarea class="form-control" id="pDesc" rows="3" placeholder="Target, kondisi cuaca, atau catatan khusus...">${s?.deskripsi || ''}</textarea>
+    </div>
+    ${isEdit && s.status === 'selesai' ? `
+      <div class="alert alert-warning" style="margin-top:8px;">
+        Periode ini sudah ditutup. Mengubah detail tidak akan mengubah total pendapatan/biaya yang sudah dikunci.
+      </div>
+    ` : ''}
   `;
 
   openModal(isEdit ? 'Edit Periode' : 'Buat Periode Baru', html, savePeriode);
