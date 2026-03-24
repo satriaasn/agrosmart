@@ -146,23 +146,31 @@ function _withUserId(data) {
   return Array.isArray(data) ? data.map(inject) : inject(data);
 }
 
-const SB = {
-  /** SEASONS (Periode Tanam) */
-  seasons: {
-    fetch:  () => {
-      let ownerId = window.APP_OWNER_ID || window._currentUserId;
-      return sb.from('planting_seasons').select('*').eq('user_id', ownerId).order('created_at', { ascending: false });
+  const SB = {
+    /** SEASONS (Periode Tanam) */
+    seasons: {
+      fetch:  () => {
+        let ownerId = window.APP_OWNER_ID || window._currentUserId;
+        return sb.from('planting_seasons').select('*').eq('user_id', ownerId).order('created_at', { ascending: false });
+      },
+      active: () => {
+        let ownerId = window.APP_OWNER_ID || window._currentUserId;
+        return sb.from('planting_seasons').select('*').eq('user_id', ownerId).eq('status', 'aktif').order('created_at', { ascending: false }).limit(1).maybeSingle();
+      },
+      insert: (data) => {
+        const payload = _withUserId(data);
+        delete payload.season_id; // planting_seasons doesn't have season_id
+        return sb.from('planting_seasons').insert(payload).select().single();
+      },
+      update: (id, data) => {
+        const payload = { ...data };
+        delete payload.season_id;
+        return sb.from('planting_seasons').update(payload).eq('id', id).select().single();
+      },
+      remove: (id)         => sb.from('planting_seasons').delete().eq('id', id),
+      close:  (id)         => sb.rpc('close_planting_season', { p_season_id: id })
     },
-    active: () => {
-      let ownerId = window.APP_OWNER_ID || window._currentUserId;
-      return sb.from('planting_seasons').select('*').eq('user_id', ownerId).eq('status', 'aktif').order('created_at', { ascending: false }).limit(1).maybeSingle();
-    },
-    insert: (data)       => sb.from('planting_seasons').insert(_withUserId(data)).select().single(),
-    update: (id, data)   => sb.from('planting_seasons').update(data).eq('id', id).select().single(),
-    remove: (id)         => sb.from('planting_seasons').delete().eq('id', id),
-    close:  (id)         => sb.rpc('close_planting_season', { p_season_id: id })
-  },
-  /** LAHAN */
+    /** LAHAN */
   lahan: {
     fetch:  (uid)       => {
       let ownerId = uid || window.APP_OWNER_ID || window._currentUserId;
