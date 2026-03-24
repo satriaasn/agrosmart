@@ -661,22 +661,19 @@
         // Gunakan RPC SECURITY DEFINER agar superadmin bisa lihat semua data
         const { data: stats, error: statErr } = await sb.rpc('get_platform_stats');
         
-        if (statErr) {
-          // Fallback: query langsung (butuh RLS bypass policy dari superadmin_rls_bypass.sql)
-          const [{data: panen}, {data: lahan}] = await Promise.all([
-            sb.from('panen').select('total'),
-            sb.from('lahan').select('luas')
-          ]);
-          const { count: cKaryawan } = await sb.from('karyawan').select('*', { count: 'exact', head: true });
-          const totalPanenRp = (panen||[]).reduce((a,b)=>a+(+b.total||0),0);
-          document.getElementById('moTotalPanen').textContent = 'Rp ' + (totalPanenRp/1e6).toFixed(1) + ' jt';
-          document.getElementById('moTotalLahan').textContent = (lahan||[]).reduce((a,b)=>a+(+b.luas||0),0).toFixed(1) + ' ha';
-          document.getElementById('moTotalKaryawan').textContent = cKaryawan || 0;
-        } else {
-          document.getElementById('moTotalPanen').textContent = 'Rp ' + ((stats.total_panen_rp||0)/1e6).toFixed(1) + ' jt';
-          document.getElementById('moTotalLahan').textContent = ((stats.total_lahan_ha||0)).toFixed(1) + ' ha';
-          document.getElementById('moTotalKaryawan').textContent = stats.total_karyawan || 0;
+        if (statErr || (stats && stats.error)) {
+          const errMsg = statErr ? statErr.message : stats.error;
+          console.error("Monitoring Error:", errMsg);
+          document.getElementById('moTotalPanen').textContent = '⚠️ Error / Akses Ditolak';
+          document.getElementById('moTotalLahan').textContent = errMsg;
+          document.getElementById('moTotalKaryawan').textContent = '0';
+          return;
         }
+
+        // Jika berhasil
+        document.getElementById('moTotalPanen').textContent = 'Rp ' + ((stats.total_panen_rp||0)/1e6).toFixed(1) + ' jt';
+        document.getElementById('moTotalLahan').textContent = ((stats.total_lahan_ha||0)).toFixed(1) + ' ha';
+        document.getElementById('moTotalKaryawan').textContent = stats.total_karyawan || 0;
 
         initAdminCharts();
     }
@@ -740,30 +737,14 @@
         const { data: rpcData, error: rpcErr } = await sb.rpc('get_all_aktivitas', { p_limit: 100 });
 
         if (!rpcErr && rpcData) {
-          activities = rpcData;
-        } else {
-          // Fallback: query langsung (perlu RLS bypass policy)
-          const { data: acts, error: actErr } = await sb
-            .from('aktivitas')
-            .select('id, user_id, judul, deskripsi, created_at')
-            .order('created_at', { ascending: false })
-            .limit(100);
-
-          if (actErr) { errMsg = actErr.message; }
-          else {
-            // Ambil profile data secara terpisah lalu merge
-            const uids = [...new Set((acts||[]).map(a => a.user_id))];
-            let profileMap = {};
-            if (uids.length > 0) {
-              const { data: profs } = await sb.from('profiles').select('id, nama_usaha, nama_pemilik, email').in('id', uids);
-              (profs||[]).forEach(p => { profileMap[p.id] = p; });
-            }
-            activities = (acts||[]).map(a => ({
-              ...a,
-              nama_usaha: profileMap[a.user_id]?.nama_usaha || profileMap[a.user_id]?.nama_pemilik || '—',
-              email: profileMap[a.user_id]?.email || '—'
-            }));
+          // Check if rpcData is actually an error object { error: "msg" }
+          if (rpcData.error) {
+              errMsg = rpcData.error;
+          } else {
+              activities = rpcData;
           }
+        } else {
+          errMsg = rpcErr ? rpcErr.message : "Gagal memuat aktivitas.";
         }
 
         if (errMsg) { tbody.innerHTML = `<tr><td colspan="4" class="empty" style="color:#fca5a5">Error: ${errMsg}</td></tr>`; return; }
