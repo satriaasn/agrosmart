@@ -25,6 +25,39 @@ async function renderProfil() {
   const bio       = profile?.deskripsi    || '';  // kolom di DB: deskripsi
   const logoUrl   = profile?.logo_url     || '';
 
+  // Lisensi
+  const licPlan    = profile?.license_plan    || 'trial';
+  const licExpires = profile?.license_expires  || null;
+  const licKey     = profile?.license_key      || null;
+  const trialStart = new Date(profile?.trial_started_at || profile?.created_at || Date.now());
+  const trialDays  = Math.max(0, 14 - Math.floor((Date.now() - trialStart) / 86400000));
+
+  let licBadgeHtml = '';
+  if (licPlan === 'pro' || licPlan === 'enterprise') {
+    const ok = !licExpires || new Date(licExpires) > new Date();
+    const expStr = licExpires ? new Date(licExpires).toLocaleDateString('id-ID', {day:'numeric',month:'long',year:'numeric'}) : 'Seumur Hidup';
+    licBadgeHtml = ok
+      ? `<div style="display:flex;align-items:center;gap:10px;padding:14px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:12px">
+           <div style="font-size:24px">${licPlan==='enterprise'?'⭐':'✅'}</div>
+           <div><div style="font-size:14px;font-weight:700;color:var(--text-primary)">${licPlan==='enterprise'?'Enterprise':'Pro'} — Aktif</div>
+           <div style="font-size:12px;color:var(--text-muted)">Berlaku hingga: ${expStr}</div>
+           ${licKey?`<div style="font-size:11px;color:var(--text-muted);margin-top:2px">Key: <code style="letter-spacing:1px">${licKey}</code></div>`:''}</div>
+         </div>`
+      : `<div style="padding:12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:12px;color:#f87171;font-size:13px">
+           ⚠️ Lisensi <strong>${licPlan}</strong> sudah kedaluwarsa. Hubungi penyedia untuk perpanjang.
+         </div>`;
+  } else {
+    licBadgeHtml = trialDays > 0
+      ? `<div style="display:flex;align-items:center;gap:10px;padding:14px;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:12px">
+           <div style="font-size:24px">🕐</div>
+           <div><div style="font-size:14px;font-weight:700;color:var(--text-primary)">Trial Aktif</div>
+           <div style="font-size:12px;color:var(--text-muted)">${trialDays} hari tersisa — upgrade untuk akses penuh tanpa batas</div></div>
+         </div>`
+      : `<div style="padding:12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:12px;color:#f87171;font-size:13px">
+           ⛔ Masa trial telah habis. Masukkan kode lisensi untuk melanjutkan.
+         </div>`;
+  }
+
   const avatar = nama ? nama.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase() : '??';
 
   return `
@@ -170,6 +203,27 @@ async function renderProfil() {
       <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Akun Anda menggunakan login Google, ubah password melalui akun Google.</div>
     </div>
     `}
+
+    <!-- 3b. Lisensi (hanya untuk owner) -->
+    ${window.APP_ROLE === 'owner' ? `
+    <div class="card" id="lisensiCard">
+      <div class="card-header" style="border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:18px">
+        <div style="font-size:15px;font-weight:700;color:var(--text-primary)">🔑 Status Lisensi</div>
+        <div style="font-size:12px;color:var(--text-muted)">Kontrol akses aplikasi berdasarkan lisensi Anda</div>
+      </div>
+      ${licBadgeHtml}
+      <div style="margin-top:16px">
+        <div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:10px">Aktivasi Kode Lisensi Baru</div>
+        <div style="display:flex;gap:10px">
+          <input type="text" id="pf_licenseKey" class="form-control" placeholder="Contoh: AGRO-XXXX-XXXX-XXXX" style="font-family:monospace;letter-spacing:1px;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          <button class="btn btn-primary" onclick="activateLicenseKey()" id="btnActivateLic" style="white-space:nowrap">
+            ✨ Aktifkan
+          </button>
+        </div>
+        <div id="licActivateResult" style="margin-top:10px;font-size:12px"></div>
+      </div>
+    </div>
+    ` : ''}
 
     <!-- 4. Pengaturan Data (Kategori & Satuan) -->
     <div class="card">
@@ -678,8 +732,49 @@ if (typeof window._originalRenderProfil === 'undefined') {
   window._originalRenderProfil = renderProfil;
   renderProfil = async function() {
     const html = await window._originalRenderProfil();
-    // Load metadata shortly after HTML is injected into DOM
     setTimeout(loadMetadata, 100);
     return html;
   };
 }
+
+// ── Aktivasi License Key (owner) ─────────────────────────────────────────────
+window.activateLicenseKey = async function() {
+  const input = document.getElementById('pf_licenseKey');
+  const result = document.getElementById('licActivateResult');
+  const btn = document.getElementById('btnActivateLic');
+  const key = (input?.value || '').trim().toUpperCase();
+
+  if (!key || key.length < 10) {
+    if (result) { result.style.color = '#f87171'; result.textContent = '⚠️ Masukkan kode lisensi yang valid (format: AGRO-XXXX-XXXX-XXXX)'; }
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner" style="width:12px;height:12px;display:inline-block;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle"></span> Memproses...';
+  if (result) { result.textContent = ''; }
+
+  try {
+    const { data, error } = await sb.rpc('activate_license', { p_key: key });
+    if (error) throw error;
+
+    if (data?.success) {
+      const expStr = data.expires ? new Date(data.expires).toLocaleDateString('id-ID', {day:'numeric',month:'long',year:'numeric'}) : 'Seumur Hidup';
+      if (result) {
+        result.style.color = 'var(--accent-primary, #10b981)';
+        result.innerHTML = `✅ <strong>Lisensi ${data.plan?.toUpperCase()} berhasil diaktifkan!</strong><br>Berlaku hingga: ${expStr} &mdash; Max ${data.max_ops >= 999 ? 'Unlimited' : data.max_ops} operator.`;
+      }
+      showToast('success', 'Lisensi Aktif!', `Plan ${data.plan} berlaku hingga ${expStr}`);
+      // Reload halaman profil setelah 2 detik
+      setTimeout(() => navigate('profil'), 2000);
+    } else {
+      throw new Error(data?.message || 'Kode lisensi tidak valid atau sudah digunakan.');
+    }
+  } catch(e) {
+    if (result) { result.style.color = '#f87171'; result.textContent = '❌ ' + (e.message || 'Terjadi kesalahan.'); }
+    showToast('error', 'Aktivasi Gagal', e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '✨ Aktifkan';
+  }
+};
+
