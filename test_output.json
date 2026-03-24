@@ -1,0 +1,52 @@
+{
+  "stats": {
+    "total_tanaman": 6,
+    "total_biaya_rp": 140210000,
+    "total_karyawan": 5,
+    "total_lahan_ha": 19,
+    "total_panen_rp": 7290000,
+    "monthly_signups": 10
+  },
+  "statErr": null,
+  "acts": 4,
+  "actErr": null,
+  "pData": [
+    {
+      "total": 750000
+    },
+    {
+      "total": 540000
+    },
+    {
+      "total": 6000000
+    }
+  ],
+  "pErr": null,
+  "aData": [
+    {
+      "id": 5,
+      "user_id": "afd386bd-6bb1-4ce1-8c0f-88b42fd39e20",
+      "judul": "Penanaman Selesai",
+      "deskripsi": "Selesai menanam bibit cabai di Blok A sejumlah 500 bedeng.",
+      "created_at": "2026-03-14T15:52:14.676943+00:00",
+      "season_id": 2
+    },
+    {
+      "id": 6,
+      "user_id": "afd386bd-6bb1-4ce1-8c0f-88b42fd39e20",
+      "judul": "Pemberian Pupuk Pertama",
+      "deskripsi": "NPK diaplikasikan ke semua bibit baru Blok C pada pagi hari hujan rintik.",
+      "created_at": "2026-03-14T15:52:14.676943+00:00",
+      "season_id": 2
+    },
+    {
+      "id": 3,
+      "user_id": "210b1065-a0ac-4cb7-9cce-d407fa2f129c",
+      "judul": "Penanaman Selesai",
+      "deskripsi": "Selesai menanam bibit cabai di Blok A sejumlah 500 bedeng.",
+      "created_at": "2026-03-14T02:25:01.816019+00:00",
+      "season_id": 4
+    }
+  ],
+  "aErr": null
+}
