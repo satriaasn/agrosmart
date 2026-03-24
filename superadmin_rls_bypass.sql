@@ -47,18 +47,16 @@ BEGIN
   END IF;
 
   SELECT jsonb_build_object(
-    'total_panen_rp',   COALESCE(SUM(p.total), 0),
-    'total_lahan_ha',   COALESCE(SUM(l.luas), 0),
+    'total_panen_rp',   COALESCE((SELECT SUM(total) FROM public.panen), 0),
+    'total_lahan_ha',   COALESCE((SELECT SUM(luas) FROM public.lahan), 0),
     'total_karyawan',   (SELECT COUNT(*) FROM public.karyawan),
     'total_tanaman',    (SELECT COUNT(*) FROM public.tanaman),
-    'total_biaya_rp',   COALESCE((SELECT SUM(b.jumlah) FROM public.biaya b), 0),
+    'total_biaya_rp',   COALESCE((SELECT SUM(total) FROM public.biaya), 0),
     'monthly_signups',  (
       SELECT COUNT(*) FROM public.profiles
       WHERE created_at >= date_trunc('month', NOW())
     )
-  ) INTO result
-  FROM public.panen p
-  CROSS JOIN (SELECT SUM(luas) FROM public.lahan) l(luas);
+  ) INTO result;
 
   RETURN result;
 END;
