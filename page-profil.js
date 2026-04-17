@@ -671,16 +671,18 @@ window.openAddKatModal = function(id) {
     const name  = document.getElementById('f-katNama').value.trim();
     const icon  = document.getElementById('f-katIkon').value.trim();
     const coa_id = document.getElementById('f-katCOA').value || null;
-    if (!name) return;
+    if (!name) { showToast('warning','Peringatan','Nama kategori wajib diisi.'); return false; }
     
     if (k) {
-      await SB.expense_categories.update(k.id, { name, icon, coa_id });
+      const { error } = await SB.expense_categories.update(k.id, { name, icon, coa_id });
+      if (error) throw new Error(error.message);
       showToast('success','Berhasil','Kategori diperbarui');
     } else {
-      await SB.expense_categories.insert({ name, icon, coa_id });
+      const { error } = await SB.expense_categories.insert({ name, icon, coa_id });
+      if (error) throw new Error(error.message);
       showToast('success','Berhasil','Kategori ditambahkan');
     }
-    loadMetadata();
+    await loadMetadata();
   });
 };
 
@@ -699,16 +701,18 @@ window.openAddSatuanModal = function(id) {
   `, async () => {
     const name = document.getElementById('f-satNama').value.trim();
     const type = document.getElementById('f-satType').value;
-    if (!name) return;
+    if (!name) { showToast('warning','Peringatan','Nama satuan wajib diisi.'); return false; }
 
     if (s) {
-      await SB.units.update(s.id, { name, type });
+      const { error } = await SB.units.update(s.id, { name, type });
+      if (error) throw new Error(error.message);
       showToast('success','Berhasil','Satuan diperbarui');
     } else {
-      await SB.units.insert({ name, type });
+      const { error } = await SB.units.insert({ name, type });
+      if (error) throw new Error(error.message);
       showToast('success','Berhasil','Satuan ditambahkan');
     }
-    loadMetadata();
+    await loadMetadata();
   });
 };
 

@@ -275,8 +275,8 @@ function _withUserId(data) {
       let ownerId = uid || window.APP_OWNER_ID || window._currentUserId;
       return sb.from('expense_categories').select('*').eq('user_id', ownerId).order('name');
     },
-    insert: (data)      => sb.from('expense_categories').insert(_withUserId(data)).select().single(),
-    update: (id, data)  => sb.from('expense_categories').update(data).eq('id', id).select().single(),
+    insert: (data)      => { const d = _withUserId(data); delete d.season_id; return sb.from('expense_categories').insert(d).select().single(); },
+    update: (id, data)  => { const d = { ...data }; delete d.season_id; return sb.from('expense_categories').update(d).eq('id', id).select().single(); },
     remove: (id)        => sb.from('expense_categories').delete().eq('id', id),
   },
   units: {
@@ -288,8 +288,8 @@ function _withUserId(data) {
       }
       return q.order('name');
     },
-    insert: (data)      => sb.from('units').insert(_withUserId(data)).select().single(),
-    update: (id, data)  => sb.from('units').update(data).eq('id', id).select().single(),
+    insert: (data)      => { const d = _withUserId(data); delete d.season_id; return sb.from('units').insert(d).select().single(); },
+    update: (id, data)  => { const d = { ...data }; delete d.season_id; return sb.from('units').update(d).eq('id', id).select().single(); },
     remove: (id)        => sb.from('units').delete().eq('id', id),
   },
   /** CASH BOOK */

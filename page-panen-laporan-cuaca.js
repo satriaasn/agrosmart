@@ -296,19 +296,41 @@ async function openPanenModal(id) {
 
         console.log('[DEBUG] Panen Syncing to Cash Book:', cashData);
 
-        const { data: existingCash, error: fetchErr } = await sb.from('cash_book').select('id').eq('ref_id', savedPanen.id).eq('ref_type', 'panen').maybeSingle();
-        if (fetchErr) console.warn('[DEBUG] Panen Sync Fetch Err:', fetchErr);
-        
-        let syncRes;
-        if (existingCash) {
-          syncRes = await SB.cash_book.update(existingCash.id, cashData);
-        } else {
-          syncRes = await SB.cash_book.insert(cashData);
-        }
+        try {
+          const { data: existingCash, error: fetchErr } = await sb.from('cash_book').select('id').eq('ref_id', savedPanen.id).eq('ref_type', 'panen').maybeSingle();
+          if (fetchErr) console.warn('[DEBUG] Panen Sync Fetch Err:', fetchErr);
+          
+          let syncRes;
+          if (existingCash) {
+            syncRes = await SB.cash_book.update(existingCash.id, cashData);
+          } else {
+            syncRes = await SB.cash_book.insert(cashData);
+          }
 
-        if (syncRes.error) {
-          console.error('[DEBUG] Panen Cash Book Sync Error:', syncRes.error);
-          throw new Error('Panen tersimpan, tapi GAGAL sinkron ke Buku Kas: ' + (syncRes.error.message || 'Terjadi kesalahan database.'));
+          if (syncRes.error) {
+            // Retry without optional columns that may not exist in DB
+            console.warn('[DEBUG] Panen Cash Book sync failed, retrying without optional columns:', syncRes.error.message);
+            const fallbackData = { ...cashData };
+            delete fallbackData.lahan;
+            delete fallbackData.coa_id;
+            delete fallbackData.season_id;
+
+            if (existingCash) {
+              syncRes = await SB.cash_book.update(existingCash.id, fallbackData);
+            } else {
+              syncRes = await SB.cash_book.insert(fallbackData);
+            }
+
+            if (syncRes.error) {
+              console.error('[DEBUG] Panen Cash Book Sync Error (final):', syncRes.error);
+              showToast('warning', 'Peringatan', 'Panen tersimpan, tapi sinkronisasi ke Buku Kas gagal. Jalankan migrasi database terbaru.');
+            } else {
+              showToast('info', 'Info', 'Kas tersinkron (tanpa kolom lahan). Jalankan migrasi DB untuk fitur lengkap.');
+            }
+          }
+        } catch (syncErr) {
+          console.error('[DEBUG] Panen Cash Book Sync Exception:', syncErr);
+          showToast('warning', 'Peringatan', 'Panen tersimpan, tapi sinkron ke Buku Kas gagal.');
         }
       }
 
