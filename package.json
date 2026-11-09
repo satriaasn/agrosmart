@@ -1,4 +1,11 @@
 {
+  "name": "agrosmart",
+  "version": "1.0.0",
+  "description": "AgroSmart — Sistem Kontrol Perkebunan",
+  "main": "serve.js",
+  "scripts": {
+    "start": "node serve.js"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.100.0"
   }

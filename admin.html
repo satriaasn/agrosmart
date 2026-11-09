@@ -211,6 +211,7 @@
           <option value="suspended">Suspended</option>
         </select>
         <button class="btn btn-secondary btn-sm" onclick="loadAllUsers()">↻ Refresh</button>
+        <button class="btn btn-secondary btn-sm" onclick="exportAdminUsersToExcel()" style="color:#22c55e;border-color:rgba(34,197,94,0.3)">📊 Export Excel</button>
       </div>
       <div class="table-wrap">
         <table>
@@ -437,6 +438,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
+  <script src="xlsx.full.min.js"></script>
   <script>
     let allUsers = [];
 
@@ -501,6 +503,37 @@
         return matchQ && matchRole && matchStatus;
       });
       renderTable(filtered);
+    }
+
+    function exportAdminUsersToExcel() {
+      if (typeof XLSX === 'undefined') {
+        showToast('error', 'Pustaka Excel belum siap. Coba muat ulang halaman.');
+        return;
+      }
+      const list = allUsers || [];
+      if (!list.length) {
+        showToast('error', 'Belum ada data user untuk diekspor.');
+        return;
+      }
+      const headers = ['No', 'Nama Usaha', 'Nama Pemilik', 'Email', 'Role', 'Status Akun', 'Plan Lisensi', 'Tanggal Daftar'];
+      const rows = [headers];
+      list.forEach((u, i) => {
+        rows.push([
+          i + 1,
+          u.nama_usaha || '-',
+          u.nama_pemilik || '-',
+          u.email || '-',
+          (u.role || 'owner').toUpperCase(),
+          u.is_suspended ? 'SUSPENDED' : 'AKTIF',
+          u.license_plan || 'trial',
+          u.created_at ? new Date(u.created_at).toLocaleDateString('id-ID') : '-'
+        ]);
+      });
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      XLSX.utils.book_append_sheet(wb, ws, 'Daftar Akun Pengguna');
+      XLSX.writeFile(wb, `AgroSmart_Data_Pengguna_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      showToast('success', 'File Excel daftar pengguna berhasil diunduh!');
     }
 
     function getLicenseStatusBadge(u) {

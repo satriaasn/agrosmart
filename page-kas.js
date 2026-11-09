@@ -20,8 +20,12 @@ async function renderKas() {
       <div class="page-title">Buku Kas & Neraca</div>
       <div class="page-subtitle">Kontrol uang masuk dan keluar untuk keseimbangan kas usaha.</div>
     </div>
-    <div class="page-actions">
-      <button class="btn btn-secondary" onclick="forceSyncKeuangan(this)" style="margin-right:8px">
+    <div class="page-actions" style="display:flex;gap:8px;align-items:center;">
+      <button class="btn btn-success" onclick="openExportExcelModal('kas')" title="Ekspor Buku Kas ke Excel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="8 13 12 17 16 13"/><line x1="12" y1="9" x2="12" y2="17"/></svg>
+        Export Excel
+      </button>
+      <button class="btn btn-secondary" onclick="forceSyncKeuangan(this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         Sinkron Data
       </button>
@@ -64,7 +68,7 @@ async function renderKas() {
         <tbody>
           ${arrKas.length ? arrKas.map(k => `
             <tr>
-              <td style="font-size:13px">${new Date(k.tanggal).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'})}</td>
+              <td style="font-size:13px">${new Date(k.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
               <td>
                 <span class="badge ${k.tipe === 'masuk' ? 'badge-green' : 'badge-red'}">
                   ${k.tipe === 'masuk' ? '🟢 MASUK' : '🔴 KELUAR'}
@@ -73,9 +77,9 @@ async function renderKas() {
               <td>
                 <div style="font-weight:700; font-size:12px; color:var(--text-primary)">
                   ${(() => {
-                    const coa = arrCOA.find(a => String(a.id) === String(k.coa_id));
-                    return coa ? `[${coa.account_code}] ${coa.account_name}` : k.kategori;
-                  })()}
+      const coa = arrCOA.find(a => String(a.id) === String(k.coa_id));
+      return coa ? `[${coa.account_code}] ${coa.account_name}` : k.kategori;
+    })()}
                 </div>
                 <div style="font-size:10px; color:var(--text-muted)">${k.kategori}</div>
               </td>
@@ -207,8 +211,8 @@ async function forceSyncKeuangan(btn) {
 
     const arrBiaya = listBiaya || [];
     const arrPanen = listPanen || [];
-    const arrKas   = listKas || [];
-    const arrKats  = listKats || [];
+    const arrKas = listKas || [];
+    const arrKats = listKats || [];
 
     let count = 0;
 

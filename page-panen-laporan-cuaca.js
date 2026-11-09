@@ -44,6 +44,10 @@ async function renderPanen() {
         ${window.APP_SEASON ? `<option value="active" ${window._panenSeasonFilter==='active'?'selected':''}>Periode Aktif: ${window.APP_SEASON.nama}</option>` : ''}
         <!-- Bisa ditambah list semua periode jika allSeasons didefinisikan secara global, sementara pakai 2 ini dulu -->
       </select>
+      <button class="btn btn-success" onclick="openExportExcelModal('panen')" title="Ekspor Catatan Panen ke Excel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="8 13 12 17 16 13"/><line x1="12" y1="9" x2="12" y2="17"/></svg>
+        Export Excel
+      </button>
       ${canAccess('panen', 'add') ? `
       <button class="btn btn-primary" onclick="openPanenModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -488,6 +492,10 @@ async function renderLaporan() {
           <option value="all" ${window._laporanSeasonFilter==='all'?'selected':''}>Semua Periode</option>
           ${window.APP_SEASON ? `<option value="active" ${window._laporanSeasonFilter==='active'?'selected':''}>Periode Aktif: ${window.APP_SEASON.nama}</option>` : ''}
         </select>
+        <button class="btn btn-success" onclick="openExportExcelModal('all')" title="Ekspor Semua Laporan & Transaksi ke Excel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="8 13 12 17 16 13"/><line x1="12" y1="9" x2="12" y2="17"/></svg>
+          Export Excel (.xlsx)
+        </button>
       </div>
     </div>
     

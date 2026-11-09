@@ -726,6 +726,28 @@ body {
   transform: translateY(-1px);
 }
 
+.btn-success {
+  background: #16a34a;
+  color: #ffffff;
+  border-color: #15803d;
+  box-shadow: 0 2px 10px rgba(22, 163, 74, 0.25);
+}
+
+.btn-success:hover {
+  background: #15803d;
+  box-shadow: 0 4px 16px rgba(22, 163, 74, 0.35);
+  transform: translateY(-1px);
+}
+
+.export-type-card:hover {
+  border-color: var(--accent-primary) !important;
+}
+
+.export-type-card.active {
+  border-color: #16a34a !important;
+  background: rgba(22, 163, 74, 0.08) !important;
+}
+
 .btn svg {
   width: 15px;
   height: 15px;

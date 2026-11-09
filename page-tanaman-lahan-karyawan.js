@@ -44,12 +44,16 @@ async function renderTanaman() {
       <div class="page-title">Manajemen Tanaman</div>
       <div class="page-subtitle">Kelola seluruh jenis tanaman di perkebunan Anda.</div>
     </div>
-     <div class="page-actions">
+     <div class="page-actions" style="display:flex;gap:8px;align-items:center;">
       <select class="form-control" style="width:160px" onchange="filterTanaman(this.value)">
         <option value="">Semua Kategori</option>
         <option>Palma</option><option>Lateks</option><option>Buah</option>
         <option>Gula</option><option>Umbi</option><option>Serealia</option>
       </select>
+      <button class="btn btn-success" onclick="openExportExcelModal('lahan_tanaman')" title="Ekspor Data Tanaman & Lahan ke Excel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="8 13 12 17 16 13"/><line x1="12" y1="9" x2="12" y2="17"/></svg>
+        Export Excel
+      </button>
       ${canAccess('tanaman', 'add') ? `
       <button class="btn btn-primary" onclick="openTanamanModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -286,7 +290,11 @@ async function renderLahan() {
       <div class="page-title">Manajemen Lahan</div>
       <div class="page-subtitle">Pantau kondisi dan status seluruh blok lahan perkebunan.</div>
     </div>
-    <div class="page-actions">
+    <div class="page-actions" style="display:flex;gap:8px;align-items:center;">
+      <button class="btn btn-success" onclick="openExportExcelModal('lahan_tanaman')" title="Ekspor Data Lahan & Tanaman ke Excel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="8 13 12 17 16 13"/><line x1="12" y1="9" x2="12" y2="17"/></svg>
+        Export Excel
+      </button>
       ${canAccess('lahan', 'add') ? `
       <button class="btn btn-primary" onclick="openLahanModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -626,7 +634,11 @@ async function renderKaryawan() {
       <div class="page-title">Manajemen Karyawan</div>
       <div class="page-subtitle">Kelola data dan kehadiran seluruh karyawan perkebunan.</div>
     </div>
-    <div class="page-actions">
+    <div class="page-actions" style="display:flex;gap:8px;align-items:center;">
+      <button class="btn btn-success" onclick="openExportExcelModal('karyawan')" title="Ekspor Data Karyawan ke Excel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="8 13 12 17 16 13"/><line x1="12" y1="9" x2="12" y2="17"/></svg>
+        Export Excel
+      </button>
       ${canAccess('karyawan', 'add') ? `
       <button class="btn btn-primary" onclick="openKaryawanModal()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
