@@ -62,6 +62,20 @@ function formatTglIndo(tglStr) {
 }
 
 /**
+ * Helper untuk fetch data yang aman (mendukung Postgrest thenable tanpa .catch)
+ */
+async function safeFetch(fetchCall) {
+  try {
+    if (!fetchCall) return { data: [] };
+    const res = await (typeof fetchCall === 'function' ? fetchCall() : fetchCall);
+    return res || { data: [] };
+  } catch (err) {
+    console.warn('safeFetch caught error:', err);
+    return { data: [] };
+  }
+}
+
+/**
  * Tarik seluruh data dari Supabase dengan fallback ke DB lokal jika demo/offline
  */
 async function fetchFullExportData(seasonFilter = 'all') {
@@ -75,14 +89,14 @@ async function fetchFullExportData(seasonFilter = 'all') {
     resCOA,
     resSeasons
   ] = await Promise.all([
-    (typeof SB !== 'undefined' && SB.cash_book?.fetch) ? SB.cash_book.fetch().catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-    (typeof SB !== 'undefined' && SB.biaya?.fetch) ? SB.biaya.fetch().catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-    (typeof SB !== 'undefined' && SB.panen?.fetch) ? SB.panen.fetch().catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-    (typeof SB !== 'undefined' && SB.tanaman?.fetch) ? SB.tanaman.fetch().catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-    (typeof SB !== 'undefined' && SB.lahan?.fetch) ? SB.lahan.fetch().catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-    (typeof SB !== 'undefined' && SB.karyawan?.fetch) ? SB.karyawan.fetch().catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-    (typeof SB !== 'undefined' && SB.coa?.fetch) ? SB.coa.fetch().catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-    (typeof SB !== 'undefined' && SB.seasons?.fetch) ? SB.seasons.fetch().catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
+    safeFetch(() => (typeof SB !== 'undefined' && SB.cash_book?.fetch) ? SB.cash_book.fetch() : null),
+    safeFetch(() => (typeof SB !== 'undefined' && SB.biaya?.fetch) ? SB.biaya.fetch() : null),
+    safeFetch(() => (typeof SB !== 'undefined' && SB.panen?.fetch) ? SB.panen.fetch() : null),
+    safeFetch(() => (typeof SB !== 'undefined' && SB.tanaman?.fetch) ? SB.tanaman.fetch() : null),
+    safeFetch(() => (typeof SB !== 'undefined' && SB.lahan?.fetch) ? SB.lahan.fetch() : null),
+    safeFetch(() => (typeof SB !== 'undefined' && SB.karyawan?.fetch) ? SB.karyawan.fetch() : null),
+    safeFetch(() => (typeof SB !== 'undefined' && SB.coa?.fetch) ? SB.coa.fetch() : null),
+    safeFetch(() => (typeof SB !== 'undefined' && SB.seasons?.fetch) ? SB.seasons.fetch() : null),
   ]);
 
   let kas = resKas?.data || [];
